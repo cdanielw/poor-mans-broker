@@ -11,22 +11,21 @@ public final class DispatchingMessageHandler<M> implements MessageHandler<M> {
         consumerByMessageType = Collections.unmodifiableMap(builder.consumerByMessageType);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "SuspiciousMethodCalls"})
     public void handle(M message) {
         MessageHandler<M> consumer = (MessageHandler<M>) consumerByMessageType.get(message.getClass());
         consumer.handle(message);
     }
 
     @SuppressWarnings("UnusedParameters")
-    public static <M> Builder<M> handler(Class<M> messageType) {
+    public static <M> Builder<M> with(Class<M> messageType) {
         return new Builder<M>();
     }
 
     public static final class Builder<M> {
         private Map<Class<? extends M>, MessageHandler<? extends M>> consumerByMessageType = new HashMap<Class<? extends M>, MessageHandler<? extends M>>();
 
-
-        public <T extends M> Builder<M> dispatch(Class<T> messageType, MessageHandler<T> consumer) {
+        public <T extends M> Builder<M> add(Class<T> messageType, MessageHandler<T> consumer) {
             consumerByMessageType.put(messageType, consumer);
             return this;
         }

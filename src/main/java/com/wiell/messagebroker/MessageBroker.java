@@ -5,7 +5,7 @@ public interface MessageBroker {
 
     void stop();
 
-    <M> MessageQueue.Builder<M> queue(Class<M> messageType);
+    <M> MessageQueue.Builder<M> queueWith(String queueId, Class<M> messageType);
 
-    <M, R> RequestResponseMessageQueue.Builder<M, R> requestResponseQueue(RespondingMessageHandler<M, R> handler);
+    <M, R> RequestResponseMessageQueue.Builder<M, R> queueWith(String queueId, RespondingMessageHandler<M, R> handler);
 }

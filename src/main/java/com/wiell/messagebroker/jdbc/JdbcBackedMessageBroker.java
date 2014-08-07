@@ -6,6 +6,6 @@ import javax.sql.DataSource;
 
 public class JdbcBackedMessageBroker extends AbstractMessageBroker {
     public JdbcBackedMessageBroker(DataSource dataSource) {
-        super(null);
+        super(null, null);
     }
 }

@@ -24,13 +24,13 @@ public class MessageQueueTest {
     }
 
     private void dispatchTest() {
-        DispatchingMessageHandler<Event> eventHandler = DispatchingMessageHandler.handler(Event.class)
-                .dispatch(Created.class, new Created.Handler())
-                .dispatch(Deleted.class, new Deleted.Handler())
+        DispatchingMessageHandler<Event> eventHandler = DispatchingMessageHandler.with(Event.class)
+                .add(Created.class, new Created.Handler())
+                .add(Deleted.class, new Deleted.Handler())
                 .build();
 
-        MessageQueue<Event> queue = messageBroker.queue(Event.class)
-                .consumer("Event consumer", eventHandler)
+        MessageQueue<Event> queue = messageBroker.queueWith("", Event.class)
+                .add(MessageConsumer.with("Event consumer", eventHandler))
                 .build();
 
         queue.publish(new Created());
@@ -51,9 +51,9 @@ public class MessageQueueTest {
             }
         };
 
-        MessageQueue<String> queue = messageBroker.queue(String.class)
-                .consumer("Consumer one", handler1).timeout(10, TimeUnit.SECONDS)
-                .consumer("Consumer two", handler2).timeout(20, TimeUnit.SECONDS)
+        MessageQueue<String> queue = messageBroker.queueWith("String queue", String.class)
+                .add(MessageConsumer.with("Consumer one", handler1).timeout(10, TimeUnit.SECONDS))
+                .add(MessageConsumer.with("Consumer two", handler2).timeout(20, TimeUnit.SECONDS))
                 .build();
 
         queue.publish("A message");
@@ -70,20 +70,26 @@ public class MessageQueueTest {
                 }
             }
         };
-        RequestResponseMessageQueue<String, Date> requestResponseQueue = messageBroker.requestResponseQueue(handler)
-                .consumer("Async consumer one", new MessageResponseHandler<String, Date>() {
+        MessageConsumer<MessageResponse<String, Date>> consumer1 = MessageConsumer.with(
+                "Async consumer one", new MessageHandler<MessageResponse<String, Date>>() {
                     public void handle(MessageResponse<String, Date> messageResponse) {
                         System.out.println("Async consumer one got response "
                                 + messageResponse.response + " from message " + messageResponse.message);
                     }
-                })
-                .consumer("Async consumer two", new MessageResponseHandler<String, Date>() {
-                    public void handle(MessageResponse<String, Date> messageResponse) {
-                        System.out.println("Async consumer two got response "
-                                + messageResponse.response + " from message " + messageResponse.message);
-                    }
-                })
-                .build();
+                }).build();
+
+        MessageConsumer<MessageResponse<String, Date>> consumer2 = MessageConsumer.with("Async consumer two", new MessageHandler<MessageResponse<String, Date>>() {
+            public void handle(MessageResponse<String, Date> messageResponse) {
+                System.out.println("Async consumer two got response "
+                        + messageResponse.response + " from message " + messageResponse.message);
+            }
+        }).build();
+
+        RequestResponseMessageQueue<String, Date> requestResponseQueue =
+                messageBroker.queueWith("Request-response queue", handler)
+                        .add(consumer1)
+                        .add(consumer2)
+                        .build();
 
         Future<Date> dateFuture = requestResponseQueue.publish("2010-05-21");
         try {

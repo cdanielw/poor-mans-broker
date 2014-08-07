@@ -10,15 +10,13 @@ public interface RequestResponseMessageQueue<M, R> {
     public static final class Builder<M, R> {
         private String queueId;
         private RespondingMessageHandler<M, R> respondingMessageHandler;
-        private final MessageRepository messageRepository;
-        private final MessageSerializer messageSerializer;
+        private MessageQueueManager queueManager;
         private List<MessageConsumer<MessageResponse<M, R>>> consumers = new ArrayList<MessageConsumer<MessageResponse<M, R>>>();
 
-        Builder(String queueId, RespondingMessageHandler<M, R> respondingMessageHandler, MessageRepository messageRepository, MessageSerializer messageSerializer) {
+        Builder(String queueId, RespondingMessageHandler<M, R> respondingMessageHandler, MessageQueueManager queueManager) {
             this.queueId = queueId;
             this.respondingMessageHandler = respondingMessageHandler;
-            this.messageRepository = messageRepository;
-            this.messageSerializer = messageSerializer;
+            this.queueManager = queueManager;
         }
 
         public Builder<M, R> add(MessageConsumer.Builder<MessageResponse<M, R>> consumer) {
@@ -32,26 +30,26 @@ public interface RequestResponseMessageQueue<M, R> {
         }
 
         public RequestResponseMessageQueue<M, R> build() {
-            return new Default<M, R>(this);
+            Default<M, R> queue = new Default<M, R>(this);
+            queueManager.registerQueue(queue);
+            return queue;
         }
 
         private static class Default<M, R> implements RequestResponseMessageQueue<M, R> {
             private final String id;
             private final RespondingMessageHandler<M, R> respondingMessageHandler;
             private final List<MessageConsumer<MessageResponse<M, R>>> consumers;
-            private final MessageRepository messageRepository;
-            private final MessageSerializer messageSerializer;
+            private final MessageQueueManager queueManager;
 
             private Default(Builder<M, R> builder) {
                 id = builder.queueId;
                 respondingMessageHandler = builder.respondingMessageHandler;
                 consumers = builder.consumers;
-                messageRepository = builder.messageRepository;
-                messageSerializer = builder.messageSerializer;
+                queueManager = builder.queueManager;
             }
 
             public Future<R> publish(final M message) {
-                // TODO: Implement...
+//                queueManager.publish(id, message, ); // TODO: Implement...
                 return null;
             }
         }

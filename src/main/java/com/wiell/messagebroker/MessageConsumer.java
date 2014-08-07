@@ -2,7 +2,7 @@ package com.wiell.messagebroker;
 
 import java.util.concurrent.TimeUnit;
 
-public class MessageConsumer<M> {
+public final class MessageConsumer<M> {
     public final String id;
     private final MessageHandler<M> handler;
     public final int time;

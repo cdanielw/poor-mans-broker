@@ -8,4 +8,5 @@ public interface MessageBroker {
     <M> MessageQueue.Builder<M> queueWith(String queueId, Class<M> messageType);
 
     <M, R> RequestResponseMessageQueue.Builder<M, R> queueWith(String queueId, RespondingMessageHandler<M, R> handler);
+
 }

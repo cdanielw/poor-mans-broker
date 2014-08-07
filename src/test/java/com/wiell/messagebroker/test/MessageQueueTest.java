@@ -1,5 +1,6 @@
-package com.wiell.messagebroker;
+package com.wiell.messagebroker.test;
 
+import com.wiell.messagebroker.*;
 import com.wiell.messagebroker.jdbc.JdbcBackedMessageBroker;
 
 import java.text.ParseException;

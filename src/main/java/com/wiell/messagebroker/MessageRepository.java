@@ -3,7 +3,7 @@ package com.wiell.messagebroker;
 import java.util.Map;
 
 public interface MessageRepository {
-    public <M> void submit(String message, String queueId, Iterable<MessageConsumer<M>> consumers);
+    public <M> void submit(String queueId, String message, Iterable<MessageConsumer<M>> consumers);
 
     public TakenMessages takePendingMessages(String queueId); // TODO: Return some iterator instead, to allow for streaming?
 //

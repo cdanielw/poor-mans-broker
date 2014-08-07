@@ -7,6 +7,7 @@ final class MessageQueueManager {
     MessageQueueManager(MessageRepository messageRepository, MessageSerializer messageSerializer) {
         this.messageRepository = messageRepository;
         this.messageSerializer = messageSerializer;
+        // TODO: Setup global poll
     }
 
     <M> void publish(String queueId, M message, Iterable<MessageConsumer<M>> messageConsumers) {
@@ -15,10 +16,6 @@ final class MessageQueueManager {
 //
 //            }
         // No need to poll for messages if the global poll is running
-    }
-
-    void start() {
-        // TODO: Setup global poll
     }
 
     void stop() {

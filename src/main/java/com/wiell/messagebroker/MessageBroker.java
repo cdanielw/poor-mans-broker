@@ -1,8 +1,6 @@
 package com.wiell.messagebroker;
 
 public interface MessageBroker {
-    void start();
-
     void stop();
 
     <M> MessageQueue.Builder<M> queueWith(String queueId, Class<M> messageType);

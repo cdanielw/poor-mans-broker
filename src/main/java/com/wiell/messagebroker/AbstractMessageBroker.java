@@ -8,10 +8,6 @@ public abstract class AbstractMessageBroker implements MessageBroker {
         queueManager = new MessageQueueManager(messageRepository, messageSerializer);
     }
 
-    public final void start() {
-        queueManager.start();
-    }
-
     public final void stop() {
         queueManager.stop();
     }

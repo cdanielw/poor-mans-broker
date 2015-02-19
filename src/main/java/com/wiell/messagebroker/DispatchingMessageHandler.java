@@ -22,6 +22,7 @@ public final class DispatchingMessageHandler<M> implements KeepAliveMessageHandl
 
     @SuppressWarnings("UnusedParameters")
     public static <M> Builder<M> builder(Class<M> messageType) {
+        Check.notNull(messageType, "messageType must not be null");
         return new Builder<M>();
     }
 
@@ -29,11 +30,15 @@ public final class DispatchingMessageHandler<M> implements KeepAliveMessageHandl
         private Map<Class<? extends M>, Object> consumerByMessageType = new HashMap<Class<? extends M>, Object>();
 
         public <T extends M> Builder<M> handler(Class<T> messageType, MessageHandler<T> messageHandler) {
+            Check.notNull(messageType, "messageType must not be null");
+            Check.notNull(messageHandler, "messageHandler must not be null");
             consumerByMessageType.put(messageType, messageHandler);
             return this;
         }
 
         public <T extends M> Builder<M> handler(Class<T> messageType, KeepAliveMessageHandler<T> messageHandler) {
+            Check.notNull(messageType, "messageType must not be null");
+            Check.notNull(messageHandler, "messageHandler must not be null");
             consumerByMessageType.put(messageType, messageHandler);
             return this;
         }

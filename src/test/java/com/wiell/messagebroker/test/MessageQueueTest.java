@@ -14,7 +14,7 @@ public class MessageQueueTest {
                 MessageBrokerConfig.builder(
                         new InMemoryMessageRepository(),
                         NULL_TRANSACTION_SYNCHRONIZER
-                ).pollingDelay(5, SECONDS)
+                ).abandonedJobsCheckingSchedule(5, SECONDS)
         ).start();
 
         asyncTest();
@@ -34,7 +34,7 @@ public class MessageQueueTest {
                 .handler(Deleted.class, new Deleted.Handler())
                 .build();
 
-        MessageQueue<Event> queue = messageBroker.queueBuilder("", Event.class)
+        MessageQueue<Event> queue = messageBroker.queueBuilder("The queue", Event.class)
                 .consumer(MessageConsumer.builder("Event consumer", eventHandler))
                 .build();
 

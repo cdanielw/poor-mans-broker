@@ -19,11 +19,13 @@ public interface MessageQueue<M> {
         }
 
         public Builder<M> consumer(MessageConsumer.Builder<M> consumer) {
+            Check.notNull(consumer, "consumer must not be null");
             consumers.add(consumer.build());
             return this;
         }
 
         public Builder<M> consumer(MessageConsumer<M> consumer) {
+            Check.notNull(consumer, "consumer must not be null");
             consumers.add(consumer);
             return this;
         }
@@ -46,6 +48,7 @@ public interface MessageQueue<M> {
             }
 
             public void publish(M message) {
+                Check.notNull(message, "message must not be null");
                 queueManager.publish(id, message);
             }
         }

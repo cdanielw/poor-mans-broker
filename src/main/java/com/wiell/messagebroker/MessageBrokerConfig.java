@@ -3,37 +3,42 @@ package com.wiell.messagebroker;
 import java.util.concurrent.TimeUnit;
 
 public class MessageBrokerConfig {
-    public final MessageRepository messageRepository;
-    public final TransactionSynchronizer transactionSynchronizer;
-    public final int pollingDelay;
-    public final TimeUnit pollingDelayTimeUnit;
+    final MessageRepository messageRepository;
+    final TransactionSynchronizer transactionSynchronizer;
+    final int abandonedJobsPeriod;
+    final TimeUnit abandonedJobsTimeUnit;
 
     private MessageBrokerConfig(Builder builder) {
         this.messageRepository = builder.messageRepository;
         this.transactionSynchronizer = builder.transactionSynchronizer;
-        this.pollingDelay = builder.pollingDelay;
-        this.pollingDelayTimeUnit = builder.timeUnit;
+        this.abandonedJobsPeriod = builder.abandonedJobsPeriod;
+        this.abandonedJobsTimeUnit = builder.abandonedJobsTimeUnit;
     }
 
     public static Builder builder(MessageRepository messageRepository,
                                   TransactionSynchronizer transactionSynchronizer) {
+        Check.notNull(messageRepository, "messageRepository must not be null");
+        Check.notNull(transactionSynchronizer, "transactionSynchronizer must not be null");
         return new Builder(messageRepository, transactionSynchronizer);
     }
 
     public static final class Builder {
         private final MessageRepository messageRepository;
         private final TransactionSynchronizer transactionSynchronizer;
-        private int pollingDelay;
-        private TimeUnit timeUnit;
+        private int abandonedJobsPeriod;
+        private TimeUnit abandonedJobsTimeUnit;
 
-        public Builder(MessageRepository messageRepository, TransactionSynchronizer transactionSynchronizer) {
+        private Builder(MessageRepository messageRepository, TransactionSynchronizer transactionSynchronizer) {
             this.messageRepository = messageRepository;
             this.transactionSynchronizer = transactionSynchronizer;
+            abandonedJobsCheckingSchedule(1, TimeUnit.MINUTES);
         }
 
-        public Builder pollingDelay(int pollingDelay, TimeUnit timeUnit) {
-            this.pollingDelay = pollingDelay;
-            this.timeUnit = timeUnit;
+        public Builder abandonedJobsCheckingSchedule(int period, TimeUnit timeUnit) {
+            Check.greaterThenZero(period, "period must be greater then zero");
+            Check.notNull(timeUnit, "timeUnit must not be null");
+            this.abandonedJobsPeriod = period;
+            this.abandonedJobsTimeUnit = timeUnit;
             return this;
         }
 

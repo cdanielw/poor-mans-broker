@@ -2,7 +2,7 @@ package com.wiell.messagebroker;
 
 import java.util.concurrent.TimeUnit;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 public final class MessageConsumer<M> {
     public final String id;
@@ -33,8 +33,10 @@ public final class MessageConsumer<M> {
             handler.handle(message);
     }
 
-    public static <M> Builder<M> builder(String consumerId, MessageHandler<M> handler) {
-        return new Builder<M>(consumerId, handler, null);
+    public static <M> Builder<M> builder(String consumerId, MessageHandler<M> messageHandler) {
+        Check.haveText(consumerId, "consumerId must be specified");
+        Check.notNull(messageHandler, "messageHandler must not be null");
+        return new Builder<M>(consumerId, messageHandler, null);
     }
 
     public static <M> Builder<M> builder(String consumerId, KeepAliveMessageHandler<M> handler) {
@@ -56,12 +58,14 @@ public final class MessageConsumer<M> {
             this.consumerId = consumerId;
             this.handler = handler;
             this.keepAliveHandler = keepAliveHandler;
-            timeout(10, SECONDS);
+            timeout(1, MINUTES);
             blocking();
             retry(ThrottleStrategy.ONE_SECOND_PER_RETRY);
         }
 
         public Builder<M> timeout(int time, TimeUnit timeUnit) {
+            Check.greaterThenZero(time, "time must be greater then zero");
+            Check.notNull(timeUnit, "timeUnit must not be null");
             this.time = time;
             this.timeUnit = timeUnit;
             return this;
@@ -74,18 +78,22 @@ public final class MessageConsumer<M> {
         }
 
         public Builder<M> nonBlocking(int workerCount) {
+            Check.greaterThenZero(workerCount, "workerCount must be greater then zero");
             this.blocking = false;
             this.workerCount = workerCount;
             return this;
         }
 
         public Builder<M> retry(int maxRetries, ThrottleStrategy throttleStrategy) {
+            Check.zeroOrGreater(maxRetries, "maxRetries must be zero or greater");
+            Check.notNull(throttleStrategy, "throttleStrategy must not be null");
             this.maxRetries = maxRetries;
             this.throttleStrategy = throttleStrategy;
             return this;
         }
 
         public Builder<M> retry(ThrottleStrategy throttleStrategy) {
+            Check.notNull(throttleStrategy, "throttleStrategy must not be null");
             this.maxRetries = -1;
             this.throttleStrategy = throttleStrategy;
             return this;

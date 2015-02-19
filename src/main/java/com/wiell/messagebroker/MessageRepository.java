@@ -1,27 +1,20 @@
 package com.wiell.messagebroker;
 
-import java.util.Map;
+import com.wiell.messagebroker.MessageConsumer;
+import com.wiell.messagebroker.MessageProcessingJob;
+import com.wiell.messagebroker.MessageProcessingJobRequest;
+
+import java.util.Collection;
+import java.util.List;
 
 public interface MessageRepository {
-    public <M> void submit(String queueId, String message, Iterable<MessageConsumer<M>> consumers);
+    void enqueue(String queueId, List<MessageConsumer<?>> consumers, Object message);
 
-    public TakenMessages takePendingMessages(String queueId); // TODO: Return some iterator instead, to allow for streaming?
-//
-//    public TakenMessages takePendingMessages();
+    void takeJobs(Collection<MessageProcessingJobRequest> requests, MessageProcessingJob.Callback callback);
 
-    public void completed(String messageId, String consumerId);
+    void keepAlive(MessageProcessingJob job);
 
+    void completed(MessageProcessingJob job);
 
-    public static class SerializedMessage {
-        String queueId;
-        String message;
-    }
-
-    public static class TakenMessages {
-        Map<String, Message> messageByConsumer;
-    }
-
-    public static class Message {
-
-    }
+    void failed(MessageProcessingJob job, int retries, Exception exception);
 }

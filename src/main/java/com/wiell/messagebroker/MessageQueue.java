@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public interface MessageQueue<M> {
-    void publish(M message);
+    void publish(M message) throws NotInTransaction;
 
-    public static final class Builder<M> {
+    final class Builder<M> {
         private String queueId;
         private MessageQueueManager queueManager;
         private List<MessageConsumer<M>> consumers = new ArrayList<MessageConsumer<M>>();
@@ -18,35 +18,35 @@ public interface MessageQueue<M> {
             this.queueManager = queueManager;
         }
 
-        public Builder<M> add(MessageConsumer.Builder<M> consumer) {
+        public Builder<M> consumer(MessageConsumer.Builder<M> consumer) {
             consumers.add(consumer.build());
             return this;
         }
 
-        public Builder<M> add(MessageConsumer<M> consumer) {
+        public Builder<M> consumer(MessageConsumer<M> consumer) {
             consumers.add(consumer);
             return this;
         }
 
+        @SuppressWarnings("unchecked")
         public MessageQueue<M> build() {
             Default<M> queue = new Default<M>(this);
-            queueManager.registerQueue(queue);
+            List uncheckedConsumers = consumers;
+            queueManager.registerQueue(queueId, uncheckedConsumers);
             return queue;
         }
 
         private static class Default<M> implements com.wiell.messagebroker.MessageQueue<M> {
             private final String id;
-            private final List<MessageConsumer<M>> consumers;
             private final MessageQueueManager queueManager;
 
             private Default(Builder<M> builder) {
                 id = builder.queueId;
-                consumers = builder.consumers;
                 queueManager = builder.queueManager;
             }
 
             public void publish(M message) {
-                queueManager.publish(id, message, consumers);
+                queueManager.publish(id, message);
             }
         }
     }

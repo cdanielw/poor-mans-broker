@@ -12,6 +12,14 @@ public final class MessageProcessingJob {
         this.consumerId = consumerId;
     }
 
+    public String toString() {
+        return "MessageProcessingJob{" +
+                "messageId='" + messageId + '\'' +
+                ", message=" + message +
+                ", consumerId='" + consumerId + '\'' +
+                '}';
+    }
+
     public interface Callback {
         void onJob(MessageProcessingJob job);
     }

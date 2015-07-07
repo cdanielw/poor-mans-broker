@@ -2,7 +2,7 @@ package com.wiell.messagebroker;
 
 import java.util.concurrent.TimeUnit;
 
-public class MessageBrokerConfig {
+public final class MessageBrokerConfig {
     final MessageRepository messageRepository;
     final TransactionSynchronizer transactionSynchronizer;
     final int abandonedJobsPeriod;

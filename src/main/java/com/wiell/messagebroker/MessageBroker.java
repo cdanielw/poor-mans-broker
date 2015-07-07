@@ -6,5 +6,4 @@ public interface MessageBroker {
     void stop();
 
     <M> MessageQueue.Builder<M> queueBuilder(String queueId, Class<M> messageType);
-
 }

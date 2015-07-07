@@ -17,14 +17,15 @@ public class MessageQueueTest {
                 ).abandonedJobsCheckingSchedule(5, SECONDS)
         ).start();
 
-        asyncTest();
+//        asyncTest();
         dispatchTest();
 
         try {
-            Thread.sleep(Long.MAX_VALUE);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
         messageBroker.stop();
     }
 
@@ -38,6 +39,7 @@ public class MessageQueueTest {
                 .consumer(MessageConsumer.builder("Event consumer", eventHandler))
                 .build();
 
+        System.out.println(System.nanoTime() + ": Publishing");
         queue.publish(new Created());
         queue.publish(new Deleted());
         queue.publish(new Created());
@@ -46,14 +48,14 @@ public class MessageQueueTest {
     private void asyncTest() {
         KeepAliveMessageHandler<String> handler1 = new KeepAliveMessageHandler<String>() {
             public void handle(String message, KeepAlive keepAlive) {
-                System.out.println("Handler one got: " + message);
+                System.out.println(System.nanoTime() + ": Handler one got: " + message);
                 keepAlive.send();
             }
         };
 
         MessageHandler<String> handler2 = new MessageHandler<String>() {
             public void handle(String message) {
-                System.out.println("Handler two got: " + message);
+                System.out.println(System.nanoTime() + ": Handler two got: " + message);
             }
         };
 
@@ -62,6 +64,7 @@ public class MessageQueueTest {
                 .consumer(MessageConsumer.builder("Consumer two", handler2).timeout(20, SECONDS))
                 .build();
 
+        System.out.println(System.nanoTime() + ": Publishing");
         queue.publish("A message");
     }
 
@@ -75,7 +78,7 @@ public class MessageQueueTest {
     private static class Created implements Event {
         static class Handler implements MessageHandler<Created> {
             public void handle(Created message) {
-                System.out.println("Created handler: " + message);
+                System.out.println(System.nanoTime() + ": Created handler: " + message);
             }
         }
     }
@@ -83,7 +86,7 @@ public class MessageQueueTest {
     private static class Deleted implements Event {
         static class Handler implements KeepAliveMessageHandler<Deleted> {
             public void handle(Deleted message, KeepAlive keepAlive) {
-                System.out.println("Deleted handler: " + message);
+                System.out.println(System.nanoTime() + ": Deleted handler: " + message);
                 keepAlive.send();
             }
         }

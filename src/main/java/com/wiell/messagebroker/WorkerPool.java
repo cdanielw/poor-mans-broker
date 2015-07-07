@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class WorkerPool {
+final class WorkerPool {
     private final MessageProcessingListener listener;
     private final Map<String, BlockingQueue<Worker>> availableWorkersByConsumer = new ConcurrentHashMap<String, BlockingQueue<Worker>>();
     private final ExecutorService workerExecutor = Executors.newCachedThreadPool();
@@ -24,8 +24,9 @@ class WorkerPool {
     }
 
     void execute(final JobTaker jobTaker) throws InterruptedException {
-        if (!takingJobs.compareAndSet(false, true))
+        if (!takingJobs.compareAndSet(false, true)) {
             return; // We're running already
+        }
         jobTakingExecutor.execute(new Runnable() {
             public void run() {
                 takeJobs(jobTaker);
@@ -54,6 +55,7 @@ class WorkerPool {
         } finally {
             takingJobs.set(false);
         }
+
         listener.jobsTaken(jobs);
     }
 
@@ -62,8 +64,12 @@ class WorkerPool {
         for (Map.Entry<String, BlockingQueue<Worker>> entry : availableWorkersByConsumer.entrySet()) {
             String consumerId = entry.getKey();
             BlockingQueue<Worker> availableWorkers = entry.getValue();
-            if (!availableWorkers.isEmpty())
+            if (!availableWorkers.isEmpty()) {
+                System.out.println("Got worker");
                 requests.add(new MessageProcessingJobRequest(consumerId, availableWorkers.size()));
+            }
+            else
+                System.out.println("No available workers");
         }
         return requests;
     }
@@ -71,6 +77,7 @@ class WorkerPool {
     private void makeWorkerAvailable(Worker worker) {
         BlockingQueue<Worker> workers = availableWorkersByConsumer.get(worker.consumer.id);
         workers.add(worker);
+        System.out.println("Worker available");
     }
 
     private Worker takeWorker(String consumerId) {
@@ -78,6 +85,7 @@ class WorkerPool {
         Worker worker = workers.poll();
         if (worker == null)
             throw new IllegalStateException("No worker available for consumer " + consumerId);
+        System.out.println("Got worker");
         return worker;
     }
 
@@ -96,6 +104,8 @@ class WorkerPool {
             workerExecutor.execute(new Runnable() {
                 @SuppressWarnings("unchecked")
                 public void run() {
+
+                    // TODO: Redo this - need some error handler
                     try {
                         int retries = 0;
                         int maxRetries = consumer.maxRetries < 0 ? Integer.MAX_VALUE - 1 : consumer.maxRetries;
@@ -103,7 +113,6 @@ class WorkerPool {
                             try {
                                 listener.processingStarted(job);
                                 consumer.consume(job.message, keepAlive(job));
-                                listener.processingCompleted(job);
                                 return;
                             } catch (Exception e) {
                                 listener.processingFailed(job, retries, e);
@@ -112,6 +121,7 @@ class WorkerPool {
                         }
                     } finally {
                         makeWorkerAvailable(Worker.this);
+                        listener.processingCompleted(job);
                     }
                 }
             });

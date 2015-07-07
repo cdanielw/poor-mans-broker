@@ -44,6 +44,8 @@ public class InMemoryMessageRepository implements MessageRepository {
     public void keepAlive(MessageProcessingJob job) {
         // No need for keep-alive.
         // Since this repository doesn't share data between processes, it's pointless to check for abandoned jobs.
+
+        // TODO: Interrupt jobs that timed out?
     }
 
     public void completed(MessageProcessingJob job) {

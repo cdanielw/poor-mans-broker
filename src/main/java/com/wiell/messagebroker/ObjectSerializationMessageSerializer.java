@@ -43,6 +43,4 @@ public final class ObjectSerializationMessageSerializer implements MessageSerial
             ignore.printStackTrace();
         }
     }
-
-
 }

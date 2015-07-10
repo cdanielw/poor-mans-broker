@@ -1,6 +1,5 @@
 package com.wiell.messagebroker
 
-import com.wiell.messagebroker.ObjectSerializationMessageSerializer
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -12,7 +11,7 @@ class ObjectSerializationMessageSerializerTest extends Specification {
         when:
             String serialized = serializer.serialize(object)
             def result = serializer.deserialize(serialized)
-        println()
+            println()
 
         then:
             result == object

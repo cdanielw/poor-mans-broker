@@ -1,8 +1,10 @@
 package com.wiell.messagebroker;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 final class MessageQueueManager {
     private final MessageRepository repository;

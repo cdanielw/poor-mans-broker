@@ -8,12 +8,12 @@ public final class PollingMessageBroker implements MessageBroker {
     // One for logging, one for monitoring
 
     public PollingMessageBroker(MessageBrokerConfig config) {
-        Check.notNull(config, "config must not be null");
+        Is.notNull(config, "config must not be null");
         queueManager = new MessageQueueManager(config);
     }
 
     public PollingMessageBroker(MessageBrokerConfig.Builder config) {
-        Check.notNull(config, "config must not be null");
+        Is.notNull(config, "config must not be null");
         queueManager = new MessageQueueManager(config.build());
     }
 
@@ -27,8 +27,8 @@ public final class PollingMessageBroker implements MessageBroker {
     }
 
     public <M> MessageQueue.Builder<M> queueBuilder(String queueId, Class<M> messageType) {
-        Check.haveText(queueId, "queueId must be specified");
-        Check.notNull(messageType, "messageType must not be null");
+        Is.haveText(queueId, "queueId must be specified");
+        Is.notNull(messageType, "messageType must not be null");
         return new MessageQueue.Builder<M>(queueId, messageType, queueManager);
     }
 }

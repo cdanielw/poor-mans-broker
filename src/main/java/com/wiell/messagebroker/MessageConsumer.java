@@ -38,8 +38,8 @@ public final class MessageConsumer<M> {
     }
 
     public static <M> Builder<M> builder(String consumerId, MessageHandler<M> messageHandler) {
-        Check.haveText(consumerId, "consumerId must be specified");
-        Check.notNull(messageHandler, "messageHandler must not be null");
+        Is.haveText(consumerId, "consumerId must be specified");
+        Is.notNull(messageHandler, "messageHandler must not be null");
         return new Builder<M>(consumerId, messageHandler, null);
     }
 
@@ -68,8 +68,8 @@ public final class MessageConsumer<M> {
         }
 
         public Builder<M> timeout(int time, TimeUnit timeUnit) {
-            Check.greaterThenZero(time, "time must be greater then zero");
-            Check.notNull(timeUnit, "timeUnit must not be null");
+            Is.greaterThenZero(time, "time must be greater then zero");
+            Is.notNull(timeUnit, "timeUnit must not be null");
             this.time = time;
             this.timeUnit = timeUnit;
             return this;
@@ -82,22 +82,22 @@ public final class MessageConsumer<M> {
         }
 
         public Builder<M> nonBlocking(int workerCount) {
-            Check.greaterThenZero(workerCount, "workerCount must be greater then zero");
+            Is.greaterThenZero(workerCount, "workerCount must be greater then zero");
             this.blocking = false;
             this.workerCount = workerCount;
             return this;
         }
 
         public Builder<M> retry(int maxRetries, ThrottlingStrategy throttlingStrategy) {
-            Check.zeroOrGreater(maxRetries, "maxRetries must be zero or greater");
-            Check.notNull(throttlingStrategy, "throttleStrategy must not be null");
+            Is.zeroOrGreater(maxRetries, "maxRetries must be zero or greater");
+            Is.notNull(throttlingStrategy, "throttleStrategy must not be null");
             this.maxRetries = maxRetries;
             this.throttlingStrategy = throttlingStrategy;
             return this;
         }
 
         public Builder<M> retry(ThrottlingStrategy throttlingStrategy) {
-            Check.notNull(throttlingStrategy, "throttleStrategy must not be null");
+            Is.notNull(throttlingStrategy, "throttleStrategy must not be null");
             this.maxRetries = -1;
             this.throttlingStrategy = throttlingStrategy;
             return this;

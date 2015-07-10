@@ -9,7 +9,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class InMemoryMessageRepository implements MessageRepository {
+public final class InMemoryMessageRepository implements MessageRepository {
     private final ConcurrentHashMap<MessageConsumer<?>, ConcurrentLinkedQueue<Message>> messagesByConsumer = new ConcurrentHashMap<MessageConsumer<?>, ConcurrentLinkedQueue<Message>>();
 
     public void addMessage(String queueId, List<MessageConsumer<?>> consumers, String message) {

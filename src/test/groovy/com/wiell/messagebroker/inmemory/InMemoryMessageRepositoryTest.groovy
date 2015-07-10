@@ -3,7 +3,6 @@ package com.wiell.messagebroker.inmemory
 import com.wiell.messagebroker.MessageConsumer
 import com.wiell.messagebroker.MessageHandler
 import com.wiell.messagebroker.MessageRepository
-import com.wiell.messagebroker.inmemory.InMemoryMessageRepository
 import spock.lang.Specification
 
 class InMemoryMessageRepositoryTest extends Specification {

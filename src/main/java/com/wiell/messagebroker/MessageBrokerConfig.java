@@ -19,8 +19,8 @@ public final class MessageBrokerConfig {
 
     public static Builder builder(MessageRepository messageRepository,
                                   TransactionSynchronizer transactionSynchronizer) {
-        Check.notNull(messageRepository, "messageRepository must not be null");
-        Check.notNull(transactionSynchronizer, "transactionSynchronizer must not be null");
+        Is.notNull(messageRepository, "messageRepository must not be null");
+        Is.notNull(transactionSynchronizer, "transactionSynchronizer must not be null");
         return new Builder(messageRepository, transactionSynchronizer);
     }
 
@@ -43,8 +43,8 @@ public final class MessageBrokerConfig {
         }
 
         public Builder abandonedJobsCheckingSchedule(int period, TimeUnit timeUnit) {
-            Check.greaterThenZero(period, "period must be greater then zero");
-            Check.notNull(timeUnit, "timeUnit must not be null");
+            Is.greaterThenZero(period, "period must be greater then zero");
+            Is.notNull(timeUnit, "timeUnit must not be null");
             this.abandonedJobsPeriod = period;
             this.abandonedJobsTimeUnit = timeUnit;
             return this;

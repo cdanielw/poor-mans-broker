@@ -1,6 +1,6 @@
 package com.wiell.messagebroker;
 
-final class Check {
+final class Is {
     static void notNull(Object o, String message) {
         if (o == null)
             throw new IllegalArgumentException(message);

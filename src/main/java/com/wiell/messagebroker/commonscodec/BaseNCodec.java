@@ -17,8 +17,6 @@
 
 package com.wiell.messagebroker.commonscodec;
 
-import java.util.Arrays;
-
 /**
  * Abstract superclass for Base-N encoders and decoders.
  * <p/>
@@ -44,12 +42,6 @@ public abstract class BaseNCodec {
          * Bitwise operations store and extract the encoding or decoding from this variable.
          */
         int ibitWorkArea;
-
-        /**
-         * Place holder for the bytes we're dealing with for our based logic.
-         * Bitwise operations store and extract the encoding or decoding from this variable.
-         */
-        long lbitWorkArea;
 
         /**
          * Buffer for streaming.
@@ -83,22 +75,6 @@ public abstract class BaseNCodec {
          * variable helps track that.
          */
         int modulus;
-
-        Context() {
-        }
-
-        /**
-         * Returns a String useful for debugging (especially within a debugger.)
-         *
-         * @return a String useful for debugging.
-         */
-        @SuppressWarnings("boxing") // OK to ignore boxing here
-        @Override
-        public String toString() {
-            return String.format("%s[buffer=%s, currentLinePos=%s, eof=%s, ibitWorkArea=%s, lbitWorkArea=%s, " +
-                            "modulus=%s, pos=%s, readPos=%s]", this.getClass().getSimpleName(), Arrays.toString(buffer),
-                    currentLinePos, eof, ibitWorkArea, lbitWorkArea, modulus, pos, readPos);
-        }
     }
 
     /**

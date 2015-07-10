@@ -1,6 +1,6 @@
 package com.wiell.messagebroker;
 
-class Worker<T> {
+final class Worker<T> {
     private final MessageRepository repository;
 
     public Worker(MessageRepository repository) {

@@ -3,6 +3,8 @@ package com.wiell.messagebroker.test;
 import com.wiell.messagebroker.*;
 import com.wiell.messagebroker.inmemory.InMemoryMessageRepository;
 
+import java.io.Serializable;
+
 import static com.wiell.messagebroker.TransactionSynchronizer.NULL_TRANSACTION_SYNCHRONIZER;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -75,7 +77,7 @@ public class MessageQueueTest {
     private interface Event {
     }
 
-    private static class Created implements Event {
+    private static class Created implements Event, Serializable {
         static class Handler implements MessageHandler<Created> {
             public void handle(Created message) {
                 System.out.println(System.nanoTime() + ": Created handler: " + message);
@@ -83,7 +85,7 @@ public class MessageQueueTest {
         }
     }
 
-    private static class Deleted implements Event {
+    private static class Deleted implements Event, Serializable {
         static class Handler implements KeepAliveMessageHandler<Deleted> {
             public void handle(Deleted message, KeepAlive keepAlive) {
                 System.out.println(System.nanoTime() + ": Deleted handler: " + message);

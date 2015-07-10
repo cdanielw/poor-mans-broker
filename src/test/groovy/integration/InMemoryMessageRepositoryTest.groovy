@@ -2,53 +2,62 @@ package integration
 
 import com.wiell.messagebroker.MessageConsumer
 import com.wiell.messagebroker.MessageHandler
-import com.wiell.messagebroker.MessageProcessingJob
-import com.wiell.messagebroker.MessageProcessingJobRequest
+import com.wiell.messagebroker.MessageRepository
 import com.wiell.messagebroker.inmemory.InMemoryMessageRepository
 import spock.lang.Specification
 
 class InMemoryMessageRepositoryTest extends Specification {
     def repo = new InMemoryMessageRepository()
     def consumer = MessageConsumer.builder('consumer', {} as MessageHandler).build()
-    def callback = Mock(MessageProcessingJob.Callback)
+    def callback = Mock(MessageRepository.MessageCallback)
 
-    def 'Can take an enqueued job'() {
+    def 'Can take a job'() {
         enqueue('message')
 
-        when: take(1)
-        then: 1 * callback.onJob(_)
+        when:
+            take(1)
+        then:
+            1 * callback.messageTaken(consumer, _ as String, 'message')
     }
 
     def 'Can request more jobs then enqueued'() {
         enqueue('message')
 
-        when: take(2)
-        then: 1 * callback.onJob(_)
+        when:
+            take(2)
+        then:
+            1 * callback.messageTaken(consumer, _ as String, 'message')
     }
 
     def 'Can take several enqueued jobs'() {
         enqueue('message 1', 'message 2')
 
-        when: take(2)
-        then: 2 * callback.onJob(_)
+        when:
+            take(2)
+        then:
+            1 * callback.messageTaken(consumer, _ as String, 'message 1')
+        then:
+            1 * callback.messageTaken(consumer, _ as String, 'message 2')
     }
 
     def 'Can take fewer jobs then enqueued'() {
         enqueue('message 1', 'message 2')
 
-        when: take(1)
-        then: 1 * callback.onJob(_)
+        when:
+            take(1)
+        then:
+            1 * callback.messageTaken(consumer, _ as String, 'message 1')
     }
 
     // TODO: Concurrent something...
 
     private enqueue(String... messages) {
         messages.each {
-            repo.enqueue('queue', [consumer], it)
+            repo.addMessage('queue', [consumer], it)
         }
     }
 
     private take(int jobsToTake) {
-        repo.takeJobs([new MessageProcessingJobRequest('consumer', jobsToTake)], callback)
+        repo.takeMessages([(consumer): jobsToTake], callback)
     }
 }

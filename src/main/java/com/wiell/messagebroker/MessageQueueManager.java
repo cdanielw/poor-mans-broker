@@ -7,65 +7,46 @@ import java.util.concurrent.atomic.AtomicBoolean;
 final class MessageQueueManager {
     private final MessageRepository repository;
     private final TransactionSynchronizer transactionSynchronizer;
-    private final WorkerPool workerPool;
+    private final MessagePoller messagePoller;
+    private final MessageSerializer messageSerializer;
 
     private final Map<String, List<MessageConsumer<?>>> consumersByQueueId = new ConcurrentHashMap<String, List<MessageConsumer<?>>>();
     private final Set<String> consumerIds = new HashSet<String>(); // For asserting global consumer id uniqueness
 
-    private final AtomicBoolean started = new AtomicBoolean();
-
     public MessageQueueManager(MessageBrokerConfig config) {
         this.repository = config.messageRepository;
         this.transactionSynchronizer = config.transactionSynchronizer;
-        this.workerPool = new WorkerPool(new JobListener());
+        this.messagePoller = new MessagePoller(repository, config.messageSerializer);
+        this.messageSerializer = config.messageSerializer;
     }
 
     <M> void publish(String queueId, M message) {
         assertInTransaction();
         List<MessageConsumer<?>> consumers = consumersByQueueId.get(queueId);
-        repository.enqueue(queueId, consumers, message);
-        pollForJobsOnCommit();
+        repository.addMessage(queueId, consumers, messageSerializer.serialize(message));
+        pollForMessagesOnCommit();
     }
 
     void registerQueue(String queueId, List<MessageConsumer<?>> consumers) {
         assertConsumerUniqueness(consumers);
         consumersByQueueId.put(queueId, consumers);
-        for (MessageConsumer<?> consumer : consumers)
-            workerPool.addWorkersFor(consumer);
+        messagePoller.registerConsumers(consumers);
     }
 
-
     void start() {
-        started.set(true);
         // TODO: Schedule abandoned jobs check
     }
 
     void stop() {
-        started.set(false);
-        workerPool.stop();
+        messagePoller.stop();
     }
 
-    private void pollForJobsOnCommit() {
+    private void pollForMessagesOnCommit() {
         transactionSynchronizer.notifyOnCommit(new TransactionSynchronizer.CommitListener() {
             public void committed() {
-                takeJobs();
+                messagePoller.poll();
             }
         });
-    }
-
-    private void takeJobs() {
-        if (!started.get())
-            return;
-        try {
-            workerPool.execute(new WorkerPool.JobTaker() {
-                public void takeJobs(Collection<MessageProcessingJobRequest> requests, MessageProcessingJob.Callback callback) {
-                    repository.takeJobs(requests, callback);
-                }
-            });
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            stop();
-        }
     }
 
     private void assertInTransaction() {
@@ -77,45 +58,5 @@ final class MessageQueueManager {
         for (MessageConsumer<?> consumer : consumers)
             if (!consumerIds.add(consumer.id))
                 throw new IllegalArgumentException("Duplicate consumer id: " + consumer.id);
-    }
-
-    private class JobListener implements MessageProcessingListener {
-        public void jobsTaken(Collection<MessageProcessingJob> jobs) {
-            if (!jobs.isEmpty())
-                takeJobs(); // Take new jobs enqueued while taking these
-        }
-
-        public void processingStarted(MessageProcessingJob job) {
-
-        }
-
-        public void processingFailed(MessageProcessingJob job, int retries, Exception exception) {
-            repository.failed(job, retries, exception);
-            // TODO: Update timestamp in repository
-            // TODO: Keep track of a global retry count, and pass to the error handler
-
-            // After error handler has run, the job is retried, considered finished or abandoned (?)
-            // Handler can make decisions as it wants, do throttling etc.
-            // Skip ThrottleStrategy and maxRetries for a consumer - have a user specified ErrorHandler
-
-            // How to prevent another process taking over the job while an error handler is throttling a retry?
-            // Cannot lock the whole job using a separate state - the machine doing the error handling can crash, and lock the job forever
-            // Easy way to deal with keep-alive while throttling.
-            //      Add throttling part of the API? Return Throttle(10, SECONDS)?
-            //          Include timeout in db job row, and increase it with the throttle time?
-            //
-
-            // TODO: Execute error handling strategy
-        }
-
-        public void processingCompleted(MessageProcessingJob job) {
-            repository.completed(job);
-            takeJobs(); // Take new jobs enqueued while processing this
-        }
-
-        public void keepAlive(MessageProcessingJob job) {
-            repository.keepAlive(job);
-        }
-
     }
 }

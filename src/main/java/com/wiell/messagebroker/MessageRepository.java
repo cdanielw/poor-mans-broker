@@ -1,20 +1,21 @@
 package com.wiell.messagebroker;
 
-import com.wiell.messagebroker.MessageConsumer;
-import com.wiell.messagebroker.MessageProcessingJob;
-import com.wiell.messagebroker.MessageProcessingJobRequest;
-
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public interface MessageRepository {
-    void enqueue(String queueId, List<MessageConsumer<?>> consumers, Object message);
+    void addMessage(String queueId, List<MessageConsumer<?>> consumers, String serializedMessage);
 
-    void takeJobs(Collection<MessageProcessingJobRequest> requests, MessageProcessingJob.Callback callback);
+    void takeMessages(Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageCallback callback);
 
-    void keepAlive(MessageProcessingJob job);
+    void keepAlive(MessageConsumer<?> consumer, String messageId, String serializedMessage);
 
-    void completed(MessageProcessingJob job);
+    void consumerCompletedMessage(MessageConsumer<?> consumer, String messageId, String serializedMessage);
 
-    void failed(MessageProcessingJob job, int retries, Exception exception);
+//    void failed(MessageProcessingJob job, int retries, Exception exception);
+
+
+    interface MessageCallback {
+        <T> void messageTaken(MessageConsumer<T> consumer, String messageId, String serializedMessage);
+    }
 }

@@ -33,6 +33,10 @@ public final class MessageConsumer<M> {
             handler.handle(message);
     }
 
+    public String toString() {
+        return "MessageConsumer(" + id + ")";
+    }
+
     public static <M> Builder<M> builder(String consumerId, MessageHandler<M> messageHandler) {
         Check.haveText(consumerId, "consumerId must be specified");
         Check.notNull(messageHandler, "messageHandler must not be null");
@@ -99,7 +103,7 @@ public final class MessageConsumer<M> {
             return this;
         }
 
-        public Builder<M> noRetries() {
+        public Builder<M> neverRetry() {
             this.maxRetries = 0;
             this.throttleStrategy = ThrottleStrategy.NO_THROTTLING;
             return this;

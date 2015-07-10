@@ -7,10 +7,12 @@ public final class MessageBrokerConfig {
     final TransactionSynchronizer transactionSynchronizer;
     final int abandonedJobsPeriod;
     final TimeUnit abandonedJobsTimeUnit;
+    final MessageSerializer messageSerializer;
 
     private MessageBrokerConfig(Builder builder) {
         this.messageRepository = builder.messageRepository;
         this.transactionSynchronizer = builder.transactionSynchronizer;
+        this.messageSerializer = builder.messageSerializer;
         this.abandonedJobsPeriod = builder.abandonedJobsPeriod;
         this.abandonedJobsTimeUnit = builder.abandonedJobsTimeUnit;
     }
@@ -25,6 +27,7 @@ public final class MessageBrokerConfig {
     public static final class Builder {
         private final MessageRepository messageRepository;
         private final TransactionSynchronizer transactionSynchronizer;
+        private MessageSerializer messageSerializer = new ObjectSerializationMessageSerializer();
         private int abandonedJobsPeriod;
         private TimeUnit abandonedJobsTimeUnit;
 
@@ -32,6 +35,11 @@ public final class MessageBrokerConfig {
             this.messageRepository = messageRepository;
             this.transactionSynchronizer = transactionSynchronizer;
             abandonedJobsCheckingSchedule(1, TimeUnit.MINUTES);
+        }
+
+        public Builder messageSerializer(MessageSerializer messageSerializer) {
+            this.messageSerializer = messageSerializer;
+            return this;
         }
 
         public Builder abandonedJobsCheckingSchedule(int period, TimeUnit timeUnit) {

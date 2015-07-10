@@ -8,12 +8,13 @@ public interface MessageRepository {
 
     void takeMessages(Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageCallback callback);
 
-    void keepAlive(MessageConsumer<?> consumer, String messageId, String serializedMessage);
+    void keepAlive(MessageConsumer<?> consumer, String messageId);
 
-    void consumerCompletedMessage(MessageConsumer<?> consumer, String messageId, String serializedMessage);
+    void completed(MessageConsumer<?> consumer, String messageId);
 
-//    void failed(MessageProcessingJob job, int retries, Exception exception);
+    void retrying(MessageConsumer<?> consumer, String messageId, int retries, Exception exception);
 
+    void failed(MessageConsumer<?> consumer, String messageId, int retries, Exception exception);
 
     interface MessageCallback {
         <T> void messageTaken(MessageConsumer<T> consumer, String messageId, String serializedMessage);

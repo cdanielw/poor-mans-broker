@@ -15,11 +15,19 @@ public final class JdbcMessageRepository implements MessageRepository {
 
     }
 
-    public void keepAlive(MessageConsumer<?> consumer, String messageId, String serializedMessage) {
+    public void keepAlive(MessageConsumer<?> consumer, String messageId) {
 
     }
 
-    public void consumerCompletedMessage(MessageConsumer<?> consumer, String messageId, String serializedMessage) {
+    public void completed(MessageConsumer<?> consumer, String messageId) {
+
+    }
+
+    public void retrying(MessageConsumer<?> consumer, String messageId, int retries, Exception exception) {
+
+    }
+
+    public void failed(MessageConsumer<?> consumer, String messageId, int retries, Exception exception) {
 
     }
     /*

@@ -8,13 +8,15 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 final class MessagePoller {
     private final MessageRepository repository;
     private final MessageSerializer messageSerializer;
     private final ExecutorService messageTaker;
-    private final ExecutorService workers;
+    private final ExecutorService workerExecutor;
+    private final AtomicBoolean stopped = new AtomicBoolean();
 
     private ConcurrentHashMap<MessageConsumer<?>, AtomicInteger> currentlyProcessingMessageCountByConsumer =
             new ConcurrentHashMap<MessageConsumer<?>, AtomicInteger>();
@@ -23,7 +25,7 @@ final class MessagePoller {
         this.repository = repository;
         this.messageSerializer = messageSerializer;
         messageTaker = Executors.newSingleThreadExecutor(NamedThreadFactory.singleThreadFactory("messagebroker.MessageTaker"));
-        workers = Executors.newCachedThreadPool(NamedThreadFactory.multipleThreadFactory("messagebroker.MessageWorker"));
+        workerExecutor = Executors.newCachedThreadPool(NamedThreadFactory.multipleThreadFactory("messagebroker.WorkerExecutor"));
     }
 
     public void registerConsumers(Collection<MessageConsumer<?>> consumers) {
@@ -33,6 +35,8 @@ final class MessagePoller {
     }
 
     public void poll() {
+        if (stopped.get())
+            return;
         messageTaker.execute(new Runnable() {
             public void run() {
                 takeMessages();
@@ -53,26 +57,18 @@ final class MessagePoller {
     private <T> void consume(final MessageConsumer<T> consumer, final String messageId, final String serializedMessage) {
         incrementCurrentlyProcessingMessageCount(consumer);
 
-        workers.execute(new Runnable() {
+        workerExecutor.execute(new Runnable() {
             @SuppressWarnings("unchecked")
             public void run() {
                 try {
                     T message = (T) messageSerializer.deserialize(serializedMessage);
-                    consumer.consume(message, keepAlive(consumer, messageId, serializedMessage));
+                    new Worker(repository).consume(consumer, messageId, message);
                 } finally {
                     decrementCurrentlyProcessingMessageCount(consumer);
                     poll();
                 }
             }
         });
-    }
-
-    private KeepAlive keepAlive(final MessageConsumer<?> consumer, final String messageId, final String serializedMessage) {
-        return new KeepAlive() {
-            public void send() {
-                repository.keepAlive(consumer, messageId, serializedMessage);
-            }
-        };
     }
 
     private void decrementCurrentlyProcessingMessageCount(MessageConsumer<?> consumer) {
@@ -102,7 +98,8 @@ final class MessagePoller {
     }
 
     public void stop() {
+        stopped.set(true);
         messageTaker.shutdownNow();
-        workers.shutdownNow();
+        workerExecutor.shutdownNow();
     }
 }

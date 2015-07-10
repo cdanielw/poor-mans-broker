@@ -54,7 +54,7 @@ public final class MessageConsumer<M> {
         private int time;
         private TimeUnit timeUnit;
         private boolean blocking;
-        private ThrottleStrategy throttleStrategy;
+        private ThrottlingStrategy throttlingStrategy;
         private int workerCount;
         private int maxRetries;
 
@@ -64,7 +64,7 @@ public final class MessageConsumer<M> {
             this.keepAliveHandler = keepAliveHandler;
             timeout(1, MINUTES);
             blocking();
-            retry(ThrottleStrategy.ONE_SECOND_PER_RETRY);
+            retry(ThrottlingStrategy.DELAY_ONE_SECOND_PER_RETRY);
         }
 
         public Builder<M> timeout(int time, TimeUnit timeUnit) {
@@ -88,24 +88,24 @@ public final class MessageConsumer<M> {
             return this;
         }
 
-        public Builder<M> retry(int maxRetries, ThrottleStrategy throttleStrategy) {
+        public Builder<M> retry(int maxRetries, ThrottlingStrategy throttlingStrategy) {
             Check.zeroOrGreater(maxRetries, "maxRetries must be zero or greater");
-            Check.notNull(throttleStrategy, "throttleStrategy must not be null");
+            Check.notNull(throttlingStrategy, "throttleStrategy must not be null");
             this.maxRetries = maxRetries;
-            this.throttleStrategy = throttleStrategy;
+            this.throttlingStrategy = throttlingStrategy;
             return this;
         }
 
-        public Builder<M> retry(ThrottleStrategy throttleStrategy) {
-            Check.notNull(throttleStrategy, "throttleStrategy must not be null");
+        public Builder<M> retry(ThrottlingStrategy throttlingStrategy) {
+            Check.notNull(throttlingStrategy, "throttleStrategy must not be null");
             this.maxRetries = -1;
-            this.throttleStrategy = throttleStrategy;
+            this.throttlingStrategy = throttlingStrategy;
             return this;
         }
 
         public Builder<M> neverRetry() {
             this.maxRetries = 0;
-            this.throttleStrategy = ThrottleStrategy.NO_THROTTLING;
+            this.throttlingStrategy = ThrottlingStrategy.NO_THROTTLING;
             return this;
         }
 

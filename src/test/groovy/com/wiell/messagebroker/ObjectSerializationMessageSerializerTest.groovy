@@ -1,4 +1,4 @@
-package unit
+package com.wiell.messagebroker
 
 import com.wiell.messagebroker.ObjectSerializationMessageSerializer
 import spock.lang.Specification

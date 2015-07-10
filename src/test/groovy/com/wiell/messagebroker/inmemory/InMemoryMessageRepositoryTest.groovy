@@ -1,4 +1,4 @@
-package integration
+package com.wiell.messagebroker.inmemory
 
 import com.wiell.messagebroker.MessageConsumer
 import com.wiell.messagebroker.MessageHandler
@@ -48,8 +48,6 @@ class InMemoryMessageRepositoryTest extends Specification {
         then:
             1 * callback.messageTaken(consumer, _ as String, 'message 1')
     }
-
-    // TODO: Concurrent something...
 
     private enqueue(String... messages) {
         messages.each {

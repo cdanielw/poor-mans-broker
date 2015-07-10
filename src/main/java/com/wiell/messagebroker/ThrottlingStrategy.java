@@ -1,13 +1,13 @@
 package com.wiell.messagebroker;
 
-public interface ThrottleStrategy {
-    public static final ThrottleStrategy NO_THROTTLING = new ThrottleStrategy() {
+public interface ThrottlingStrategy {
+    ThrottlingStrategy NO_THROTTLING = new ThrottlingStrategy() {
         public int determineDelayMillis(int retry) {
             return 0;
         }
     };
 
-    public static final ThrottleStrategy ONE_SECOND_PER_RETRY = new ThrottleStrategy() {
+    ThrottlingStrategy DELAY_ONE_SECOND_PER_RETRY = new ThrottlingStrategy() {
         public int determineDelayMillis(int retry) {
             return retry * 1000;
         }

@@ -1,4 +1,6 @@
-package com.wiell.messagebroker;
+package com.wiell.messagebroker.objectserialization;
+
+import com.wiell.messagebroker.spi.MessageSerializer;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -878,7 +880,7 @@ public final class ObjectSerializationMessageSerializer implements MessageSerial
          * @since 1.4
          */
         static byte[] encodeBase64(final byte[] binaryData, final boolean isChunked,
-                                          final boolean urlSafe, final int maxResultSize) {
+                                   final boolean urlSafe, final int maxResultSize) {
             if (binaryData == null || binaryData.length == 0) {
                 return binaryData;
             }

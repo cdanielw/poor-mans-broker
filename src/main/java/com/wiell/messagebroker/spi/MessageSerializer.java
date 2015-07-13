@@ -1,4 +1,4 @@
-package com.wiell.messagebroker;
+package com.wiell.messagebroker.spi;
 
 public interface MessageSerializer {
     String serialize(Object message) throws SerializationFailed;

@@ -1,5 +1,6 @@
 package com.wiell.messagebroker
 
+import com.wiell.messagebroker.objectserialization.ObjectSerializationMessageSerializer
 import spock.lang.Specification
 import spock.lang.Unroll
 

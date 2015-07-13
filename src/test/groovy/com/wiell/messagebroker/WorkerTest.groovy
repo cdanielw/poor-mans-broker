@@ -1,5 +1,6 @@
 package com.wiell.messagebroker
 
+import com.wiell.messagebroker.spi.MessageRepository
 import integration.QueueTestDelegate
 import spock.lang.Specification
 import util.TestHandler

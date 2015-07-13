@@ -4,7 +4,7 @@ import com.wiell.messagebroker.*
 import com.wiell.messagebroker.inmemory.InMemoryMessageRepository
 import util.TestHandler
 
-import static com.wiell.messagebroker.TransactionSynchronizer.NULL_TRANSACTION_SYNCHRONIZER
+import static com.wiell.messagebroker.spi.TransactionSynchronizer.NULL_TRANSACTION_SYNCHRONIZER
 import static groovyx.gpars.GParsPool.withPool
 
 class QueueTestDelegate {

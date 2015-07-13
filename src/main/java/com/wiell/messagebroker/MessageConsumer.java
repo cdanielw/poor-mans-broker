@@ -6,7 +6,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 
 public final class MessageConsumer<M> {
     public final String id;
-    public final int time;
+    public final int timeout;
     public final TimeUnit timeUnit;
     public final boolean blocking;
     public final int workerCount;
@@ -17,7 +17,7 @@ public final class MessageConsumer<M> {
 
     private MessageConsumer(Builder<M> builder) {
         id = builder.consumerId;
-        time = builder.time;
+        timeout = builder.time;
         timeUnit = builder.timeUnit;
         blocking = builder.blocking;
         workerCount = builder.workerCount;

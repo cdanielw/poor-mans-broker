@@ -1,6 +1,8 @@
 package com.wiell.messagebroker;
 
-import com.wiell.messagebroker.MessageRepository.MessageCallback;
+import com.wiell.messagebroker.spi.MessageRepository;
+import com.wiell.messagebroker.spi.MessageCallback;
+import com.wiell.messagebroker.spi.MessageSerializer;
 
 import java.util.Collection;
 import java.util.HashMap;

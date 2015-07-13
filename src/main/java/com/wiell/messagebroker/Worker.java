@@ -1,5 +1,7 @@
 package com.wiell.messagebroker;
 
+import com.wiell.messagebroker.spi.MessageRepository;
+
 final class Worker<T> {
     private final MessageRepository repository;
 

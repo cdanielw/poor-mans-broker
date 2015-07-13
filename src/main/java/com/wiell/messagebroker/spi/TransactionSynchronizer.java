@@ -1,7 +1,7 @@
-package com.wiell.messagebroker;
+package com.wiell.messagebroker.spi;
 
 public interface TransactionSynchronizer {
-    public static TransactionSynchronizer NULL_TRANSACTION_SYNCHRONIZER = new TransactionSynchronizer() {
+    TransactionSynchronizer NULL_TRANSACTION_SYNCHRONIZER = new TransactionSynchronizer() {
         public boolean isInTransaction() {
             return true;
         }

@@ -2,13 +2,13 @@ package com.wiell.messagebroker.inmemory
 
 import com.wiell.messagebroker.MessageConsumer
 import com.wiell.messagebroker.MessageHandler
-import com.wiell.messagebroker.MessageRepository
+import com.wiell.messagebroker.spi.MessageCallback
 import spock.lang.Specification
 
 class InMemoryMessageRepositoryTest extends Specification {
     def repo = new InMemoryMessageRepository()
     def consumer = MessageConsumer.builder('consumer', {} as MessageHandler).build()
-    def callback = Mock(MessageRepository.MessageCallback)
+    def callback = Mock(MessageCallback)
 
     def 'Can take a job'() {
         enqueue('message')

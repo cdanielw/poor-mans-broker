@@ -33,7 +33,6 @@ class QueueConcurrencyTest extends Specification {
 
         when:
             publish(queue, messages)
-
         then:
             handler.handled(messages)
     }

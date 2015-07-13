@@ -1,5 +1,9 @@
 package com.wiell.messagebroker;
 
+import com.wiell.messagebroker.spi.MessageRepository;
+import com.wiell.messagebroker.spi.MessageSerializer;
+import com.wiell.messagebroker.spi.TransactionSynchronizer;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;

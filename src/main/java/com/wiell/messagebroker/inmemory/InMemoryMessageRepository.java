@@ -1,7 +1,8 @@
 package com.wiell.messagebroker.inmemory;
 
 import com.wiell.messagebroker.MessageConsumer;
-import com.wiell.messagebroker.MessageRepository;
+import com.wiell.messagebroker.spi.MessageCallback;
+import com.wiell.messagebroker.spi.MessageRepository;
 
 import java.util.List;
 import java.util.Map;

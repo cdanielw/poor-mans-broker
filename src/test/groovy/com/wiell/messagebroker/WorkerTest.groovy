@@ -1,61 +1,73 @@
 package com.wiell.messagebroker
 
-import com.wiell.messagebroker.spi.MessageRepository
 import integration.QueueTestDelegate
+import org.spockframework.lang.ConditionBlock
 import spock.lang.Specification
 import util.TestHandler
+
+import static com.wiell.messagebroker.MessageProcessingUpdate.Status.*
 
 class WorkerTest extends Specification {
     @SuppressWarnings("GroovyUnusedDeclaration")
     @Delegate QueueTestDelegate queueTestDelegate = new QueueTestDelegate()
-    def repo = Mock(MessageRepository)
-    def worker = new Worker(repo)
+    def repo = new MockRepo()
     private String messageId = 'message-id'
     private String message = 'message'
 
-    def 'Passes message to consumer'() {
+    def 'Passes message to consumer and updates the repository'() {
         def handler = createHandler()
 
         when:
-            worker.consume(consumer(handler), messageId, message)
+            consume(consumer(handler))
 
         then:
             handler.handled(message)
-
+            repo.updates.size() == 1
+            with(repo[0]) {
+                status == COMPLETED
+                retries == 0
+            }
     }
 
-    def 'Given a retrying consumer, when handling fails, it is retried'() {
-        def handler = createFailingHandler(1)
+    def 'Given a retrying consumer, when handling fails, it is retried, and repository is updated'() {
+        def handler = createFailingHandler(1, 'Error message')
 
         when:
-            worker.consume(retryingConsumer(1, handler), messageId, message)
+            consume(retryingConsumer(1, handler))
 
         then:
             handler.handled(message)
+            repo.updates.size() == 2
+            with(repo[0]) {
+                status == PROCESSING
+                retries == 1
+                errorMessage == 'Error message'
+            }
+            with(repo[1]) {
+                status == COMPLETED
+                retries == 1
+                errorMessage == 'Error message'
+            }
     }
 
     def 'Given a non-retrying consumer, when handling fails, repository is notified about the failure'() {
         def handler = createFailingHandler(1)
-        def consumer = consumer(handler)
 
         when:
-            worker.consume(consumer, messageId, message)
+            consume(consumer(handler))
 
         then:
-            1 * repo.failed(consumer, messageId, 0, _ as Exception)
-            0 * repo._
+            repo.updates.size() == 1
+            with(repo[0]) {
+                status == FAILED
+                retries == 0
+            }
     }
 
-    def 'Given a retrying consumer, when handling fails, repository is notified about the retry'() {
-        def handler = createFailingHandler(1)
-        def consumer = retryingConsumer(1, handler)
-
-        when:
-            worker.consume(consumer, messageId, message)
-
-        then:
-            1 * repo.retrying(consumer, messageId, 1, _ as RuntimeException)
-            0 * repo.failed(*_)
+    @ConditionBlock
+    void assertEquals(MessageProcessingUpdate update, @DelegatesTo(MessageProcessingUpdate) Closure assertions) {
+        assertions.delegate = update
+        assertions()
     }
 
     def 'Given a keep alive handler, when handler calls keep alive, repository is notified'() {
@@ -66,23 +78,23 @@ class WorkerTest extends Specification {
         )
 
         when:
-            worker.consume(consumer, messageId, message)
+            consume(consumer)
 
         then:
-            1 * repo.keepAlive(consumer, messageId)
+            repo.updates.size() == 2
+            with(repo[0]) {
+                status == PROCESSING
+                retries == 0
+            }
+            with(repo[1]) {
+                status == COMPLETED
+                retries == 0
+            }
     }
 
-    def 'When consumer successfully handled a message, repository is notified'() {
-        def consumer = consumer(createHandler())
-
-        when:
-            worker.consume(consumer, messageId, message)
-
-        then:
-            1 * repo.completed(consumer, messageId)
-            0 * repo._
+    void consume(MessageConsumer consumer) {
+        new Worker(repo, MessageProcessingUpdate.create(consumer, messageId, PROCESSING, 0, null, null), message).consume()
     }
-
 
     private MessageConsumer consumer(TestHandler handler) {
         MessageConsumer.builder('consumer', handler).build()
@@ -92,5 +104,26 @@ class WorkerTest extends Specification {
         MessageConsumer.builder('consumer', handler)
                 .retry(maxRetries, ThrottlingStrategy.NO_THROTTLING)
                 .build()
+    }
+
+    static class MockRepo implements MessageRepository {
+        List<MessageProcessingUpdate> updates = []
+
+        void add(String queueId, List<MessageConsumer<?>> consumers, String serializedMessage) throws MessageRepositoryException {
+            assert false, "No call to MessageRepository.add expected"
+        }
+
+        void take(Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageCallback callback) throws MessageRepositoryException {
+            assert false, "No call to MessageRepository.take expected"
+        }
+
+        boolean update(MessageProcessingUpdate update) throws MessageRepositoryException {
+            updates << update
+            // TODO: Verify version chain - toVersionshould equal fromVersion in next update
+        }
+
+        MessageProcessingUpdate getAt(int index) {
+            updates[index]
+        }
     }
 }

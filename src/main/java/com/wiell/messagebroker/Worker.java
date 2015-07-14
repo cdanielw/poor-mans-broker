@@ -1,44 +1,53 @@
 package com.wiell.messagebroker;
 
-import com.wiell.messagebroker.spi.MessageRepository;
-
+@SuppressWarnings("ThrowableResultOfMethodCallIgnored")
 final class Worker<T> {
     private final MessageRepository repository;
+    private final T message;
+    private final MessageConsumer<T> consumer;
+    private MessageProcessingUpdate<T> update;
 
-    public Worker(MessageRepository repository) {
+    public Worker(MessageRepository repository, MessageProcessingUpdate<T> update, T message) {
         this.repository = repository;
+        this.update = update;
+        this.message = message;
+        consumer = update.consumer;
     }
 
-    public void consume(MessageConsumer<T> consumer, String messageId, T message) {
-        int retry = 0;
-        Exception e = tryToConsume(consumer, messageId, message, retry);
+    public void consume() {
+        Exception e = tryToConsume();
         if (e == null)
             return;
 
-        while (retry <= consumer.maxRetries) {
-            retry++;
-            repository.retrying(consumer, messageId, retry, e);
-            e = tryToConsume(consumer, messageId, message, retry);
+        while (update.retries <= consumer.maxRetries) {
+            updateRepo(update.retry(e.getMessage()));
+            e = tryToConsume();
             if (e == null)
                 return;
         }
-        repository.failed(consumer, messageId, retry, e);
+        updateRepo(update.failed(e.getMessage()));
     }
 
-    private Exception tryToConsume(MessageConsumer<T> consumer, String messageId, T message, int retry) {
+    private Exception tryToConsume() {
         try {
-            consumer.consume(message, keepAlive(consumer, messageId));
-            repository.completed(consumer, messageId);
+            consumer.consume(message, keepAlive());
+            updateRepo(update.completed());
             return null;
         } catch (RuntimeException e) {
+            // TODO: Notify someone about exception
             return e;
         }
     }
 
-    private KeepAlive keepAlive(final MessageConsumer<?> consumer, final String messageId) {
+    private synchronized void updateRepo(MessageProcessingUpdate<T> update) {
+        repository.update(update);
+        this.update = update;
+    }
+
+    private KeepAlive keepAlive() {
         return new KeepAlive() {
             public void send() {
-                repository.keepAlive(consumer, messageId);
+                updateRepo(update.processing());
             }
         };
 

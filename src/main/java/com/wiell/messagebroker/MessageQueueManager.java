@@ -1,9 +1,5 @@
 package com.wiell.messagebroker;
 
-import com.wiell.messagebroker.spi.MessageRepository;
-import com.wiell.messagebroker.spi.MessageSerializer;
-import com.wiell.messagebroker.spi.TransactionSynchronizer;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +25,7 @@ final class MessageQueueManager {
     <M> void publish(String queueId, M message) {
         assertInTransaction();
         List<MessageConsumer<?>> consumers = consumersByQueueId.get(queueId);
-        repository.addMessage(queueId, consumers, messageSerializer.serialize(message));
+        repository.add(queueId, consumers, messageSerializer.serialize(message));
         pollForMessagesOnCommit();
     }
 
@@ -57,7 +53,7 @@ final class MessageQueueManager {
 
     private void assertInTransaction() {
         if (!transactionSynchronizer.isInTransaction())
-            throw new NotInTransaction("Trying to publish message outside of a transaction");
+            throw new NotInTransaction();
     }
 
     private void assertConsumerUniqueness(List<MessageConsumer<?>> consumers) {

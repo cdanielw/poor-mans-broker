@@ -1,9 +1,5 @@
 package com.wiell.messagebroker;
 
-import com.wiell.messagebroker.spi.MessageRepository;
-import com.wiell.messagebroker.spi.MessageCallback;
-import com.wiell.messagebroker.spi.MessageSerializer;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,24 +45,24 @@ final class MessagePoller {
     private void takeMessages() {
         final Map<MessageConsumer<?>, Integer> maxCountByConsumer = determineMaxCountByConsumer();
         if (!maxCountByConsumer.isEmpty())
-            repository.takeMessages(maxCountByConsumer, new MessageCallback() {
-                public <T> void messageTaken(final MessageConsumer<T> consumer, final String messageId, final String serializedMessage) {
-                    consume(consumer, messageId, serializedMessage);
+            repository.take(maxCountByConsumer, new MessageCallback() {
+                public void messageTaken(MessageProcessingUpdate update, String serializedMessage) {
+                    consume(update, serializedMessage);
                 }
             });
     }
 
-    private <T> void consume(final MessageConsumer<T> consumer, final String messageId, final String serializedMessage) {
-        incrementCurrentlyProcessingMessageCount(consumer);
+    private <T> void consume(final MessageProcessingUpdate<T> update, final String serializedMessage) {
+        incrementCurrentlyProcessingMessageCount(update.consumer);
 
         workerExecutor.execute(new Runnable() {
             @SuppressWarnings("unchecked")
             public void run() {
                 try {
                     T message = (T) messageSerializer.deserialize(serializedMessage);
-                    new Worker(repository).consume(consumer, messageId, message);
+                    new Worker<T>(repository, update, message).consume();
                 } finally {
-                    decrementCurrentlyProcessingMessageCount(consumer);
+                    decrementCurrentlyProcessingMessageCount(update.consumer);
                     poll();
                 }
             }

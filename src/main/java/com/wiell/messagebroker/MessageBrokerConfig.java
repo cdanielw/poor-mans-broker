@@ -1,9 +1,6 @@
 package com.wiell.messagebroker;
 
 import com.wiell.messagebroker.objectserialization.ObjectSerializationMessageSerializer;
-import com.wiell.messagebroker.spi.MessageRepository;
-import com.wiell.messagebroker.spi.MessageSerializer;
-import com.wiell.messagebroker.spi.TransactionSynchronizer;
 
 import java.util.concurrent.TimeUnit;
 

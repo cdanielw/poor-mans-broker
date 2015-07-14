@@ -4,7 +4,7 @@ import com.wiell.messagebroker.*
 import com.wiell.messagebroker.inmemory.InMemoryMessageRepository
 import util.TestHandler
 
-import static com.wiell.messagebroker.spi.TransactionSynchronizer.NULL_TRANSACTION_SYNCHRONIZER
+import static TransactionSynchronizer.NULL_TRANSACTION_SYNCHRONIZER
 import static groovyx.gpars.GParsPool.withPool
 
 class QueueTestDelegate {
@@ -32,11 +32,11 @@ class QueueTestDelegate {
         ).build()
     }
 
-    TestHandler createFailingHandler(int failOnUntilRetry) {
+    TestHandler createFailingHandler(int failOnUntilRetry, String errorMessage = 'Error message') {
         int retry = 0
         createHandler(1) {
             if (retry++ < failOnUntilRetry)
-                throw new IllegalStateException('Failing handler')
+                throw new IllegalStateException(errorMessage)
         }
     }
 

@@ -1,28 +1,34 @@
 package com.wiell.messagebroker.inmemory;
 
-import com.wiell.messagebroker.MessageConsumer;
-import com.wiell.messagebroker.spi.MessageCallback;
-import com.wiell.messagebroker.spi.MessageRepository;
+import com.wiell.messagebroker.*;
+import com.wiell.messagebroker.util.Clock;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.*;
+
+import static com.wiell.messagebroker.MessageProcessingUpdate.Status.*;
 
 public final class InMemoryMessageRepository implements MessageRepository {
-    private final ConcurrentHashMap<MessageConsumer<?>, ConcurrentLinkedQueue<Message>> messagesByConsumer = new ConcurrentHashMap<MessageConsumer<?>, ConcurrentLinkedQueue<Message>>();
+    private final Object lock = new Object();
+    private final Map<MessageConsumer<?>, ConsumerMessages> consumerMessagesByConsumer =
+            new HashMap<MessageConsumer<?>, ConsumerMessages>();
+    private Clock clock = new Clock.SystemClock();
 
-    public void addMessage(String queueId, List<MessageConsumer<?>> consumers, String message) {
-        for (MessageConsumer<?> consumer : consumers) {
-            ConcurrentLinkedQueue<Message> newConsumerMessages = new ConcurrentLinkedQueue<Message>();
-            ConcurrentLinkedQueue<Message> oldConsumerMessages = messagesByConsumer.putIfAbsent(consumer, newConsumerMessages);
-            ConcurrentLinkedQueue<Message> consumerMessages = oldConsumerMessages == null ? newConsumerMessages : oldConsumerMessages;
-            consumerMessages.add(new Message(UUID.randomUUID().toString(), message));
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
+
+    public void add(String queueId, List<MessageConsumer<?>> consumers, String serializedMessage) {
+        synchronized (lock) {
+            for (MessageConsumer<?> consumer : consumers) {
+                ConsumerMessages consumerMessages = consumerMessages(consumer);
+                String messageId = UUID.randomUUID().toString();
+                MessageProcessingUpdate<?> update = MessageProcessingUpdate.create(consumer, messageId, PENDING, 0, null, null);
+                consumerMessages.add(new Message(update, serializedMessage));
+            }
         }
     }
 
-    public void takeMessages(Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageCallback callback) {
+    public void take(Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageCallback callback) {
         for (Map.Entry<MessageConsumer<?>, Integer> entry : maxCountByConsumer.entrySet()) {
             MessageConsumer<?> consumer = entry.getKey();
             Integer maxCount = entry.getValue();
@@ -30,39 +36,100 @@ public final class InMemoryMessageRepository implements MessageRepository {
         }
     }
 
-    public void keepAlive(MessageConsumer<?> consumer, String messageId) {
-    }
-
-    public void completed(MessageConsumer<?> consumer, String messageId) {
-    }
-
-    public void retrying(MessageConsumer<?> consumer, String messageId, int retries, Exception exception) {
-
-    }
-
-    public void failed(MessageConsumer<?> consumer, String messageId, int retries, Exception exception) {
-
-    }
-
     private void takeForConsumer(MessageConsumer<?> consumer, Integer maxCount, MessageCallback callback) {
-        ConcurrentLinkedQueue<Message> messages = messagesByConsumer.get(consumer);
+        ConsumerMessages messages = consumerMessages(consumer);
         if (messages == null)
             return;
         for (int i = 0; i < maxCount; i++) {
-            Message message = messages.poll();
+            Message message;
+            synchronized (lock) {
+                message = messages.takePending();
+            }
             if (message == null)
                 return;
-            callback.messageTaken(consumer, message.id, message.body);
+            callback.messageTaken(message.update.processing(), message.serializedMessage);
         }
     }
 
-    private static class Message {
-        final String id;
-        final String body;
+    private ConsumerMessages consumerMessages(MessageConsumer<?> consumer) {
+        ConsumerMessages messages = consumerMessagesByConsumer.get(consumer);
+        if (messages == null) {
+            messages = new ConsumerMessages();
+            consumerMessagesByConsumer.put(consumer, messages);
+        }
+        return messages;
+    }
 
-        Message(String id, String body) {
-            this.id = id;
-            this.body = body;
+    public boolean update(MessageProcessingUpdate update) throws MessageRepositoryException {
+        synchronized (lock) {
+            ConsumerMessages messages = consumerMessages(update.consumer);
+            Message message = messages.find(update.messageId);
+            messages.update(message, update);
+            return true;
+        }
+    }
+
+    private static class ConsumerMessages {
+        Set<Message> messages = new LinkedHashSet<Message>();
+        Map<String, Message> messageById = new HashMap<String, Message>();
+
+        void add(Message message) {
+            messages.add(message);
+            messageById.put(message.update.messageId, message);
+        }
+
+        Message find(String messageId) {
+            return messageById.get(messageId);
+        }
+
+        void update(Message message, MessageProcessingUpdate update) {
+            message.setUpdate(update);
+            if (message.isCompleted()) {
+                messageById.remove(message.update.messageId);
+                messages.remove(message);
+            }
+        }
+
+        public Message takePending() {
+            for (Message message : messages) {
+                if (message.isPending() || message.timedOut()) {
+                    message.processing();
+                    return message;
+                }
+            }
+            return null;
+        }
+    }
+
+    private class Message {
+        MessageProcessingUpdate update;
+        Date timesOut;
+        final String serializedMessage;
+
+        Message(MessageProcessingUpdate update, String serializedMessage) {
+            this.update = update;
+            this.timesOut = new Date(clock.millis() + update.consumer.timeUnit.toMillis(update.consumer.timeout));
+            this.serializedMessage = serializedMessage;
+        }
+
+        void processing() {
+            setUpdate(update.processing());
+        }
+
+        void setUpdate(MessageProcessingUpdate update) {
+            this.update = update;
+        }
+
+        boolean isPending() {
+            return update.status == PENDING;
+        }
+
+        boolean timedOut() {
+            return update.status == PROCESSING && timesOut.before(new Date());
+        }
+
+        boolean isCompleted() {
+            return update.status == COMPLETED;
         }
     }
 }

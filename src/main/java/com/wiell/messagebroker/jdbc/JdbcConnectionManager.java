@@ -6,5 +6,5 @@ import java.sql.SQLException;
 public interface JdbcConnectionManager {
     Connection getConnection() throws SQLException;
 
-    void releaseConnection(Connection connection) throws SQLException;
+    void releaseConnection(Connection connection);
 }

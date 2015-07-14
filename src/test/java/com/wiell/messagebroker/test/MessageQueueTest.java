@@ -5,7 +5,7 @@ import com.wiell.messagebroker.inmemory.InMemoryMessageRepository;
 
 import java.io.Serializable;
 
-import static com.wiell.messagebroker.spi.TransactionSynchronizer.NULL_TRANSACTION_SYNCHRONIZER;
+import static com.wiell.messagebroker.TransactionSynchronizer.NULL_TRANSACTION_SYNCHRONIZER;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class MessageQueueTest {

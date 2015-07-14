@@ -1,6 +1,6 @@
 package com.wiell.messagebroker.objectserialization;
 
-import com.wiell.messagebroker.spi.MessageSerializer;
+import com.wiell.messagebroker.MessageSerializer;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -805,7 +805,7 @@ public final class ObjectSerializationMessageSerializer implements MessageSerial
                 // We have some spare bits remaining
                 // Output all whole multiples of 8 bits and ignore the rest
                 switch (context.modulus) {
-    //              case 0 : // impossible, as excluded above
+                    //              case 0 : // impossible, as excluded above
                     case 1: // 6 bits - ignore entirely
                         // TODO not currently tested; perhaps it is impossible?
                         break;

@@ -1,60 +1,15 @@
 package com.wiell.messagebroker.inmemory
 
-import com.wiell.messagebroker.MessageConsumer
-import com.wiell.messagebroker.MessageHandler
-import com.wiell.messagebroker.spi.MessageCallback
-import spock.lang.Specification
+import com.wiell.messagebroker.AbstractMessageRepositoryIntegrationTest
 
-class InMemoryMessageRepositoryTest extends Specification {
-    def repo = new InMemoryMessageRepository()
-    def consumer = MessageConsumer.builder('consumer', {} as MessageHandler).build()
-    def callback = Mock(MessageCallback)
+class InMemoryMessageRepositoryTest extends AbstractMessageRepositoryIntegrationTest {
+    InMemoryMessageRepository repository = new InMemoryMessageRepository()
 
-    def 'Can take a job'() {
-        enqueue('message')
-
-        when:
-            take(1)
-        then:
-            1 * callback.messageTaken(consumer, _ as String, 'message')
+    void inTransaction(Closure unitOfWork) {
+        unitOfWork()
     }
 
-    def 'Can request more jobs then enqueued'() {
-        enqueue('message')
-
-        when:
-            take(2)
-        then:
-            1 * callback.messageTaken(consumer, _ as String, 'message')
-    }
-
-    def 'Can take several enqueued jobs'() {
-        enqueue('message 1', 'message 2')
-
-        when:
-            take(2)
-        then:
-            1 * callback.messageTaken(consumer, _ as String, 'message 1')
-        then:
-            1 * callback.messageTaken(consumer, _ as String, 'message 2')
-    }
-
-    def 'Can take fewer jobs then enqueued'() {
-        enqueue('message 1', 'message 2')
-
-        when:
-            take(1)
-        then:
-            1 * callback.messageTaken(consumer, _ as String, 'message 1')
-    }
-
-    private enqueue(String... messages) {
-        messages.each {
-            repo.addMessage('queue', [consumer], it)
-        }
-    }
-
-    private take(int jobsToTake) {
-        repo.takeMessages([(consumer): jobsToTake], callback)
+    def setup() {
+        repository.clock = clock
     }
 }

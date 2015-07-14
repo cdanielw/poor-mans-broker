@@ -11,13 +11,13 @@ CREATE TABLE message (
 );
 
 CREATE TABLE message_consumer (
-  message_id   VARCHAR(127) NOT NULL,
-  consumer_id  VARCHAR(127) NOT NULL,
-  version_id   INTEGER      NOT NULL,
-  status       VARCHAR(32)  NOT NULL,
-  last_updated TIMESTAMP    NOT NULL,
-  times_out    TIMESTAMP    NOT NULL,
-  retries      INTEGER      NOT NULL,
-  error        TEXT,
+  message_id    VARCHAR(127) NOT NULL,
+  consumer_id   VARCHAR(127) NOT NULL,
+  version_id    VARCHAR(127) NOT NULL,
+  status        VARCHAR(32)  NOT NULL,
+  last_updated  TIMESTAMP    NOT NULL,
+  times_out     TIMESTAMP    NOT NULL,
+  retries       INTEGER      NOT NULL,
+  error_message TEXT,
   PRIMARY KEY (message_id, consumer_id)
 );

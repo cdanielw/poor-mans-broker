@@ -1,4 +1,4 @@
-package com.wiell.messagebroker.spi;
+package com.wiell.messagebroker;
 
 public interface TransactionSynchronizer {
     TransactionSynchronizer NULL_TRANSACTION_SYNCHRONIZER = new TransactionSynchronizer() {

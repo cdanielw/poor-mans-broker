@@ -1,4 +1,4 @@
-package com.wiell.messagebroker.spi;
+package com.wiell.messagebroker;
 
 public class MessageRepositoryException extends RuntimeException {
     public MessageRepositoryException(Exception cause) {

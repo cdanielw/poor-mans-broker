@@ -15,7 +15,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
 
     abstract void inTransaction(Closure unitOfWork)
 
-    def 'When taking message, callback is invoked'() {
+    def 'When taking message, callback is invoked with the message and an update from PENDING to PROCESSING'() {
         def consumer = consumer('consumer id')
         addMessage('A message', consumer)
 
@@ -23,10 +23,9 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             take((consumer): 1)
 
         then:
-            def message = callback.gotOneMessage('A message', consumer)
-
-            message.update.fromStatus == PENDING
-            message.update.toStatus == PROCESSING
+            def callbackInvocation = callback.gotOneMessage('A message', consumer)
+            callbackInvocation.update.fromStatus == PENDING
+            callbackInvocation.update.toStatus == PROCESSING
     }
 
     def 'Given no message, when taking message, callback is not invoked'() {
@@ -101,7 +100,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             callback.gotNoMessages()
     }
 
-    def 'Given a timed out message, when taking messages, callback is invoked'() {
+    def 'Given a timed out message, when taking messages, callback is invoked with the message and an update from PROCESSING to PROCESSING'() {
         def consumer = consumer('consumer id')
 
         clock.inThePast(consumer.timeout + 1, consumer.timeUnit) {
@@ -113,9 +112,9 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             take((consumer): 1)
 
         then:
-            def message = callback.gotOneMessage('A message')
-            message.update.fromStatus == PROCESSING
-            message.update.toStatus == PROCESSING
+            def callbackInvocation = callback.gotOneMessage('A message')
+            callbackInvocation.update.fromStatus == PROCESSING
+            callbackInvocation.update.toStatus == PROCESSING
     }
 
     def 'When concurrently trying to take messages, each message is only taken once'() {
@@ -168,17 +167,17 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
     }
 
     static class MockCallback implements MessageCallback {
-        final List<Message> messages = []
+        final List<CallbackInvocation> messages = []
 
         void messageTaken(MessageProcessingUpdate update, Object serializedMessage) {
-            messages << new Message(update, serializedMessage)
+            messages << new CallbackInvocation(update, serializedMessage)
         }
 
-        Message getAt(int index) {
+        CallbackInvocation getAt(int index) {
             messages[index]
         }
 
-        Message gotOneMessage(message, MessageConsumer consumer = null) {
+        CallbackInvocation gotOneMessage(message, MessageConsumer consumer = null) {
             assert messages.size() == 1
             assert messages[0].message == message
             if (consumer)
@@ -191,11 +190,11 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
         }
     }
 
-    static class Message {
+    static class CallbackInvocation {
         final MessageProcessingUpdate update
         final message
 
-        Message(MessageProcessingUpdate update, Object message) {
+        CallbackInvocation(MessageProcessingUpdate update, Object message) {
             this.update = update
             this.message = message
         }

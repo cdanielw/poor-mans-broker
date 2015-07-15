@@ -1,7 +1,9 @@
 package com.wiell.messagebroker
 
+import com.wiell.messagebroker.monitor.*
 import integration.QueueTestDelegate
 import spock.lang.Specification
+import util.CollectingMonitor
 import util.TestHandler
 
 import static com.wiell.messagebroker.MessageProcessingUpdate.Status.*
@@ -10,6 +12,7 @@ class WorkerTest extends Specification {
     @SuppressWarnings("GroovyUnusedDeclaration")
     @Delegate QueueTestDelegate queueTestDelegate = new QueueTestDelegate()
     def repo = new MockRepo()
+    def monitor = new CollectingMonitor()
     def throttler = Mock(Throttler)
     def messageId = 'message-id'
     def message = 'message'
@@ -29,7 +32,7 @@ class WorkerTest extends Specification {
             }
     }
 
-    def 'Given a retrying consumer, when handling fails, it is retried, and repository is updated'() {
+    def 'Given a retrying consumer, when handling fails, it is retried, repository is updated, and monitors get a RetryingMessageConsumptionEvent'() {
         def handler = createFailingHandler(1, 'Error message')
 
         when:
@@ -48,6 +51,7 @@ class WorkerTest extends Specification {
                 retries == 1
                 errorMessage == 'Error message'
             }
+            monitor.eventTypes().contains(RetryingMessageConsumptionEvent)
     }
 
     def 'Given a non-retrying consumer, when handling fails, repository is notified about the failure'() {
@@ -64,7 +68,7 @@ class WorkerTest extends Specification {
             }
     }
 
-    def 'Given a keep alive handler, when handler calls keep alive, repository is notified'() {
+    def 'Given a keep alive handler, when handler calls keep alive, repository is notified and monitor is notified about a MessageKeptAliveEvent'() {
         def consumer = consumer(
                 createHandler { message, KeepAlive keepAlive ->
                     keepAlive.send()
@@ -84,7 +88,9 @@ class WorkerTest extends Specification {
                 toStatus == COMPLETED
                 retries == 0
             }
+            monitor.eventTypes().contains(MessageKeptAliveEvent)
     }
+
 
     def 'When handling is retried, throttler is invoked'() {
         def handler = createFailingHandler(2, 'Error message')
@@ -99,12 +105,32 @@ class WorkerTest extends Specification {
             1 * throttler.throttle(2, consumer, _ as KeepAlive)
     }
 
-    // TODO: Make sure listeners are notified when updating from PROCESSING -> PROCESSING when taking a new
-    // Meaning, message timed out, and is taken over
+    def 'When handling a message, monitors are passed a ConsumingNewMessageEvent and MessageConsumedEvent '() {
+        def handler = createHandler()
+
+        when:
+            consume(consumer(handler))
+        then:
+            monitor.eventTypes() == [ConsumingNewMessageEvent, MessageConsumedEvent]
+    }
+
+    def 'When handling a timed out message, monitors are passed a ConsumingTimedOutMessageEvent and MessageConsumedEvent '() {
+        def handler = createHandler()
+
+        when:
+            consumeTimedOut(consumer(handler))
+        then:
+            monitor.eventTypes() == [ConsumingTimedOutMessageEvent, MessageConsumedEvent]
+    }
 
     void consume(MessageConsumer consumer) {
+        def update = MessageProcessingUpdate.create(consumer, messageId, PENDING, PROCESSING, 0, null, null)
+        new Worker(repo, throttler, new Monitors([monitor]), update, message).consume()
+    }
+
+    void consumeTimedOut(MessageConsumer consumer) {
         def update = MessageProcessingUpdate.create(consumer, messageId, PROCESSING, PROCESSING, 0, null, null)
-        new Worker(repo, throttler, update, message).consume()
+        new Worker(repo, throttler, new Monitors([monitor]), update, message).consume()
     }
 
     MessageConsumer consumer(TestHandler handler) {

@@ -1,7 +1,10 @@
 package com.wiell.messagebroker;
 
+import com.wiell.messagebroker.monitor.Monitor;
 import com.wiell.messagebroker.objectserialization.ObjectSerializationMessageSerializer;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public final class MessageBrokerConfig {
@@ -10,6 +13,7 @@ public final class MessageBrokerConfig {
     final int abandonedJobsPeriod;
     final TimeUnit abandonedJobsTimeUnit;
     final MessageSerializer messageSerializer;
+    final Monitors monitors;
 
     private MessageBrokerConfig(Builder builder) {
         this.messageRepository = builder.messageRepository;
@@ -17,6 +21,7 @@ public final class MessageBrokerConfig {
         this.messageSerializer = builder.messageSerializer;
         this.abandonedJobsPeriod = builder.abandonedJobsPeriod;
         this.abandonedJobsTimeUnit = builder.abandonedJobsTimeUnit;
+        this.monitors = new Monitors(builder.monitors);
     }
 
     public static Builder builder(MessageRepository messageRepository,
@@ -32,6 +37,7 @@ public final class MessageBrokerConfig {
         private MessageSerializer messageSerializer = new ObjectSerializationMessageSerializer();
         private int abandonedJobsPeriod;
         private TimeUnit abandonedJobsTimeUnit;
+        private final List<Monitor> monitors = new ArrayList<Monitor>();
 
         private Builder(MessageRepository messageRepository, TransactionSynchronizer transactionSynchronizer) {
             this.messageRepository = messageRepository;
@@ -41,6 +47,11 @@ public final class MessageBrokerConfig {
 
         public Builder messageSerializer(MessageSerializer messageSerializer) {
             this.messageSerializer = messageSerializer;
+            return this;
+        }
+
+        public Builder monitor(Monitor monitor) {
+            monitors.add(monitor);
             return this;
         }
 

@@ -2,17 +2,20 @@ package integration
 
 import com.wiell.messagebroker.*
 import com.wiell.messagebroker.inmemory.InMemoryMessageRepository
+import util.CollectingMonitor
 import util.TestHandler
 
 import static TransactionSynchronizer.NULL_TRANSACTION_SYNCHRONIZER
 import static groovyx.gpars.GParsPool.withPool
 
 class QueueTestDelegate {
+    CollectingMonitor monitor = new CollectingMonitor()
     MessageBroker messageBroker = new PollingMessageBroker(
             MessageBrokerConfig.builder(
                     new InMemoryMessageRepository(),
                     NULL_TRANSACTION_SYNCHRONIZER
             )
+                    .monitor(monitor)
     ).start()
 
     int workerCount = 5
@@ -23,7 +26,6 @@ class QueueTestDelegate {
     def cleanup() {
         messageBroker.stop()
     }
-
 
     MessageQueue<Object> retryingQueue(int retries, TestHandler handler) {
         messageBroker.queueBuilder('queue', Object).consumer(

@@ -1,5 +1,6 @@
 package com.wiell.messagebroker;
 
+import com.wiell.messagebroker.monitor.PollingForMessagesEvent;
 import com.wiell.messagebroker.util.Clock;
 
 import java.util.Collection;
@@ -16,6 +17,7 @@ import static com.wiell.messagebroker.Throttler.DefaultThrottler;
 final class MessagePoller {
     private final MessageRepository repository;
     private final MessageSerializer messageSerializer;
+    private final Monitors monitors;
     private final ExecutorService messageTaker;
     private final ExecutorService workerExecutor;
     private final Throttler throttler = new DefaultThrottler(new Clock.SystemClock());
@@ -24,9 +26,10 @@ final class MessagePoller {
     private ConcurrentHashMap<MessageConsumer<?>, AtomicInteger> currentlyProcessingMessageCountByConsumer =
             new ConcurrentHashMap<MessageConsumer<?>, AtomicInteger>();
 
-    public MessagePoller(MessageRepository repository, MessageSerializer messageSerializer) {
+    public MessagePoller(MessageRepository repository, MessageSerializer messageSerializer, Monitors monitors) {
         this.repository = repository;
         this.messageSerializer = messageSerializer;
+        this.monitors = monitors;
         messageTaker = Executors.newSingleThreadExecutor(NamedThreadFactory.singleThreadFactory("messagebroker.MessageTaker"));
         workerExecutor = Executors.newCachedThreadPool(NamedThreadFactory.multipleThreadFactory("messagebroker.WorkerExecutor"));
     }
@@ -50,6 +53,7 @@ final class MessagePoller {
     private void takeMessages() {
         final Map<MessageConsumer<?>, Integer> maxCountByConsumer = determineMaxCountByConsumer();
         if (!maxCountByConsumer.isEmpty())
+            monitors.onEvent(new PollingForMessagesEvent(maxCountByConsumer));
             repository.take(maxCountByConsumer, new MessageCallback() {
                 public void messageTaken(MessageProcessingUpdate update, Object serializedMessage) {
                     consume(update, serializedMessage);
@@ -65,7 +69,7 @@ final class MessagePoller {
             public void run() {
                 try {
                     T message = (T) messageSerializer.deserialize(serializedMessage);
-                    new Worker<T>(repository, throttler, update, message).consume();
+                    new Worker<T>(repository, throttler, monitors, update, message).consume();
                 } catch (InterruptedException ignore) {
                     // TODO: Deal with it?
                 } finally {

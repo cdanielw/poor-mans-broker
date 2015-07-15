@@ -66,7 +66,7 @@ public final class JdbcMessageRepository implements MessageRepository {
             ps.setNull(4, Types.VARCHAR);
             ps.setBlob(5, new ByteArrayInputStream((byte[]) serializedMessage));
         } else
-            throw new IllegalStateException("Expected serialized message to be either a String or a byte[]");
+            throw new IllegalArgumentException("Support only message serialized to either String or byte[]");
         ps.executeUpdate();
         ps.close();
         return messageId;
@@ -99,7 +99,7 @@ public final class JdbcMessageRepository implements MessageRepository {
         ps.setMaxRows(maxCount);
         ResultSet rs = ps.executeQuery();
         while (rs.next()) {
-//            Status status = Status.valueOf(rs.getString("status"));
+            Status fromStatus = Status.valueOf(rs.getString("status"));
             String messageId = rs.getString("message_id");
             String stringMessage = rs.getString("message_string");
             byte[] bytesMessage = rs.getBytes("message_bytes");
@@ -108,9 +108,7 @@ public final class JdbcMessageRepository implements MessageRepository {
             int retries = rs.getInt("retries");
             String errorMessage = rs.getString("error_message");
 
-            // TODO: If we're taking over a job that timed out, notify someone
-
-            MessageProcessingUpdate update = MessageProcessingUpdate.create(consumer, messageId, Status.PROCESSING, retries, errorMessage, versionId);
+            MessageProcessingUpdate update = MessageProcessingUpdate.create(consumer, messageId, fromStatus, Status.PROCESSING, retries, errorMessage, versionId);
             if (updateMessageProcessing(connection, update))
                 callback.messageTaken(update, serializedMessage);
         }
@@ -123,7 +121,7 @@ public final class JdbcMessageRepository implements MessageRepository {
         PreparedStatement ps = connection.prepareStatement("" +
                 "UPDATE message_consumer SET status = ?, last_updated = ?, times_out = ?, version_id = ?, retries = ?, error_message = ? \n" +
                 "WHERE message_id = ? AND version_id = ?");
-        ps.setString(1, update.status.name());
+        ps.setString(1, update.toStatus.name());
         ps.setTimestamp(2, new Timestamp(now));
         ps.setTimestamp(3, new Timestamp(timesOut(update.consumer, now)));
         ps.setString(4, update.toVersionId);

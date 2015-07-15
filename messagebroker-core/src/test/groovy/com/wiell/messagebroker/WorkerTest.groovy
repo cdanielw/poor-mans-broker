@@ -24,7 +24,7 @@ class WorkerTest extends Specification {
             handler.handled(message)
             repo.updates.size() == 1
             with(repo[0]) {
-                status == COMPLETED
+                toStatus == COMPLETED
                 retries == 0
             }
     }
@@ -39,12 +39,12 @@ class WorkerTest extends Specification {
             handler.handled(message)
             repo.updates.size() == 2
             with(repo[0]) {
-                status == PROCESSING
+                toStatus == PROCESSING
                 retries == 1
                 errorMessage == 'Error message'
             }
             with(repo[1]) {
-                status == COMPLETED
+                toStatus == COMPLETED
                 retries == 1
                 errorMessage == 'Error message'
             }
@@ -59,7 +59,7 @@ class WorkerTest extends Specification {
         then:
             repo.updates.size() == 1
             with(repo[0]) {
-                status == FAILED
+                toStatus == FAILED
                 retries == 0
             }
     }
@@ -77,11 +77,11 @@ class WorkerTest extends Specification {
         then:
             repo.updates.size() == 2
             with(repo[0]) {
-                status == PROCESSING
+                toStatus == PROCESSING
                 retries == 0
             }
             with(repo[1]) {
-                status == COMPLETED
+                toStatus == COMPLETED
                 retries == 0
             }
     }
@@ -99,8 +99,11 @@ class WorkerTest extends Specification {
             1 * throttler.throttle(2, consumer, _ as KeepAlive)
     }
 
+    // TODO: Make sure listeners are notified when updating from PROCESSING -> PROCESSING when taking a new
+    // Meaning, message timed out, and is taken over
+
     void consume(MessageConsumer consumer) {
-        def update = MessageProcessingUpdate.create(consumer, messageId, PROCESSING, 0, null, null)
+        def update = MessageProcessingUpdate.create(consumer, messageId, PROCESSING, PROCESSING, 0, null, null)
         new Worker(repo, throttler, update, message).consume()
     }
 

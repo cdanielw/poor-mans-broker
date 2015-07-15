@@ -3,6 +3,8 @@ package com.wiell.messagebroker
 import spock.lang.Specification
 import util.AdjustableClock
 
+import static com.wiell.messagebroker.MessageProcessingUpdate.Status.PENDING
+import static com.wiell.messagebroker.MessageProcessingUpdate.Status.PROCESSING
 import static groovyx.gpars.GParsPool.withPool
 
 abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
@@ -21,7 +23,10 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             take((consumer): 1)
 
         then:
-            callback.gotOneMessage('A message', consumer)
+            def message = callback.gotOneMessage('A message', consumer)
+
+            message.update.fromStatus == PENDING
+            message.update.toStatus == PROCESSING
     }
 
     def 'Given no message, when taking message, callback is not invoked'() {
@@ -108,7 +113,9 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             take((consumer): 1)
 
         then:
-            callback.gotOneMessage('A message')
+            def message = callback.gotOneMessage('A message')
+            message.update.fromStatus == PROCESSING
+            message.update.toStatus == PROCESSING
     }
 
     def 'When concurrently trying to take messages, each message is only taken once'() {
@@ -171,11 +178,12 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             messages[index]
         }
 
-        void gotOneMessage(message, MessageConsumer consumer = null) {
+        Message gotOneMessage(message, MessageConsumer consumer = null) {
             assert messages.size() == 1
             assert messages[0].message == message
             if (consumer)
                 assert messages[0].update.consumer == consumer
+            return messages[0]
         }
 
         void gotNoMessages() {

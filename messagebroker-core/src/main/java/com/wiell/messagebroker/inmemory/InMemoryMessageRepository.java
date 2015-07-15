@@ -22,7 +22,7 @@ public final class InMemoryMessageRepository implements MessageRepository {
             for (MessageConsumer<?> consumer : consumers) {
                 ConsumerMessages consumerMessages = consumerMessages(consumer);
                 String messageId = UUID.randomUUID().toString();
-                MessageProcessingUpdate<?> update = MessageProcessingUpdate.create(consumer, messageId, PENDING, 0, null, null);
+                MessageProcessingUpdate<?> update = MessageProcessingUpdate.create(consumer, messageId, PENDING, PENDING, 0, null, null);
                 consumerMessages.add(new Message(update, serializedMessage));
             }
         }
@@ -47,7 +47,7 @@ public final class InMemoryMessageRepository implements MessageRepository {
             }
             if (message == null)
                 return;
-            callback.messageTaken(message.update.processing(), message.serializedMessage);
+            callback.messageTaken(message.update, message.serializedMessage);
         }
     }
 
@@ -121,15 +121,15 @@ public final class InMemoryMessageRepository implements MessageRepository {
         }
 
         boolean isPending() {
-            return update.status == PENDING;
+            return update.toStatus == PENDING;
         }
 
         boolean timedOut() {
-            return update.status == PROCESSING && timesOut.before(new Date());
+            return update.toStatus == PROCESSING && timesOut.before(new Date());
         }
 
         boolean isCompleted() {
-            return update.status == COMPLETED;
+            return update.toStatus == COMPLETED;
         }
     }
 }

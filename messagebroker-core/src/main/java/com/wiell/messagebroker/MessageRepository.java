@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface MessageRepository {
-    void add(String queueId, List<MessageConsumer<?>> consumers, String serializedMessage) throws MessageRepositoryException;
+    void add(String queueId, List<MessageConsumer<?>> consumers, Object serializedMessage) throws MessageRepositoryException;
 
     void take(Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageCallback callback) throws MessageRepositoryException;
 

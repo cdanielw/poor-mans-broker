@@ -17,7 +17,7 @@ public final class InMemoryMessageRepository implements MessageRepository {
         this.clock = clock;
     }
 
-    public void add(String queueId, List<MessageConsumer<?>> consumers, String serializedMessage) {
+    public void add(String queueId, List<MessageConsumer<?>> consumers, Object serializedMessage) {
         synchronized (lock) {
             for (MessageConsumer<?> consumer : consumers) {
                 ConsumerMessages consumerMessages = consumerMessages(consumer);
@@ -104,9 +104,9 @@ public final class InMemoryMessageRepository implements MessageRepository {
     private class Message {
         MessageProcessingUpdate update;
         Date timesOut;
-        final String serializedMessage;
+        final Object serializedMessage;
 
-        Message(MessageProcessingUpdate update, String serializedMessage) {
+        Message(MessageProcessingUpdate update, Object serializedMessage) {
             this.update = update;
             this.timesOut = new Date(clock.millis() + update.consumer.timeUnit.toMillis(update.consumer.timeout));
             this.serializedMessage = serializedMessage;

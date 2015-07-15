@@ -1,7 +1,6 @@
 package com.wiell.messagebroker
 
 import integration.QueueTestDelegate
-import org.spockframework.lang.ConditionBlock
 import spock.lang.Specification
 import util.TestHandler
 
@@ -64,6 +63,7 @@ class WorkerTest extends Specification {
                 retries == 0
             }
     }
+
     def 'Given a keep alive handler, when handler calls keep alive, repository is notified'() {
         def consumer = consumer(
                 createHandler { message, KeepAlive keepAlive ->
@@ -117,7 +117,7 @@ class WorkerTest extends Specification {
     static class MockRepo implements MessageRepository {
         List<MessageProcessingUpdate> updates = []
 
-        void add(String queueId, List<MessageConsumer<?>> consumers, String serializedMessage) throws MessageRepositoryException {
+        void add(String queueId, List<MessageConsumer<?>> consumers, Object serializedMessage) throws MessageRepositoryException {
             assert false, "No call to MessageRepository.add expected"
         }
 

@@ -17,7 +17,6 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
         def consumer = consumer('consumer id')
         addMessage('A message', consumer)
 
-
         when:
             take((consumer): 1)
 
@@ -126,7 +125,19 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
 
         then:
             callback.gotOneMessage('A message')
+    }
 
+    def 'Given a byte[] message, when taking the message, the byte[] is returned'() {
+        def message = 'a byte array'.bytes
+        def consumer = consumer('consumer id')
+        addMessage(message, consumer)
+
+
+        when:
+            take((consumer): 1)
+
+        then:
+            callback.gotOneMessage(message)
     }
 
 
@@ -143,7 +154,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
         MessageConsumer.builder(id, {} as MessageHandler).build()
     }
 
-    void addMessage(String message, MessageConsumer... consumers) {
+    void addMessage(message, MessageConsumer... consumers) {
         inTransaction {
             repository.add('queue id', consumers as List, message)
         }
@@ -152,7 +163,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
     static class MockCallback implements MessageCallback {
         final List<Message> messages = []
 
-        void messageTaken(MessageProcessingUpdate update, String serializedMessage) {
+        void messageTaken(MessageProcessingUpdate update, Object serializedMessage) {
             messages << new Message(update, serializedMessage)
         }
 
@@ -160,7 +171,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             messages[index]
         }
 
-        void gotOneMessage(String message, MessageConsumer consumer = null) {
+        void gotOneMessage(message, MessageConsumer consumer = null) {
             assert messages.size() == 1
             assert messages[0].message == message
             if (consumer)
@@ -174,9 +185,9 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
 
     static class Message {
         final MessageProcessingUpdate update
-        final String message
+        final message
 
-        Message(MessageProcessingUpdate update, String message) {
+        Message(MessageProcessingUpdate update, Object message) {
             this.update = update
             this.message = message
         }

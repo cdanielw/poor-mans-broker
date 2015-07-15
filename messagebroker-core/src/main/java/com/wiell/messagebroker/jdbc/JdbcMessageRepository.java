@@ -4,6 +4,7 @@ import com.wiell.messagebroker.*;
 import com.wiell.messagebroker.MessageProcessingUpdate.Status;
 import com.wiell.messagebroker.util.Clock;
 
+import java.io.ByteArrayInputStream;
 import java.sql.*;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +22,7 @@ public final class JdbcMessageRepository implements MessageRepository {
         this.clock = clock;
     }
 
-    public void add(final String queueId, final List<MessageConsumer<?>> consumers, final String serializedMessage) {
+    public void add(final String queueId, final List<MessageConsumer<?>> consumers, final Object serializedMessage) {
         withConnection(new ConnectionCallback() {
             public Void execute(Connection connection) throws SQLException {
                 String messageId = insertMessage(connection, queueId, serializedMessage);
@@ -50,15 +51,22 @@ public final class JdbcMessageRepository implements MessageRepository {
         ps.close();
     }
 
-    private String insertMessage(Connection connection, String queueId, String serializedMessage) throws SQLException {
+    private String insertMessage(Connection connection, String queueId, Object serializedMessage) throws SQLException {
         String messageId = UUID.randomUUID().toString();
         PreparedStatement ps = connection.prepareStatement("" +
-                "INSERT INTO message(id, published, queue_id, message)\n" +
-                "VALUES(?, ?, ?, ?)");
+                "INSERT INTO message(id, published, queue_id, message_string, message_bytes)\n" +
+                "VALUES(?, ?, ?, ?, ?)");
         ps.setString(1, messageId);
         ps.setTimestamp(2, new Timestamp(clock.millis()));
         ps.setString(3, queueId);
-        ps.setString(4, serializedMessage);
+        if (serializedMessage instanceof String) {
+            ps.setString(4, (String) serializedMessage);
+            ps.setNull(5, Types.BINARY);
+        } else if (serializedMessage instanceof byte[]) {
+            ps.setNull(4, Types.VARCHAR);
+            ps.setBlob(5, new ByteArrayInputStream((byte[]) serializedMessage));
+        } else
+            throw new IllegalStateException("Expected serialized message to be either a String or a byte[]");
         ps.executeUpdate();
         ps.close();
         return messageId;
@@ -78,10 +86,9 @@ public final class JdbcMessageRepository implements MessageRepository {
         });
     }
 
-
     private void takeMessages(Connection connection, MessageConsumer<?> consumer, Integer maxCount, MessageCallback callback) throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
-                "SELECT message_id, version_id, status, message, retries, error_message \n" +
+                "SELECT message_id, version_id, status, message_string, message_bytes, retries, error_message \n" +
                 "FROM message_consumer mc\n" +
                 "JOIN message m ON mc.message_id = m.id\n" +
                 "WHERE consumer_id = ?\n" +
@@ -94,7 +101,9 @@ public final class JdbcMessageRepository implements MessageRepository {
         while (rs.next()) {
 //            Status status = Status.valueOf(rs.getString("status"));
             String messageId = rs.getString("message_id");
-            String serializedMessage = rs.getString("message");
+            String stringMessage = rs.getString("message_string");
+            byte[] bytesMessage = rs.getBytes("message_bytes");
+            Object serializedMessage = stringMessage == null ? bytesMessage : stringMessage;
             String versionId = rs.getString("version_id");
             int retries = rs.getInt("retries");
             String errorMessage = rs.getString("error_message");

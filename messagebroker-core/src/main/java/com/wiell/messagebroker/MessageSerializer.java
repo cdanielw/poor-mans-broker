@@ -1,28 +1,35 @@
 package com.wiell.messagebroker;
 
 public interface MessageSerializer {
-    String serialize(Object message) throws SerializationFailed;
+    Object serialize(Object message) throws SerializationFailed;
 
-    Object deserialize(String serializedMessage) throws DeserilizationFailed;
-
+    Object deserialize(Object serializedMessage) throws DeserilizationFailed;
 
     class SerializationFailed extends RuntimeException {
-        public SerializationFailed(String message) {
-            super(message);
+        public SerializationFailed(String errorMessage) {
+            super(errorMessage);
         }
 
-        public SerializationFailed(String message, Throwable cause) {
-            super(message, cause);
+        public SerializationFailed(Exception cause) {
+            super(cause);
+        }
+
+        public SerializationFailed(String errorMessage, Exception cause) {
+            super(errorMessage, cause);
         }
     }
 
     class DeserilizationFailed extends RuntimeException {
-        public DeserilizationFailed(String message) {
-            super(message);
+        public DeserilizationFailed(String errorMessage) {
+            super(errorMessage);
         }
 
-        public DeserilizationFailed(String message, Throwable cause) {
-            super(message, cause);
+        public DeserilizationFailed(Exception cause) {
+            super(cause);
+        }
+
+        public DeserilizationFailed(String errorMessage, Exception cause) {
+            super(errorMessage, cause);
         }
     }
 }

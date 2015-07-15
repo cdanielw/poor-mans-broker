@@ -51,13 +51,13 @@ final class MessagePoller {
         final Map<MessageConsumer<?>, Integer> maxCountByConsumer = determineMaxCountByConsumer();
         if (!maxCountByConsumer.isEmpty())
             repository.take(maxCountByConsumer, new MessageCallback() {
-                public void messageTaken(MessageProcessingUpdate update, String serializedMessage) {
+                public void messageTaken(MessageProcessingUpdate update, Object serializedMessage) {
                     consume(update, serializedMessage);
                 }
             });
     }
 
-    private <T> void consume(final MessageProcessingUpdate<T> update, final String serializedMessage) {
+    private <T> void consume(final MessageProcessingUpdate<T> update, final Object serializedMessage) {
         incrementCurrentlyProcessingMessageCount(update.consumer);
 
         workerExecutor.execute(new Runnable() {

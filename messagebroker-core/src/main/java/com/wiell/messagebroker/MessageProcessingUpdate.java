@@ -5,6 +5,7 @@ import java.util.UUID;
 import static com.wiell.messagebroker.MessageProcessingUpdate.Status.*;
 
 public final class MessageProcessingUpdate<T> {
+    public final String queueId;
     public final MessageConsumer<T> consumer;
     public final String messageId;
     public final Status fromStatus;
@@ -15,6 +16,7 @@ public final class MessageProcessingUpdate<T> {
     public final String toVersionId;
 
     private MessageProcessingUpdate(
+            String queueId,
             MessageConsumer<T> consumer,
             String messageId,
             Status fromStatus,
@@ -23,6 +25,7 @@ public final class MessageProcessingUpdate<T> {
             String errorMessage,
             String fromVersionId,
             String toVersionId) {
+        this.queueId = queueId;
         this.consumer = consumer;
         this.messageId = messageId;
         this.fromStatus = fromStatus;
@@ -34,6 +37,7 @@ public final class MessageProcessingUpdate<T> {
     }
 
     public static <T> MessageProcessingUpdate<T> create(
+            String queueId,
             MessageConsumer<T> consumer,
             String messageId,
             Status fromStatus,
@@ -41,28 +45,34 @@ public final class MessageProcessingUpdate<T> {
             int retries,
             String errorMessage,
             String fromVersionId) {
-        return new MessageProcessingUpdate<T>(consumer, messageId, fromStatus, toStatus, retries, errorMessage, fromVersionId, newVersionId());
+        return new MessageProcessingUpdate<T>(queueId, consumer, messageId, fromStatus, toStatus, retries, errorMessage,
+                fromVersionId, newVersionId());
     }
 
     public MessageProcessingUpdate<T> processing() {
-        return new MessageProcessingUpdate<T>(consumer, messageId, toStatus, PROCESSING, retries, errorMessage, fromVersionId, newVersionId());
+        return new MessageProcessingUpdate<T>(queueId, consumer, messageId, toStatus, PROCESSING, retries, errorMessage,
+                fromVersionId, newVersionId());
     }
 
     public MessageProcessingUpdate<T> completed() {
-        return new MessageProcessingUpdate<T>(consumer, messageId, toStatus, COMPLETED, retries, errorMessage, fromVersionId, newVersionId());
+        return new MessageProcessingUpdate<T>(queueId, consumer, messageId, toStatus, COMPLETED, retries, errorMessage,
+                fromVersionId, newVersionId());
     }
 
     public MessageProcessingUpdate<T> retry(String errorMessage) {
-        return new MessageProcessingUpdate<T>(consumer, messageId, toStatus, PROCESSING, retries + 1, errorMessage, fromVersionId, newVersionId());
+        return new MessageProcessingUpdate<T>(queueId, consumer, messageId, toStatus, PROCESSING, retries + 1,
+                errorMessage, fromVersionId, newVersionId());
     }
 
     public MessageProcessingUpdate<T> failed(String errorMessage) {
-        return new MessageProcessingUpdate<T>(consumer, messageId, toStatus, FAILED, retries, errorMessage, fromVersionId, newVersionId());
+        return new MessageProcessingUpdate<T>(queueId, consumer, messageId, toStatus, FAILED, retries, errorMessage,
+                fromVersionId, newVersionId());
     }
 
     public String toString() {
         return "MessageProcessingUpdate{" +
-                "consumer=" + consumer +
+                "queueId=" + queueId +
+                ", consumer='" + consumer + '\'' +
                 ", messageId='" + messageId + '\'' +
                 ", fromStatus=" + fromStatus +
                 ", toStatus=" + toStatus +

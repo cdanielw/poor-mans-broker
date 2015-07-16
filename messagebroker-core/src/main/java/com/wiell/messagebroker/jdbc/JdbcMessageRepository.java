@@ -32,7 +32,8 @@ public final class JdbcMessageRepository implements MessageRepository {
         });
     }
 
-    private void insertMessageConsumers(Connection connection, String messageId, List<MessageConsumer<?>> consumers) throws SQLException {
+    private void insertMessageConsumers(Connection connection, String messageId, List<MessageConsumer<?>> consumers)
+            throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
                 "INSERT INTO message_consumer(message_id, consumer_id, version_id, status, last_updated, times_out, retries)\n" +
                 "VALUES(?, ?, ?, ?, ?, ?, ?)");
@@ -51,7 +52,8 @@ public final class JdbcMessageRepository implements MessageRepository {
         ps.close();
     }
 
-    private String insertMessage(Connection connection, String queueId, Object serializedMessage) throws SQLException {
+    private String insertMessage(Connection connection, String queueId, Object serializedMessage)
+            throws SQLException {
         String messageId = UUID.randomUUID().toString();
         PreparedStatement ps = connection.prepareStatement("" +
                 "INSERT INTO message(id, published, queue_id, message_string, message_bytes)\n" +
@@ -89,12 +91,10 @@ public final class JdbcMessageRepository implements MessageRepository {
         });
     }
 
-    private void takeMessages(Connection connection,
-                              MessageConsumer<?> consumer,
-                              Integer maxCount,
-                              MessageCallback callback) throws SQLException {
+    private void takeMessages(Connection connection, MessageConsumer<?> consumer, Integer maxCount, MessageCallback callback)
+            throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
-                "SELECT message_id, version_id, status, message_string, message_bytes, retries, error_message \n" +
+                "SELECT queue_id, message_id, version_id, status, message_string, message_bytes, retries, error_message \n" +
                 "FROM message_consumer mc\n" +
                 "JOIN message m ON mc.message_id = m.id\n" +
                 "WHERE consumer_id = ?\n" +
@@ -111,11 +111,11 @@ public final class JdbcMessageRepository implements MessageRepository {
         ps.close();
     }
 
-    private void takeMessagesBlocking(Connection connection,
-                                      MessageConsumer<?> consumer,
-                                      MessageCallback callback) throws SQLException {
+    private void takeMessagesBlocking(Connection connection, MessageConsumer<?> consumer, MessageCallback callback)
+            throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
-                "SELECT message_id, version_id, status, message_string, message_bytes, times_out, retries, error_message \n" +
+                "SELECT queue_id, message_id, version_id, status, message_string, message_bytes, " +
+                "       times_out, retries, error_message \n" +
                 "FROM message_consumer mc\n" +
                 "JOIN message m ON mc.message_id = m.id\n" +
                 "WHERE consumer_id = ?\n" +
@@ -138,7 +138,9 @@ public final class JdbcMessageRepository implements MessageRepository {
         return status.equals("PENDING") || timesOut.before(now);
     }
 
-    private void takeMessage(Connection connection, ResultSet rs, MessageConsumer<?> consumer, MessageCallback callback) throws SQLException {
+    private void takeMessage(Connection connection, ResultSet rs, MessageConsumer<?> consumer, MessageCallback callback)
+            throws SQLException {
+        String queueId = rs.getString("queue_id");
         Status fromStatus = Status.valueOf(rs.getString("status"));
         String messageId = rs.getString("message_id");
         String stringMessage = rs.getString("message_string");
@@ -148,12 +150,13 @@ public final class JdbcMessageRepository implements MessageRepository {
         int retries = rs.getInt("retries");
         String errorMessage = rs.getString("error_message");
         MessageProcessingUpdate update = MessageProcessingUpdate
-                .create(consumer, messageId, fromStatus, Status.PROCESSING, retries, errorMessage, versionId);
+                .create(queueId, consumer, messageId, fromStatus, Status.PROCESSING, retries, errorMessage, versionId);
         if (updateMessageProcessing(connection, update))
             callback.messageTaken(update, serializedMessage);
     }
 
-    private boolean updateMessageProcessing(Connection connection, MessageProcessingUpdate update) throws SQLException {
+    private boolean updateMessageProcessing(Connection connection, MessageProcessingUpdate update)
+            throws SQLException {
         long now = clock.millis();
         PreparedStatement ps = connection.prepareStatement("" +
                 "UPDATE message_consumer\n" +
@@ -183,7 +186,9 @@ public final class JdbcMessageRepository implements MessageRepository {
         });
     }
 
-    private long timesOut(MessageConsumer<?> consumer, long now) {return now + consumer.timeUnit.toMillis(consumer.timeout);}
+    private long timesOut(MessageConsumer<?> consumer, long now) {
+        return now + consumer.timeUnit.toMillis(consumer.timeout);
+    }
 
     private <T> T withConnection(ConnectionCallback<T> callback) {
         Connection connection = null;

@@ -18,7 +18,7 @@ class Slf4jLoggingMonitorTest extends Specification {
             MessageBrokerConfig.builder(new InMemoryMessageRepository(), NULL_TRANSACTION_SYNCHRONIZER)
     )
     static consumer = MessageConsumer.builder('consumer id', {} as MessageHandler).build()
-    static update = MessageProcessingUpdate.create(consumer, 'message id', PENDING, PROCESSING, 0, null, 'version id')
+    static update = MessageProcessingUpdate.create('queue id', consumer, 'message id', PENDING, PROCESSING, 0, null, 'version id')
 
     def monitor = new Slf4jLoggingMonitor()
 

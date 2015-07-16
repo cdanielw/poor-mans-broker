@@ -22,7 +22,7 @@ public final class InMemoryMessageRepository implements MessageRepository {
             for (MessageConsumer<?> consumer : consumers) {
                 ConsumerMessages consumerMessages = consumerMessages(consumer);
                 String messageId = UUID.randomUUID().toString();
-                MessageProcessingUpdate<?> update = MessageProcessingUpdate.create(consumer, messageId, PENDING, PENDING, 0, null, null);
+                MessageProcessingUpdate<?> update = MessageProcessingUpdate.create(queueId, consumer, messageId, PENDING, PENDING, 0, null, null);
                 consumerMessages.add(new Message(update, serializedMessage));
             }
         }

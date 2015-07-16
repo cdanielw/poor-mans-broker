@@ -124,12 +124,12 @@ class WorkerTest extends Specification {
     }
 
     void consume(MessageConsumer consumer) {
-        def update = MessageProcessingUpdate.create(consumer, messageId, PENDING, PROCESSING, 0, null, null)
+        def update = MessageProcessingUpdate.create('queue id', consumer, messageId, PENDING, PROCESSING, 0, null, null)
         new Worker(repo, throttler, new Monitors([monitor]), update, message).consume()
     }
 
     void consumeTimedOut(MessageConsumer consumer) {
-        def update = MessageProcessingUpdate.create(consumer, messageId, PROCESSING, PROCESSING, 0, null, null)
+        def update = MessageProcessingUpdate.create('queue id', consumer, messageId, PROCESSING, PROCESSING, 0, null, null)
         new Worker(repo, throttler, new Monitors([monitor]), update, message).consume()
     }
 

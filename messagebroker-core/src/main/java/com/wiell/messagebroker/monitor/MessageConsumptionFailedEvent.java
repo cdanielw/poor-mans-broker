@@ -2,10 +2,10 @@ package com.wiell.messagebroker.monitor;
 
 import com.wiell.messagebroker.MessageProcessingUpdate;
 
-public class MessageConsumptionFailedEvent<T> implements Event {
-    private final MessageProcessingUpdate<T> update;
-    private final T message;
-    private final Exception e;
+public final class MessageConsumptionFailedEvent<T> implements Event {
+    public final MessageProcessingUpdate<T> update;
+    public final T message;
+    public final Exception e;
 
     public MessageConsumptionFailedEvent(MessageProcessingUpdate<T> update, T message, Exception e) {
         this.update = update;

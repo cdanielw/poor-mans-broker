@@ -33,7 +33,7 @@ final class MessageQueueManager {
         assertInTransaction();
         List<MessageConsumer<?>> consumers = consumersByQueueId.get(queueId);
         repository.add(queueId, consumers, messageSerializer.serialize(message));
-        monitors.onEvent(new MessagePublishedEvent<M>(queueId, message));
+        monitors.onEvent(new MessagePublishedEvent(queueId, message));
         pollForMessagesOnCommit();
     }
 
@@ -45,12 +45,10 @@ final class MessageQueueManager {
     }
 
     void start() {
-        monitors.onEvent(new MessageBrokerStartedEvent());
     }
 
     void stop() {
         messagePoller.stop();
-        monitors.onEvent(new MessageBrokerStoppedEvent());
     }
 
     private void pollForMessagesOnCommit() {

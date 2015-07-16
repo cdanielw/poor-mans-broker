@@ -1,5 +1,5 @@
 package com.wiell.messagebroker.monitor;
 
-public interface Monitor {
-    void onEvent(Event event);
+public interface Monitor<T extends Event> {
+    void onEvent(T event);
 }

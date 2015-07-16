@@ -3,15 +3,12 @@ package util
 import groovy.sql.Sql
 import org.h2.jdbcx.JdbcDataSource
 import org.h2.tools.Server
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 import javax.sql.DataSource
 
 import static org.h2.tools.Server.createTcpServer
 
 class Database {
-    private static final Logger LOG = LoggerFactory.getLogger(this)
     private static final String SCHEMA = '/schema-postgres.sql'
     private static final String RESET_SCRIPT = '/reset.sql'
 
@@ -31,7 +28,6 @@ class Database {
     void reset() {
         long time = System.currentTimeMillis()
         new Sql(dataSource).execute(resourceText(RESET_SCRIPT))
-        LOG.info("Reset database in ${System.currentTimeMillis() - time} millis.")
     }
 
     private void initDatabase() {
@@ -50,7 +46,6 @@ class Database {
                 dataSource = new JdbcDataSource(url: url,
                         user: 'sa', password: 'sa')
                 setupSchema()
-                LOG.info("Setup database in ${System.currentTimeMillis() - time} millis.")
             } else reset()
         }
     }

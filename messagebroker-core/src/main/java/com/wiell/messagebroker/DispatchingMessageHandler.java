@@ -1,5 +1,7 @@
 package com.wiell.messagebroker;
 
+import com.wiell.messagebroker.util.Is;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +30,8 @@ public final class DispatchingMessageHandler<M> implements KeepAliveMessageHandl
 
     public static final class Builder<M> {
         private Map<Class<? extends M>, Object> consumerByMessageType = new HashMap<Class<? extends M>, Object>();
+
+        private Builder() { }
 
         public <T extends M> Builder<M> handler(Class<T> messageType, MessageHandler<T> messageHandler) {
             Is.notNull(messageType, "messageType must not be null");

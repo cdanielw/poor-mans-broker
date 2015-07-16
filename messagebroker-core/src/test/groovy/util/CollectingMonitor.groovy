@@ -5,14 +5,14 @@ import com.wiell.messagebroker.monitor.Monitor
 
 import java.util.concurrent.CopyOnWriteArrayList
 
-class CollectingMonitor implements Monitor {
-    final List<Event> events = new CopyOnWriteArrayList<>();
+class CollectingMonitor<T extends Event> implements Monitor<T> {
+    final List<T> events = new CopyOnWriteArrayList<>();
 
-    void onEvent(Event event) {
+    void onEvent(T event) {
         events << event
     }
 
-    List<Class<? extends Event>> eventTypes() {
+    List<Class<T>> eventTypes() {
         events.collect { it.class }
     }
 }

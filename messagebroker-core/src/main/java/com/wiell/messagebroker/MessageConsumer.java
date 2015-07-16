@@ -1,5 +1,7 @@
 package com.wiell.messagebroker;
 
+import com.wiell.messagebroker.util.Is;
+
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MINUTES;

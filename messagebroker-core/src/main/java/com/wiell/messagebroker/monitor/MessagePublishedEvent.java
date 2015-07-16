@@ -1,10 +1,10 @@
 package com.wiell.messagebroker.monitor;
 
-public class MessagePublishedEvent<M> implements Event {
-    final String queueId;
-    final M message;
+public final class MessagePublishedEvent implements Event {
+    public final String queueId;
+    public final Object message;
 
-    public MessagePublishedEvent(String queueId, M message) {
+    public MessagePublishedEvent(String queueId, Object message) {
         this.queueId = queueId;
         this.message = message;
     }

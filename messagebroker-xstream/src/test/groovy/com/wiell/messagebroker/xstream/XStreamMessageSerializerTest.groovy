@@ -8,24 +8,6 @@ import static com.wiell.messagebroker.MessageSerializer.DeserilizationFailed
 class XStreamMessageSerializerTest extends Specification {
     def serializer = new XStreamMessageSerializer()
 
-    @Unroll
-    def '"#object" can be serialized and deserialized back to original string'() {
-
-        when:
-            def serialized = serializer.serialize(message)
-            def deserialized = serializer.deserialize(serialized)
-
-        then:
-            deserialized == message
-
-        where:
-            message << [
-                    new Date(),
-                    'A string',
-                    ['Foo', 'Bar']
-            ]
-    }
-
     def 'When serializing null, IllegalArgumentException is thrown'() {
         when:
             serializer.serialize(null)
@@ -54,5 +36,23 @@ class XStreamMessageSerializerTest extends Specification {
             serializer.deserialize('not valid xstream format')
         then:
             thrown(DeserilizationFailed)
+    }
+
+    @Unroll
+    def '"#object" can be serialized and deserialized back to original string'() {
+
+        when:
+            def serialized = serializer.serialize(message)
+            def deserialized = serializer.deserialize(serialized)
+
+        then:
+            deserialized == message
+
+        where:
+            message << [
+                    new Date(),
+                    'A string',
+                    ['Foo', 'Bar']
+            ]
     }
 }

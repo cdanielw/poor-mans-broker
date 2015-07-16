@@ -1,17 +1,16 @@
 package com.wiell.messagebroker;
 
+import com.wiell.messagebroker.monitor.Event;
 import com.wiell.messagebroker.monitor.Monitor;
 import com.wiell.messagebroker.objectserialization.ObjectSerializationMessageSerializer;
+import com.wiell.messagebroker.util.Is;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public final class MessageBrokerConfig {
     final MessageRepository messageRepository;
     final TransactionSynchronizer transactionSynchronizer;
-    final int abandonedJobsPeriod;
-    final TimeUnit abandonedJobsTimeUnit;
     final MessageSerializer messageSerializer;
     final Monitors monitors;
 
@@ -19,9 +18,16 @@ public final class MessageBrokerConfig {
         this.messageRepository = builder.messageRepository;
         this.transactionSynchronizer = builder.transactionSynchronizer;
         this.messageSerializer = builder.messageSerializer;
-        this.abandonedJobsPeriod = builder.abandonedJobsPeriod;
-        this.abandonedJobsTimeUnit = builder.abandonedJobsTimeUnit;
         this.monitors = new Monitors(builder.monitors);
+    }
+
+    public String toString() {
+        return "MessageBrokerConfig{" +
+                "messageRepository=" + messageRepository +
+                ", transactionSynchronizer=" + transactionSynchronizer +
+                ", messageSerializer=" + messageSerializer +
+                ", monitors=" + monitors +
+                '}';
     }
 
     public static Builder builder(MessageRepository messageRepository,
@@ -35,14 +41,11 @@ public final class MessageBrokerConfig {
         private final MessageRepository messageRepository;
         private final TransactionSynchronizer transactionSynchronizer;
         private MessageSerializer messageSerializer = new ObjectSerializationMessageSerializer();
-        private int abandonedJobsPeriod;
-        private TimeUnit abandonedJobsTimeUnit;
-        private final List<Monitor> monitors = new ArrayList<Monitor>();
+        private final List<Monitor<Event>> monitors = new ArrayList<Monitor<Event>>();
 
         private Builder(MessageRepository messageRepository, TransactionSynchronizer transactionSynchronizer) {
             this.messageRepository = messageRepository;
             this.transactionSynchronizer = transactionSynchronizer;
-            abandonedJobsCheckingSchedule(1, TimeUnit.MINUTES);
         }
 
         public Builder messageSerializer(MessageSerializer messageSerializer) {
@@ -50,16 +53,8 @@ public final class MessageBrokerConfig {
             return this;
         }
 
-        public Builder monitor(Monitor monitor) {
+        public Builder monitor(Monitor<Event> monitor) {
             monitors.add(monitor);
-            return this;
-        }
-
-        public Builder abandonedJobsCheckingSchedule(int period, TimeUnit timeUnit) {
-            Is.greaterThenZero(period, "period must be greater then zero");
-            Is.notNull(timeUnit, "timeUnit must not be null");
-            this.abandonedJobsPeriod = period;
-            this.abandonedJobsTimeUnit = timeUnit;
             return this;
         }
 

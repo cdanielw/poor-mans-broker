@@ -1,22 +1,22 @@
-package com.wiell.messagebroker;
+package com.wiell.messagebroker.util;
 
-final class Is {
-    static void notNull(Object o, String message) {
+public final class Is {
+    public static void notNull(Object o, String message) {
         if (o == null)
             throw new IllegalArgumentException(message);
     }
 
-    static void haveText(String s, String message) {
+    public static void haveText(String s, String message) {
         if (s == null || s.trim().isEmpty())
             throw new IllegalArgumentException(message + ". Value: '" + s + "'");
     }
 
-    static void greaterThenZero(int i, String message) {
+    public static void greaterThenZero(int i, String message) {
         if (i < 0)
             throw new IllegalArgumentException(message + ". Value: '" + i + "'");
     }
 
-    static void zeroOrGreater(int i, String message) {
+    public static void zeroOrGreater(int i, String message) {
         if (i <= 0)
             throw new IllegalArgumentException(message + ". Value: '" + i + "'");
     }

@@ -75,6 +75,5 @@ final class Worker<T> {
                 monitors.onEvent(new MessageKeptAliveEvent<T>(update, message));
             }
         };
-
     }
 }

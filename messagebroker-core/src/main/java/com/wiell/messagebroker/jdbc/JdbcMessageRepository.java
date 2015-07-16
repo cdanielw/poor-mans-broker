@@ -79,47 +79,85 @@ public final class JdbcMessageRepository implements MessageRepository {
                 for (Map.Entry<MessageConsumer<?>, Integer> entry : maxCountByConsumer.entrySet()) {
                     MessageConsumer<?> consumer = entry.getKey();
                     Integer maxCount = entry.getValue();
-                    takeMessages(connection, consumer, maxCount, callback);
+                    if (consumer.blocking)
+                        takeMessagesBlocking(connection, consumer, callback);
+                    else
+                        takeMessages(connection, consumer, maxCount, callback);
                 }
                 return null;
             }
         });
     }
 
-    private void takeMessages(Connection connection, MessageConsumer<?> consumer, Integer maxCount, MessageCallback callback) throws SQLException {
+    private void takeMessages(Connection connection,
+                              MessageConsumer<?> consumer,
+                              Integer maxCount,
+                              MessageCallback callback) throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
                 "SELECT message_id, version_id, status, message_string, message_bytes, retries, error_message \n" +
                 "FROM message_consumer mc\n" +
                 "JOIN message m ON mc.message_id = m.id\n" +
                 "WHERE consumer_id = ?\n" +
                 "AND (status = 'PENDING'\n" +
-                "OR (status = 'PROCESSING' AND times_out < ?))");
+                "OR (status = 'PROCESSING' AND times_out < ?))\n" +
+                "ORDER BY sequence_no");
         ps.setString(1, consumer.id);
         ps.setTimestamp(2, new Timestamp(clock.millis()));
         ps.setMaxRows(maxCount);
         ResultSet rs = ps.executeQuery();
-        while (rs.next()) {
-            Status fromStatus = Status.valueOf(rs.getString("status"));
-            String messageId = rs.getString("message_id");
-            String stringMessage = rs.getString("message_string");
-            byte[] bytesMessage = rs.getBytes("message_bytes");
-            Object serializedMessage = stringMessage == null ? bytesMessage : stringMessage;
-            String versionId = rs.getString("version_id");
-            int retries = rs.getInt("retries");
-            String errorMessage = rs.getString("error_message");
-
-            MessageProcessingUpdate update = MessageProcessingUpdate.create(consumer, messageId, fromStatus, Status.PROCESSING, retries, errorMessage, versionId);
-            if (updateMessageProcessing(connection, update))
-                callback.messageTaken(update, serializedMessage);
-        }
+        while (rs.next())
+            takeMessage(connection, rs, consumer, callback);
         rs.close();
         ps.close();
+    }
+
+    private void takeMessagesBlocking(Connection connection,
+                                      MessageConsumer<?> consumer,
+                                      MessageCallback callback) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement("" +
+                "SELECT message_id, version_id, status, message_string, message_bytes, times_out, retries, error_message \n" +
+                "FROM message_consumer mc\n" +
+                "JOIN message m ON mc.message_id = m.id\n" +
+                "WHERE consumer_id = ?\n" +
+                "AND status IN ('PENDING', 'PROCESSING')\n" +
+                "ORDER BY sequence_no");
+        ps.setString(1, consumer.id);
+        ps.setMaxRows(1);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next() && canTakeBlocking(rs))
+            takeMessage(connection, rs, consumer, callback);
+        rs.close();
+        ps.close();
+    }
+
+    private boolean canTakeBlocking(ResultSet rs) throws SQLException {
+        Timestamp now = new Timestamp(clock.millis());
+        String status = rs.getString("status");
+        Timestamp timesOut = rs.getTimestamp("times_out");
+
+        return status.equals("PENDING") || timesOut.before(now);
+    }
+
+    private void takeMessage(Connection connection, ResultSet rs, MessageConsumer<?> consumer, MessageCallback callback) throws SQLException {
+        Status fromStatus = Status.valueOf(rs.getString("status"));
+        String messageId = rs.getString("message_id");
+        String stringMessage = rs.getString("message_string");
+        byte[] bytesMessage = rs.getBytes("message_bytes");
+        Object serializedMessage = stringMessage == null ? bytesMessage : stringMessage;
+        String versionId = rs.getString("version_id");
+        int retries = rs.getInt("retries");
+        String errorMessage = rs.getString("error_message");
+        MessageProcessingUpdate update = MessageProcessingUpdate
+                .create(consumer, messageId, fromStatus, Status.PROCESSING, retries, errorMessage, versionId);
+        if (updateMessageProcessing(connection, update))
+            callback.messageTaken(update, serializedMessage);
     }
 
     private boolean updateMessageProcessing(Connection connection, MessageProcessingUpdate update) throws SQLException {
         long now = clock.millis();
         PreparedStatement ps = connection.prepareStatement("" +
-                "UPDATE message_consumer SET status = ?, last_updated = ?, times_out = ?, version_id = ?, retries = ?, error_message = ? \n" +
+                "UPDATE message_consumer\n" +
+                "SET status = ?, last_updated = ?, times_out = ?, version_id = ?, retries = ?, error_message = ? \n" +
                 "WHERE message_id = ? AND version_id = ?");
         ps.setString(1, update.toStatus.name());
         ps.setTimestamp(2, new Timestamp(now));

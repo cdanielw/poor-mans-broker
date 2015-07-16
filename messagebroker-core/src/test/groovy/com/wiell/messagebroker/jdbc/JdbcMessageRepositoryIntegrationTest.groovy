@@ -13,8 +13,23 @@ class JdbcMessageRepositoryIntegrationTest extends AbstractMessageRepositoryInte
         repository.clock = clock
     }
 
-    void inTransaction(Closure unitOfWork) {
-        connectionManager.inTransaction(unitOfWork)
+    void withTransaction(Closure unitOfWork) {
+        connectionManager.withTransaction(unitOfWork)
+    }
+
+    def 'A blocking consumer will not let a message be be taken while another is processing'() {
+        def consumer = blockingConsumer('consumer id')
+        addMessage('message 1', consumer)
+        addMessage('message 2', consumer)
+        take((consumer): 1)
+        callback.clear()
+
+        when:
+            take((consumer): 1)
+
+        then:
+            callback.gotNoMessages()
+
     }
 
 }

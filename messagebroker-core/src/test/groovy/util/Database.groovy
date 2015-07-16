@@ -18,6 +18,7 @@ class Database {
     private static Server server
     private static File workingDir = File.createTempDir()
 
+    private String url
 
     Database() {
         initDatabase()
@@ -26,8 +27,11 @@ class Database {
     DataSource getDataSource() { dataSource }
 
     void reset() {
-        long time = System.currentTimeMillis()
         new Sql(dataSource).execute(resourceText(RESET_SCRIPT))
+    }
+
+    String getUrl() {
+        return url
     }
 
     private void initDatabase() {
@@ -37,7 +41,7 @@ class Database {
                 long time = System.currentTimeMillis()
 
                 def port = findFreePort()
-                def url = "jdbc:h2:tcp://localhost:$port/messageRepository;MODE=PostgreSQL"
+                url = "jdbc:h2:tcp://localhost:$port/messageRepository;MODE=PostgreSQL"
                 server = createTcpServer("-tcpPort $port -baseDir $workingDir".split(' ')).start()
                 addShutdownHook {
                     stop()

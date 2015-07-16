@@ -13,7 +13,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
 
     abstract MessageRepository getRepository()
 
-    abstract void inTransaction(Closure unitOfWork)
+    abstract void withTransaction(Closure unitOfWork)
 
     def 'When taking message, callback is invoked with the message and an update from PENDING to PROCESSING'() {
         def consumer = consumer('consumer id')
@@ -157,11 +157,19 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
     }
 
     MessageConsumer consumer(String id) {
-        MessageConsumer.builder(id, {} as MessageHandler).build()
+        MessageConsumer.builder(id, {} as MessageHandler)
+                .nonBlocking(Integer.MAX_VALUE)
+                .build()
+    }
+
+    MessageConsumer blockingConsumer(String id) {
+        MessageConsumer.builder(id, {} as MessageHandler)
+                .blocking()
+                .build()
     }
 
     void addMessage(message, MessageConsumer... consumers) {
-        inTransaction {
+        withTransaction {
             repository.add('queue id', consumers as List, message)
         }
     }
@@ -188,6 +196,10 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
         void gotNoMessages() {
             assert messages.empty
         }
+
+        void clear() {
+            messages.clear()
+        }
     }
 
     static class CallbackInvocation {
@@ -197,6 +209,10 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
         CallbackInvocation(MessageProcessingUpdate update, Object message) {
             this.update = update
             this.message = message
+        }
+
+        String toString() {
+            return message
         }
     }
 

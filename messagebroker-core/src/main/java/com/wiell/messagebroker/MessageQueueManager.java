@@ -1,15 +1,17 @@
 package com.wiell.messagebroker;
 
-import com.wiell.messagebroker.monitor.MessageBrokerStartedEvent;
-import com.wiell.messagebroker.monitor.MessageBrokerStoppedEvent;
 import com.wiell.messagebroker.monitor.MessagePublishedEvent;
 import com.wiell.messagebroker.monitor.MessageQueueCreatedEvent;
+import com.wiell.messagebroker.monitor.ScheduledMessagePollingFailedEvent;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 final class MessageQueueManager {
     private final MessageRepository repository;
@@ -17,6 +19,7 @@ final class MessageQueueManager {
     private final MessagePoller messagePoller;
     private final MessageSerializer messageSerializer;
     private final Monitors monitors;
+    private final ScheduledExecutorService pollingScheduler;
 
     private final Map<String, List<MessageConsumer<?>>> consumersByQueueId = new ConcurrentHashMap<String, List<MessageConsumer<?>>>();
     private final Set<String> consumerIds = new HashSet<String>(); // For asserting global consumer id uniqueness
@@ -27,6 +30,7 @@ final class MessageQueueManager {
         this.messagePoller = new MessagePoller(repository, config.messageSerializer, config.monitors);
         this.messageSerializer = config.messageSerializer;
         this.monitors = config.monitors;
+        this.pollingScheduler = Executors.newSingleThreadScheduledExecutor();
     }
 
     <M> void publish(String queueId, M message) {
@@ -45,9 +49,19 @@ final class MessageQueueManager {
     }
 
     void start() {
+        pollingScheduler.scheduleWithFixedDelay(new Runnable() {
+            public void run() {
+                try {
+                    messagePoller.poll();
+                } catch (Exception e) {
+                    monitors.onEvent(new ScheduledMessagePollingFailedEvent(e));
+                }
+            }
+        }, 0, 10, TimeUnit.SECONDS);
     }
 
     void stop() {
+        pollingScheduler.shutdownNow();
         messagePoller.stop();
     }
 

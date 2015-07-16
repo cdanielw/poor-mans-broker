@@ -38,18 +38,19 @@ class Slf4jLoggingMonitorTest extends Specification {
                 assert logEntry.throwable.orNull() != null
 
         where:
-            event                           | level | throwable
-            messageBrokerStartedEvent       | DEBUG | false
-            messageBrokerStoppedEvent       | DEBUG | false
-            messageQueueCreatedEvent        | DEBUG | false
-            messagePublishedEvent           | DEBUG | false
-            pollingForMessagesEvent         | TRACE | false
-            consumingNewMessageEvent        | DEBUG | false
-            consumingTimedOutMessageEvent   | INFO  | false
-            retryingMessageConsumptionEvent | WARN  | false
-            messageConsumptionFailedEvent   | ERROR | true
-            messageKeptAliveEvent           | TRACE | false
-            messageConsumedEvent            | DEBUG | false
+            event                              | level | throwable
+            messageBrokerStartedEvent          | DEBUG | false
+            messageBrokerStoppedEvent          | DEBUG | false
+            messageQueueCreatedEvent           | DEBUG | false
+            scheduledMessagePollingFailedEvent | ERROR | false
+            messagePublishedEvent              | DEBUG | false
+            pollingForMessagesEvent            | TRACE | false
+            consumingNewMessageEvent           | DEBUG | false
+            consumingTimedOutMessageEvent      | INFO  | false
+            retryingMessageConsumptionEvent    | WARN  | false
+            messageConsumptionFailedEvent      | ERROR | true
+            messageKeptAliveEvent              | TRACE | false
+            messageConsumedEvent               | DEBUG | false
     }
 
     Event getMessageBrokerStartedEvent() {
@@ -62,6 +63,10 @@ class Slf4jLoggingMonitorTest extends Specification {
 
     Event getMessageQueueCreatedEvent() {
         new MessageQueueCreatedEvent('queue id', [])
+    }
+
+    Event getScheduledMessagePollingFailedEvent() {
+        new ScheduledMessagePollingFailedEvent(new RuntimeException())
     }
 
     Event getMessagePublishedEvent() {

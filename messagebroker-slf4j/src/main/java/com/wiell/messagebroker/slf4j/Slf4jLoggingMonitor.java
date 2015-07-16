@@ -27,6 +27,11 @@ public final class Slf4jLoggingMonitor implements Monitor<Event> {
                 log.debug("MessageQueue {}: created with consumers {}", event.queueId, event.consumers);
             }
         });
+        add(ScheduledMessagePollingFailedEvent.class, new LoggingMonitor<ScheduledMessagePollingFailedEvent>() {
+            public void onEvent(ScheduledMessagePollingFailedEvent event, Logger log) {
+                log.error("Scheduled message polling failed", event.exception);
+            }
+        });
         add(MessagePublishedEvent.class, new LoggingMonitor<MessagePublishedEvent>() {
             public void onEvent(MessagePublishedEvent event, Logger log) {
                 log.debug("MessageQueue {}: {} published", event.queueId, event.message);

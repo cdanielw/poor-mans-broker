@@ -81,37 +81,14 @@ public final class JdbcMessageRepository implements MessageRepository {
                 for (Map.Entry<MessageConsumer<?>, Integer> entry : maxCountByConsumer.entrySet()) {
                     MessageConsumer<?> consumer = entry.getKey();
                     Integer maxCount = entry.getValue();
-                    if (consumer.blocking)
-                        takeMessagesBlocking(connection, consumer, callback);
-                    else
-                        takeMessages(connection, consumer, maxCount, callback);
+                    takeMessages(connection, consumer, maxCount, callback);
                 }
                 return null;
             }
         });
     }
 
-    private void takeMessages(Connection connection, MessageConsumer<?> consumer, Integer maxCount, MessageCallback callback)
-            throws SQLException {
-        PreparedStatement ps = connection.prepareStatement("" +
-                "SELECT queue_id, message_id, version_id, status, message_string, message_bytes, retries, error_message \n" +
-                "FROM message_consumer mc\n" +
-                "JOIN message m ON mc.message_id = m.id\n" +
-                "WHERE consumer_id = ?\n" +
-                "AND (status = 'PENDING'\n" +
-                "OR (status = 'PROCESSING' AND times_out < ?))\n" +
-                "ORDER BY sequence_no");
-        ps.setString(1, consumer.id);
-        ps.setTimestamp(2, new Timestamp(clock.millis()));
-        ps.setMaxRows(maxCount);
-        ResultSet rs = ps.executeQuery();
-        while (rs.next())
-            takeMessage(connection, rs, consumer, callback);
-        rs.close();
-        ps.close();
-    }
-
-    private void takeMessagesBlocking(Connection connection, MessageConsumer<?> consumer, MessageCallback callback)
+    private void takeMessages(Connection connection, MessageConsumer<?> consumer, int maxCount, MessageCallback callback)
             throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
                 "SELECT queue_id, message_id, version_id, status, message_string, message_bytes, " +
@@ -122,15 +99,16 @@ public final class JdbcMessageRepository implements MessageRepository {
                 "AND status IN ('PENDING', 'PROCESSING')\n" +
                 "ORDER BY sequence_no");
         ps.setString(1, consumer.id);
-        ps.setMaxRows(1);
+        ps.setMaxRows(maxCount);
         ResultSet rs = ps.executeQuery();
-        if (rs.next() && canTakeBlocking(rs))
-            takeMessage(connection, rs, consumer, callback);
+        while (rs.next())
+            if (canTakeMessage(rs))
+                takeMessage(connection, rs, consumer, callback);
         rs.close();
         ps.close();
     }
 
-    private boolean canTakeBlocking(ResultSet rs) throws SQLException {
+    private boolean canTakeMessage(ResultSet rs) throws SQLException {
         Timestamp now = new Timestamp(clock.millis());
         String status = rs.getString("status");
         Timestamp timesOut = rs.getTimestamp("times_out");

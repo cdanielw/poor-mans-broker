@@ -156,17 +156,12 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
         repository.take(maxCountbyConsumer, Mock(MessageCallback))
     }
 
-    MessageConsumer consumer(String id) {
+    MessageConsumer consumer(String id, int workCount = Integer.MAX_VALUE) {
         MessageConsumer.builder(id, {} as MessageHandler)
-                .nonBlocking(Integer.MAX_VALUE)
+                .workerCount(workCount)
                 .build()
     }
 
-    MessageConsumer blockingConsumer(String id) {
-        MessageConsumer.builder(id, {} as MessageHandler)
-                .blocking()
-                .build()
-    }
 
     void addMessage(message, MessageConsumer... consumers) {
         withTransaction {

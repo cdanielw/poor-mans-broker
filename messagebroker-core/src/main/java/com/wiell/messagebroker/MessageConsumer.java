@@ -10,7 +10,6 @@ public final class MessageConsumer<M> {
     public final String id;
     public final int timeout;
     public final TimeUnit timeUnit;
-    public final boolean blocking;
     public final int workerCount;
     public final int maxRetries;
     public final ThrottlingStrategy throttlingStrategy;
@@ -21,7 +20,6 @@ public final class MessageConsumer<M> {
         id = builder.consumerId;
         timeout = builder.time;
         timeUnit = builder.timeUnit;
-        blocking = builder.blocking;
         workerCount = builder.workerCount;
         handler = builder.handler;
         keepAliveHandler = builder.keepAliveHandler;
@@ -56,9 +54,8 @@ public final class MessageConsumer<M> {
         private final KeepAliveMessageHandler<M> keepAliveHandler;
         private int time;
         private TimeUnit timeUnit;
-        private boolean blocking;
         private ThrottlingStrategy throttlingStrategy;
-        private int workerCount;
+        private int workerCount = 1;
         private int maxRetries;
 
         private Builder(String consumerId, MessageHandler<M> handler, KeepAliveMessageHandler<M> keepAliveHandler) {
@@ -66,7 +63,6 @@ public final class MessageConsumer<M> {
             this.handler = handler;
             this.keepAliveHandler = keepAliveHandler;
             timeout(1, MINUTES);
-            blocking();
             retry(new ThrottlingStrategy.ExponentialBackoff(1, MINUTES));
         }
 
@@ -78,15 +74,8 @@ public final class MessageConsumer<M> {
             return this;
         }
 
-        public Builder<M> blocking() {
-            this.blocking = true;
-            this.workerCount = 1;
-            return this;
-        }
-
-        public Builder<M> nonBlocking(int workerCount) {
+        public Builder<M> workerCount(int workerCount) {
             Is.greaterThenZero(workerCount, "workerCount must be greater then zero");
-            this.blocking = false;
             this.workerCount = workerCount;
             return this;
         }

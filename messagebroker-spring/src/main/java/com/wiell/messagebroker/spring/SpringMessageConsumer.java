@@ -12,7 +12,6 @@ public final class SpringMessageConsumer<T> implements InitializingBean {
     private final MessageConsumer.Builder<T> builder;
     private MessageConsumer<T> consumer;
 
-    private boolean blocking = true;
     private int workerCount = 1;
     private Integer retries = null;
     private ThrottlingStrategy throttlingStrategy = new ThrottlingStrategy.ExponentialBackoff(1, TimeUnit.MINUTES);
@@ -38,10 +37,6 @@ public final class SpringMessageConsumer<T> implements InitializingBean {
         return consumer;
     }
 
-    public void setBlocking(boolean blocking) {
-        this.blocking = blocking;
-    }
-
     public void setWorkerCount(int workerCount) {
         this.workerCount = workerCount;
     }
@@ -59,14 +54,9 @@ public final class SpringMessageConsumer<T> implements InitializingBean {
     }
 
     public void afterPropertiesSet() throws Exception {
-        if (blocking && workerCount > 1)
-            throw new IllegalArgumentException("A consumer cannot be blocking and have a workerCount greater than one");
         if (workerCount < 1)
             throw new IllegalArgumentException("A consumer must have a workerCount of at least one");
-        if (blocking)
-            builder.blocking();
-        else
-            builder.nonBlocking(workerCount);
+        builder.workerCount(workerCount);
 
         ThrottlingStrategy actualThrottlingStrategy = throttlingStrategy == null
                 ? ThrottlingStrategy.NO_THROTTLING

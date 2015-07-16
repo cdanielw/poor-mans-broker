@@ -18,7 +18,7 @@ class JdbcMessageRepositoryIntegrationTest extends AbstractMessageRepositoryInte
     }
 
     def 'A blocking consumer will not let a message be be taken while another is processing'() {
-        def consumer = blockingConsumer('consumer id')
+        def consumer = consumer('consumer id', 1)
         addMessage('message 1', consumer)
         addMessage('message 2', consumer)
         take((consumer): 1)

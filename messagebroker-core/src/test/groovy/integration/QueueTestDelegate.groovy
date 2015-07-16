@@ -30,6 +30,7 @@ class QueueTestDelegate {
     MessageQueue<Object> retryingQueue(int retries, TestHandler handler) {
         messageBroker.queueBuilder('queue', Object).consumer(
                 MessageConsumer.builder('consumer', handler)
+                        .workerCount(1)
                         .retry(retries, ThrottlingStrategy.NO_THROTTLING)
         ).build()
     }
@@ -58,19 +59,20 @@ class QueueTestDelegate {
 
     MessageQueue<Object> queue(TestHandler handler) {
         messageBroker.queueBuilder('queue', Object)
-                .consumer(MessageConsumer.builder('consumer', handler))
+                .consumer(MessageConsumer.builder('consumer', handler)
+                .workerCount(1))
                 .build()
     }
 
     MessageQueue<Object> blockingQueue(TestHandler handler) {
-        def consumer = MessageConsumer.builder('blocking consumer', handler).blocking()
+        def consumer = MessageConsumer.builder('blocking consumer', handler).workerCount(1)
         messageBroker.queueBuilder('blocking queue', Object)
                 .consumer(consumer)
                 .build()
     }
 
     MessageQueue<Object> nonBlockingQueue(TestHandler handler) {
-        def consumer = MessageConsumer.builder('non-blocking consumer', handler).nonBlocking(workerCount)
+        def consumer = MessageConsumer.builder('non-blocking consumer', handler).workerCount(workerCount)
         messageBroker.queueBuilder('blocking queue', Object)
                 .consumer(consumer)
                 .build()

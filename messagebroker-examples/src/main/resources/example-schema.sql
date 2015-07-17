@@ -1,7 +1,7 @@
-DROP TABLE IF EXISTS message_consumer;
-DROP TABLE IF EXISTS message;
+DROP TABLE IF EXISTS example_message_consumer;
+DROP TABLE IF EXISTS example_message;
 
-CREATE TABLE message (
+CREATE TABLE example_message (
   id             VARCHAR(127) NOT NULL,
   sequence_no    SERIAL,
   published      TIMESTAMP    NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE message (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE message_consumer (
+CREATE TABLE example_message_consumer (
   message_id    VARCHAR(127) NOT NULL,
   consumer_id   VARCHAR(127) NOT NULL,
   version_id    VARCHAR(127) NOT NULL,
@@ -21,5 +21,5 @@ CREATE TABLE message_consumer (
   retries       INTEGER      NOT NULL,
   error_message TEXT,
   PRIMARY KEY (message_id, consumer_id),
-  FOREIGN KEY (message_id) REFERENCES message (id)
+  FOREIGN KEY (message_id) REFERENCES example_message (id)
 );

@@ -30,16 +30,10 @@ class Database {
         new Sql(dataSource).execute(resourceText(RESET_SCRIPT))
     }
 
-    String getUrl() {
-        return url
-    }
-
     private void initDatabase() {
         synchronized (LOCK) {
             if (!initialized) {
                 initialized = true
-                long time = System.currentTimeMillis()
-
                 def port = findFreePort()
                 url = "jdbc:h2:tcp://localhost:$port/messageRepository;MODE=PostgreSQL"
                 server = createTcpServer("-tcpPort $port -baseDir $workingDir".split(' ')).start()

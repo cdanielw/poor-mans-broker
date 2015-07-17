@@ -49,8 +49,9 @@ class Slf4jLoggingMonitorTest extends Specification {
             consumingTimedOutMessageEvent      | INFO  | false
             retryingMessageConsumptionEvent    | WARN  | false
             messageConsumptionFailedEvent      | ERROR | true
-            messageKeptAliveEvent              | TRACE | false
+            messageKeptAliveEvent              | DEBUG | false
             messageConsumedEvent               | DEBUG | false
+            messageUpdateConflictEvent         | ERROR | false
     }
 
     Event getMessageBrokerStartedEvent() {
@@ -99,5 +100,9 @@ class Slf4jLoggingMonitorTest extends Specification {
 
     Event getMessageConsumedEvent() {
         new MessageConsumedEvent(update, 'a message')
+    }
+
+    Event getMessageUpdateConflictEvent() {
+        new MessageUpdateConflictEvent(update, 'a message')
     }
 }

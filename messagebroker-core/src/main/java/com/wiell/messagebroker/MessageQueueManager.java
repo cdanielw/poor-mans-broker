@@ -19,7 +19,9 @@ final class MessageQueueManager {
     private final MessagePoller messagePoller;
     private final MessageSerializer messageSerializer;
     private final Monitors monitors;
-    private final ScheduledExecutorService pollingScheduler;
+    private final ScheduledExecutorService pollingScheduler = Executors.newSingleThreadScheduledExecutor(
+            NamedThreadFactory.singleThreadFactory("messagebroker.PollingScheduler")
+    );
 
     private final Map<String, List<MessageConsumer<?>>> consumersByQueueId = new ConcurrentHashMap<String, List<MessageConsumer<?>>>();
     private final Set<String> consumerIds = new HashSet<String>(); // For asserting global consumer id uniqueness
@@ -30,7 +32,6 @@ final class MessageQueueManager {
         this.messagePoller = new MessagePoller(repository, config.messageSerializer, config.monitors);
         this.messageSerializer = config.messageSerializer;
         this.monitors = config.monitors;
-        this.pollingScheduler = Executors.newSingleThreadScheduledExecutor();
     }
 
     <M> void publish(String queueId, M message) {
@@ -61,7 +62,7 @@ final class MessageQueueManager {
     }
 
     void stop() {
-        pollingScheduler.shutdownNow();
+        ExecutorTerminator.shutdownAndAwaitTermination(pollingScheduler);
         messagePoller.stop();
     }
 

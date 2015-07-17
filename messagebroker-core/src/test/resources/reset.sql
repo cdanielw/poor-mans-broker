@@ -1,2 +1,2 @@
-delete from message_consumer;
-delete from message;
+DELETE FROM message_consumer;
+DELETE FROM message;

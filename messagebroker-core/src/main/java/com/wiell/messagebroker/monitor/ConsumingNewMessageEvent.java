@@ -2,8 +2,8 @@ package com.wiell.messagebroker.monitor;
 
 import com.wiell.messagebroker.MessageProcessingUpdate;
 
-public final class ConsumingNewMessageEvent<T> extends ConsumingMessageEvent<T> {
-    public ConsumingNewMessageEvent(MessageProcessingUpdate<T> update, T message) {
+public final class ConsumingNewMessageEvent extends ConsumingMessageEvent {
+    public ConsumingNewMessageEvent(MessageProcessingUpdate<?> update, Object message) {
         super(update, message);
     }
 

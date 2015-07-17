@@ -7,7 +7,7 @@ import util.Database
 class JdbcMessageRepositoryIntegrationTest extends AbstractMessageRepositoryIntegrationTest {
     def database = new Database()
     def connectionManager = new TestConnectionManager(database.dataSource)
-    JdbcMessageRepository repository = new JdbcMessageRepository(connectionManager)
+    JdbcMessageRepository repository = new JdbcMessageRepository(connectionManager, '')
 
     def setup() {
         repository.clock = clock

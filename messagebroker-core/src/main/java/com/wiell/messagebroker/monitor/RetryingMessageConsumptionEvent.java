@@ -2,10 +2,10 @@ package com.wiell.messagebroker.monitor;
 
 import com.wiell.messagebroker.MessageProcessingUpdate;
 
-public class RetryingMessageConsumptionEvent<T> extends ConsumingMessageEvent<T> {
+public class RetryingMessageConsumptionEvent extends ConsumingMessageEvent {
     private final Exception exception;
 
-    public RetryingMessageConsumptionEvent(MessageProcessingUpdate<T> update, T message, Exception exception) {
+    public RetryingMessageConsumptionEvent(MessageProcessingUpdate<?> update, Object message, Exception exception) {
         super(update, message);
         this.exception = exception;
     }

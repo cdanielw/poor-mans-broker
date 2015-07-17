@@ -12,12 +12,17 @@ public final class Is {
     }
 
     public static void greaterThenZero(int i, String message) {
-        if (i < 0)
+        if (i <= 0)
             throw new IllegalArgumentException(message + ". Value: '" + i + "'");
     }
 
     public static void zeroOrGreater(int i, String message) {
-        if (i <= 0)
+        if (i < 0)
+            throw new IllegalArgumentException(message + ". Value: '" + i + "'");
+    }
+
+    public static void lessThanEqual(int i, int lessThanValue, String message) {
+        if (i > lessThanValue)
             throw new IllegalArgumentException(message + ". Value: '" + i + "'");
     }
 }

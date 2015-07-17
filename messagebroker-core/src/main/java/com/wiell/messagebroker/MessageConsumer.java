@@ -74,6 +74,15 @@ public final class MessageConsumer<M> {
             return this;
         }
 
+        // TODO: workerCount makes it sound like multiple workers per message
+        // concurrentMessages
+        // messagesHandledInParallel
+        // maxMessageHandledInParallel
+        // messagesConsumedInParallel
+        // messagesConcurrentlyConsumed
+        // maxMessagesConcurrentlyConsumed
+        //
+
         public Builder<M> workerCount(int workerCount) {
             Is.greaterThenZero(workerCount, "workerCount must be greater then zero");
             this.workerCount = workerCount;

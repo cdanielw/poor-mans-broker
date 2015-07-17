@@ -64,12 +64,17 @@ public final class Slf4jLoggingMonitor implements Monitor<Event> {
         });
         add(MessageKeptAliveEvent.class, new LoggingMonitor<MessageKeptAliveEvent>() {
             public void onEvent(MessageKeptAliveEvent event, Logger log) {
-                log.trace("{} consumed {}", event.update.consumer, event.message);
+                log.debug("{} sent keep-alive for {}", event.update.consumer, event.message);
             }
         });
         add(MessageConsumedEvent.class, new LoggingMonitor<MessageConsumedEvent>() {
             public void onEvent(MessageConsumedEvent event, Logger log) {
                 log.debug("{}, after {} retries, consumed {}", event.update.consumer, event.update.retries, event.message);
+            }
+        });
+        add(MessageUpdateConflictEvent.class, new LoggingMonitor<MessageUpdateConflictEvent>() {
+            public void onEvent(MessageUpdateConflictEvent event, Logger log) {
+                log.error("{} had a message update conflict for message {}", event.update.consumer, event.message);
             }
         });
 

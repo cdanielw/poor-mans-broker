@@ -1,5 +1,7 @@
 package com.wiell.messagebroker;
 
+import com.wiell.messagebroker.util.Is;
+
 import java.util.UUID;
 
 import static com.wiell.messagebroker.MessageProcessingUpdate.Status.*;
@@ -34,6 +36,17 @@ public final class MessageProcessingUpdate<T> {
         this.errorMessage = errorMessage;
         this.fromVersionId = fromVersionId;
         this.toVersionId = toVersionId;
+        validateState();
+    }
+
+    private void validateState() {
+        Is.notNull(queueId, "queueId must not be null");
+        Is.notNull(consumer, "consumer must not be null");
+        Is.notNull(messageId, "messageId must not be null");
+        Is.notNull(fromStatus, "fromStatus must not be null");
+        Is.notNull(toStatus, "toStatus must not be null");
+        Is.notNull(fromVersionId, "fromVersionId must not be null");
+        Is.notNull(toVersionId, "toVersionId must not be null");
     }
 
     public static <T> MessageProcessingUpdate<T> create(
@@ -50,23 +63,19 @@ public final class MessageProcessingUpdate<T> {
     }
 
     public MessageProcessingUpdate<T> processing() {
-        return new MessageProcessingUpdate<T>(queueId, consumer, messageId, toStatus, PROCESSING, retries, errorMessage,
-                fromVersionId, newVersionId());
+        return create(queueId, consumer, messageId, toStatus, PROCESSING, retries, errorMessage, toVersionId);
     }
 
     public MessageProcessingUpdate<T> completed() {
-        return new MessageProcessingUpdate<T>(queueId, consumer, messageId, toStatus, COMPLETED, retries, errorMessage,
-                fromVersionId, newVersionId());
+        return create(queueId, consumer, messageId, toStatus, COMPLETED, retries, errorMessage, toVersionId);
     }
 
     public MessageProcessingUpdate<T> retry(String errorMessage) {
-        return new MessageProcessingUpdate<T>(queueId, consumer, messageId, toStatus, PROCESSING, retries + 1,
-                errorMessage, fromVersionId, newVersionId());
+        return create(queueId, consumer, messageId, toStatus, PROCESSING, retries + 1, errorMessage, toVersionId);
     }
 
     public MessageProcessingUpdate<T> failed(String errorMessage) {
-        return new MessageProcessingUpdate<T>(queueId, consumer, messageId, toStatus, FAILED, retries, errorMessage,
-                fromVersionId, newVersionId());
+        return create(queueId, consumer, messageId, toStatus, FAILED, retries, errorMessage, toVersionId);
     }
 
     public String toString() {

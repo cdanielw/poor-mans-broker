@@ -12,10 +12,12 @@ import java.util.UUID;
 
 public final class JdbcMessageRepository implements MessageRepository {
     private final JdbcConnectionManager connectionManager;
+    private final String tablePrefix;
     private Clock clock = new Clock.SystemClock();
 
-    public JdbcMessageRepository(JdbcConnectionManager connectionManager) {
+    public JdbcMessageRepository(JdbcConnectionManager connectionManager, String tablePrefix) {
         this.connectionManager = connectionManager;
+        this.tablePrefix = tablePrefix;
     }
 
     void setClock(Clock clock) {
@@ -35,7 +37,7 @@ public final class JdbcMessageRepository implements MessageRepository {
     private void insertMessageConsumers(Connection connection, String messageId, List<MessageConsumer<?>> consumers)
             throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
-                "INSERT INTO message_consumer(message_id, consumer_id, version_id, status, last_updated, times_out, retries)\n" +
+                "INSERT INTO " + tablePrefix + "message_consumer(message_id, consumer_id, version_id, status, last_updated, times_out, retries)\n" +
                 "VALUES(?, ?, ?, ?, ?, ?, ?)");
         for (MessageConsumer<?> consumer : consumers) {
             long creationTime = clock.millis();
@@ -56,7 +58,7 @@ public final class JdbcMessageRepository implements MessageRepository {
             throws SQLException {
         String messageId = UUID.randomUUID().toString();
         PreparedStatement ps = connection.prepareStatement("" +
-                "INSERT INTO message(id, published, queue_id, message_string, message_bytes)\n" +
+                "INSERT INTO " + tablePrefix + "message(id, published, queue_id, message_string, message_bytes)\n" +
                 "VALUES(?, ?, ?, ?, ?)");
         ps.setString(1, messageId);
         ps.setTimestamp(2, new Timestamp(clock.millis()));
@@ -93,8 +95,8 @@ public final class JdbcMessageRepository implements MessageRepository {
         PreparedStatement ps = connection.prepareStatement("" +
                 "SELECT queue_id, message_id, version_id, status, message_string, message_bytes, " +
                 "       times_out, retries, error_message \n" +
-                "FROM message_consumer mc\n" +
-                "JOIN message m ON mc.message_id = m.id\n" +
+                "FROM " + tablePrefix + "message_consumer mc\n" +
+                "JOIN " + tablePrefix + "message m ON mc.message_id = m.id\n" +
                 "WHERE consumer_id = ?\n" +
                 "AND status IN ('PENDING', 'PROCESSING')\n" +
                 "ORDER BY sequence_no");
@@ -137,9 +139,9 @@ public final class JdbcMessageRepository implements MessageRepository {
             throws SQLException {
         long now = clock.millis();
         PreparedStatement ps = connection.prepareStatement("" +
-                "UPDATE message_consumer\n" +
+                "UPDATE " + tablePrefix + "message_consumer\n" +
                 "SET status = ?, last_updated = ?, times_out = ?, version_id = ?, retries = ?, error_message = ? \n" +
-                "WHERE message_id = ? AND version_id = ?");
+                "WHERE message_id = ? AND consumer_id = ? AND version_id = ?");
         ps.setString(1, update.toStatus.name());
         ps.setTimestamp(2, new Timestamp(now));
         ps.setTimestamp(3, new Timestamp(timesOut(update.consumer, now)));
@@ -147,13 +149,16 @@ public final class JdbcMessageRepository implements MessageRepository {
         ps.setInt(5, update.retries);
         ps.setString(6, update.errorMessage);
         ps.setString(7, update.messageId);
-        ps.setString(8, update.fromVersionId);
+        ps.setString(8, update.consumer.id);
+        ps.setString(9, update.fromVersionId);
 
         int rowsUpdated = ps.executeUpdate();
         if (rowsUpdated > 1)
             throw new IllegalStateException("More than one row with message_id " + update.messageId);
-        connection.commit();
-        return rowsUpdated != 0;
+        boolean updated = rowsUpdated != 0;
+        if (updated)
+            connection.commit();
+        return updated;
     }
 
     public boolean update(final MessageProcessingUpdate update) {

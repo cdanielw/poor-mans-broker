@@ -124,12 +124,12 @@ class WorkerTest extends Specification {
     }
 
     void consume(MessageConsumer consumer) {
-        def update = MessageProcessingUpdate.create('queue id', consumer, messageId, PENDING, PROCESSING, 0, null, null)
+        def update = MessageProcessingUpdate.create('queue id', consumer, messageId, PENDING, PROCESSING, 0, null, UUID.randomUUID().toString())
         new Worker(repo, throttler, new Monitors([monitor]), update, message).consume()
     }
 
     void consumeTimedOut(MessageConsumer consumer) {
-        def update = MessageProcessingUpdate.create('queue id', consumer, messageId, PROCESSING, PROCESSING, 0, null, null)
+        def update = MessageProcessingUpdate.create('queue id', consumer, messageId, PROCESSING, PROCESSING, 0, null, UUID.randomUUID().toString())
         new Worker(repo, throttler, new Monitors([monitor]), update, message).consume()
     }
 
@@ -156,7 +156,19 @@ class WorkerTest extends Specification {
 
         boolean update(MessageProcessingUpdate update) throws MessageRepositoryException {
             updates << update
-            // TODO: Verify version chain - toVersionshould equal fromVersion in next update
+            versionIdsChainTogether()
+            return true
+        }
+
+        private void versionIdsChainTogether() {
+            if (updates) {
+                updates.tail().inject(updates.first()) { prevUpdate, update ->
+                    def toVersionId = prevUpdate.toVersionId
+                    def fromVersionId = update.fromVersionId
+                    assert toVersionId == fromVersionId
+                    return update
+                }
+            }
         }
 
         MessageProcessingUpdate getAt(int index) {

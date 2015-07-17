@@ -1,5 +1,6 @@
 package com.wiell.messagebroker;
 
+import com.wiell.messagebroker.monitor.MessageUpdateConflictEvent;
 import com.wiell.messagebroker.monitor.PollingForMessagesEvent;
 import com.wiell.messagebroker.util.Clock;
 
@@ -9,7 +10,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.wiell.messagebroker.Throttler.DefaultThrottler;
@@ -21,7 +21,6 @@ final class MessagePoller {
     private final ExecutorService messageTaker;
     private final ExecutorService workerExecutor;
     private final Throttler throttler = new DefaultThrottler(new Clock.SystemClock());
-    private final AtomicBoolean stopped = new AtomicBoolean();
 
     private ConcurrentHashMap<MessageConsumer<?>, AtomicInteger> currentlyProcessingMessageCountByConsumer =
             new ConcurrentHashMap<MessageConsumer<?>, AtomicInteger>();
@@ -41,8 +40,6 @@ final class MessagePoller {
     }
 
     public void poll() {
-        if (stopped.get())
-            return;
         messageTaker.execute(new Runnable() {
             public void run() {
                 takeMessages();
@@ -54,11 +51,11 @@ final class MessagePoller {
         final Map<MessageConsumer<?>, Integer> maxCountByConsumer = determineMaxCountByConsumer();
         if (!maxCountByConsumer.isEmpty())
             monitors.onEvent(new PollingForMessagesEvent(maxCountByConsumer));
-            repository.take(maxCountByConsumer, new MessageCallback() {
-                public void messageTaken(MessageProcessingUpdate update, Object serializedMessage) {
-                    consume(update, serializedMessage);
-                }
-            });
+        repository.take(maxCountByConsumer, new MessageCallback() {
+            public void messageTaken(MessageProcessingUpdate update, Object serializedMessage) {
+                consume(update, serializedMessage);
+            }
+        });
     }
 
     private <T> void consume(final MessageProcessingUpdate<T> update, final Object serializedMessage) {
@@ -67,11 +64,12 @@ final class MessagePoller {
         workerExecutor.execute(new Runnable() {
             @SuppressWarnings("unchecked")
             public void run() {
+                T message = (T) messageSerializer.deserialize(serializedMessage);
                 try {
-                    T message = (T) messageSerializer.deserialize(serializedMessage);
                     new Worker<T>(repository, throttler, monitors, update, message).consume();
                 } catch (InterruptedException ignore) {
-                    // TODO: Deal with it?
+                } catch (Worker.MessageUpdateConflict e) {
+                    monitors.onEvent(new MessageUpdateConflictEvent(update, message));
                 } finally {
                     decrementCurrentlyProcessingMessageCount(update.consumer);
                     poll();
@@ -107,8 +105,6 @@ final class MessagePoller {
     }
 
     public void stop() {
-        stopped.set(true);
-        messageTaker.shutdownNow();
-        workerExecutor.shutdownNow();
+        ExecutorTerminator.shutdownAndAwaitTermination(messageTaker, workerExecutor);
     }
 }

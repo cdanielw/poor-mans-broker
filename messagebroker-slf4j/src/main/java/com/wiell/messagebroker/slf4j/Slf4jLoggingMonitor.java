@@ -4,13 +4,14 @@ import com.wiell.messagebroker.monitor.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public final class Slf4jLoggingMonitor implements Monitor<Event> {
-    private final DispatchingMonitor dispatchingMonitor;
-    private final DispatchingMonitor.Builder builder;
+    private final Map<Class<? extends Event>, Monitor<?>> monitors =
+            new HashMap<Class<? extends Event>, Monitor<?>>();
 
     public Slf4jLoggingMonitor() {
-        this.builder = DispatchingMonitor.builder();
-        DispatchingMonitor.Builder builder = this.builder;
 
         add(MessageBrokerStartedEvent.class, new LoggingMonitor<MessageBrokerStartedEvent>() {
             public void onEvent(MessageBrokerStartedEvent event, Logger log) {
@@ -84,16 +85,17 @@ public final class Slf4jLoggingMonitor implements Monitor<Event> {
                 log.error("{} had a message update conflict for message {}", event.update.consumer, event.message);
             }
         });
-
-        dispatchingMonitor = builder.build();
     }
 
+    @SuppressWarnings("unchecked")
     public void onEvent(Event event) {
-        dispatchingMonitor.onEvent(event);
+        Monitor monitor = monitors.get(event.getClass());
+        if (monitor != null)
+            monitor.onEvent(event);
     }
 
     private <T extends Event> void add(final Class<T> eventType, final LoggingMonitor<T> monitor) {
-        builder.monitor(eventType, new Monitor<T>() {
+        monitors.put(eventType, new Monitor<T>() {
             final Logger log = LoggerFactory.getLogger(eventType);
 
             public void onEvent(T event) {
@@ -101,7 +103,6 @@ public final class Slf4jLoggingMonitor implements Monitor<Event> {
             }
         });
     }
-
 
     private abstract static class LoggingMonitor<T extends Event> {
         protected abstract void onEvent(T event, Logger log);

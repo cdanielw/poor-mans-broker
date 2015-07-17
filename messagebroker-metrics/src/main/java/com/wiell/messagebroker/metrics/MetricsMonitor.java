@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class MetricsMonitor implements Monitor {
+public class MetricsMonitor implements Monitor<Event> {
     private final MetricRegistry metrics;
     private final Map<String, Map<String, Long>> messageHandlingTimesByConsumerId = new ConcurrentHashMap<String, Map<String, Long>>();
     private Clock clock = new Clock.SystemClock();

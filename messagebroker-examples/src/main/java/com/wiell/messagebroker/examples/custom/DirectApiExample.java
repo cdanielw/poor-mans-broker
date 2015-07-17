@@ -42,13 +42,13 @@ public class DirectApiExample {
         final MessageQueue<char[]> queue = messageBroker.<char[]>queueBuilder("A queue")
                 .consumer(MessageConsumer.builder("Word Joiner", new CharacterJoiner())
                                 .timeout(10, SECONDS)
-                                .neverRetry()
-                                .workerCount(1)
+                                .retry(10, new ExponentialBackoff(1, MINUTES))
+                                .workerCount(4)
                 )
                 .consumer(MessageConsumer.builder("Word Counter", new CharacterCounter())
                                 .timeout(5, SECONDS)
-                                .retry(10, new ExponentialBackoff(1, MINUTES))
-                                .workerCount(5)
+                                .neverRetry()
+                                .workerCount(1)
                 )
                 .build();
 
@@ -100,7 +100,7 @@ public class DirectApiExample {
 
         private void sleep() {
             try {
-                Thread.sleep(random.nextInt(50));
+                Thread.sleep(random.nextInt(500));
             } catch (InterruptedException ignore) {
             }
         }

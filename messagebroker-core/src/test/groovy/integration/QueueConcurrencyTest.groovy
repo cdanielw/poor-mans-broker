@@ -5,10 +5,10 @@ import spock.lang.Specification
 class QueueConcurrencyTest extends Specification {
     @Delegate QueueTestDelegate queueTestDelegate = new QueueTestDelegate()
 
-    def messages = 1..20000
+    def messages = 1..1000
 
     def setup() {
-        workerCount = 5
+        workerCount = 4
         timeoutSecs = 5
     }
 

@@ -2,12 +2,12 @@ DROP TABLE IF EXISTS example_message_consumer;
 DROP TABLE IF EXISTS example_message;
 
 CREATE TABLE example_message (
-  id             VARCHAR(127) NOT NULL,
-  sequence_no    SERIAL,
-  published      TIMESTAMP    NOT NULL,
-  queue_id       VARCHAR(127) NOT NULL,
-  message_string TEXT,
-  message_bytes  BYTEA,
+  id               VARCHAR(127) NOT NULL,
+  sequence_no      SERIAL,
+  publication_time TIMESTAMP    NOT NULL,
+  queue_id         VARCHAR(127) NOT NULL,
+  message_string   TEXT,
+  message_bytes    BYTEA,
   PRIMARY KEY (id)
 );
 

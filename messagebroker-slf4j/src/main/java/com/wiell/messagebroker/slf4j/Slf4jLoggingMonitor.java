@@ -54,7 +54,14 @@ public final class Slf4jLoggingMonitor implements Monitor<Event> {
         });
         add(RetryingMessageConsumptionEvent.class, new LoggingMonitor<RetryingMessageConsumptionEvent>() {
             public void onEvent(RetryingMessageConsumptionEvent event, Logger log) {
-                log.warn("{} retrying ({}) to consume message {}", event.update.consumer, event.update.retries, event.message);
+                log.warn("{} retrying (#{}) to consume message {}", event.update.consumer, event.update.retries, event.message);
+            }
+        });
+        add(ThrottlingMessageRetryEvent.class, new LoggingMonitor<ThrottlingMessageRetryEvent>() {
+            public void onEvent(ThrottlingMessageRetryEvent event, Logger log) {
+                int delay = event.update.consumer.throttlingStrategy.determineDelayMillis(event.update.retries);
+                log.debug("{} throttling {} millis before retrying (#{}) to consume message {}",
+                        event.update.consumer, delay, event.update.retries, event.message);
             }
         });
         add(MessageConsumptionFailedEvent.class, new LoggingMonitor<MessageConsumptionFailedEvent>() {

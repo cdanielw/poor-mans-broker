@@ -74,6 +74,7 @@ final class Worker<T> {
 
     private synchronized void retry(Exception e) throws InterruptedException {
         updateRepo(update.retry(e.getMessage()));
+        monitors.onEvent(new ThrottlingMessageRetryEvent(update, message, e));
         throttler.throttle(update.retries, consumer, keepAlive);
         monitors.onEvent(new RetryingMessageConsumptionEvent(update, message, e));
     }

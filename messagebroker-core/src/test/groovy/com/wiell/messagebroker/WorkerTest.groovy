@@ -123,13 +123,26 @@ class WorkerTest extends Specification {
             monitor.eventTypes() == [ConsumingTimedOutMessageEvent, MessageConsumedEvent]
     }
 
+    def 'When retrying, monitors are passed a ThrottlingMessageRetryEvent'() {
+        def consumer = retryingConsumer(1, createFailingHandler(1, 'Error message'))
+
+        when:
+            consume(consumer)
+        then:
+            monitor.eventTypes() == [
+                    ConsumingNewMessageEvent,
+                    ThrottlingMessageRetryEvent,
+                    RetryingMessageConsumptionEvent,
+                    MessageConsumedEvent]
+    }
+
     void consume(MessageConsumer consumer) {
-        def update = MessageProcessingUpdate.create('queue id', consumer, messageId, PENDING, PROCESSING, 0, null, UUID.randomUUID().toString())
+        def update = MessageProcessingUpdate.create('queue id', consumer, messageId, 0, PENDING, PROCESSING, 0, null, UUID.randomUUID().toString())
         new Worker(repo, throttler, new Monitors([monitor]), update, message).consume()
     }
 
     void consumeTimedOut(MessageConsumer consumer) {
-        def update = MessageProcessingUpdate.create('queue id', consumer, messageId, PROCESSING, PROCESSING, 0, null, UUID.randomUUID().toString())
+        def update = MessageProcessingUpdate.create('queue id', consumer, messageId, 0, PROCESSING, PROCESSING, 0, null, UUID.randomUUID().toString())
         new Worker(repo, throttler, new Monitors([monitor]), update, message).consume()
     }
 

@@ -23,7 +23,9 @@ public final class InMemoryMessageRepository implements MessageRepository {
                 ConsumerMessages consumerMessages = consumerMessages(consumer);
                 String messageId = UUID.randomUUID().toString();
                 String fromVersionId = UUID.randomUUID().toString();
-                MessageProcessingUpdate<?> update = MessageProcessingUpdate.create(queueId, consumer, messageId, PENDING, PENDING, 0, null, fromVersionId);
+                long publicationTime = clock.millis();
+                MessageProcessingUpdate<?> update = MessageProcessingUpdate
+                        .create(queueId, consumer, messageId, publicationTime, PENDING, PENDING, 0, null, fromVersionId);
                 consumerMessages.add(new Message(update, serializedMessage));
             }
         }
@@ -109,7 +111,7 @@ public final class InMemoryMessageRepository implements MessageRepository {
 
         Message(MessageProcessingUpdate update, Object serializedMessage) {
             this.update = update;
-            this.timesOut = new Date(clock.millis() + update.consumer.timeUnit.toMillis(update.consumer.timeout));
+            this.timesOut = new Date(update.publicationTime + update.consumer.timeUnit.toMillis(update.consumer.timeout));
             this.serializedMessage = serializedMessage;
         }
 

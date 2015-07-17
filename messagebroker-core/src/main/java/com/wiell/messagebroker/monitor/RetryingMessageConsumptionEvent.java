@@ -3,7 +3,7 @@ package com.wiell.messagebroker.monitor;
 import com.wiell.messagebroker.MessageProcessingUpdate;
 
 public class RetryingMessageConsumptionEvent extends ConsumingMessageEvent {
-    private final Exception exception;
+    public final Exception exception;
 
     public RetryingMessageConsumptionEvent(MessageProcessingUpdate<?> update, Object message, Exception exception) {
         super(update, message);

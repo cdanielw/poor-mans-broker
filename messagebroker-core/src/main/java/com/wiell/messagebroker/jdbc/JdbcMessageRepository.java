@@ -58,7 +58,7 @@ public final class JdbcMessageRepository implements MessageRepository {
             throws SQLException {
         String messageId = UUID.randomUUID().toString();
         PreparedStatement ps = connection.prepareStatement("" +
-                "INSERT INTO " + tablePrefix + "message(id, published, queue_id, message_string, message_bytes)\n" +
+                "INSERT INTO " + tablePrefix + "message(id, publication_time, queue_id, message_string, message_bytes)\n" +
                 "VALUES(?, ?, ?, ?, ?)");
         ps.setString(1, messageId);
         ps.setTimestamp(2, new Timestamp(clock.millis()));
@@ -93,7 +93,7 @@ public final class JdbcMessageRepository implements MessageRepository {
     private void takeMessages(Connection connection, MessageConsumer<?> consumer, int maxCount, MessageCallback callback)
             throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
-                "SELECT queue_id, message_id, version_id, status, message_string, message_bytes, " +
+                "SELECT queue_id, message_id, publication_time, version_id, status, message_string, message_bytes, " +
                 "       times_out, retries, error_message \n" +
                 "FROM " + tablePrefix + "message_consumer mc\n" +
                 "JOIN " + tablePrefix + "message m ON mc.message_id = m.id\n" +
@@ -121,6 +121,7 @@ public final class JdbcMessageRepository implements MessageRepository {
     private void takeMessage(Connection connection, ResultSet rs, MessageConsumer<?> consumer, MessageCallback callback)
             throws SQLException {
         String queueId = rs.getString("queue_id");
+        Timestamp publicationTime = rs.getTimestamp("publication_time");
         Status fromStatus = Status.valueOf(rs.getString("status"));
         String messageId = rs.getString("message_id");
         String stringMessage = rs.getString("message_string");
@@ -129,8 +130,10 @@ public final class JdbcMessageRepository implements MessageRepository {
         String versionId = rs.getString("version_id");
         int retries = rs.getInt("retries");
         String errorMessage = rs.getString("error_message");
-        MessageProcessingUpdate update = MessageProcessingUpdate
-                .create(queueId, consumer, messageId, fromStatus, Status.PROCESSING, retries, errorMessage, versionId);
+        MessageProcessingUpdate update = MessageProcessingUpdate.create(
+                queueId, consumer, messageId, publicationTime.getTime(),
+                fromStatus, Status.PROCESSING, retries, errorMessage, versionId
+        );
         if (updateMessageProcessing(connection, update))
             callback.messageTaken(update, serializedMessage);
     }

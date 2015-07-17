@@ -18,7 +18,7 @@ class Slf4jLoggingMonitorTest extends Specification {
             MessageBrokerConfig.builder(new InMemoryMessageRepository(), NULL_TRANSACTION_SYNCHRONIZER)
     )
     static consumer = MessageConsumer.builder('consumer id', {} as MessageHandler).build()
-    static update = MessageProcessingUpdate.create('queue id', consumer, 'message id', PENDING, PROCESSING, 0, null, 'version id')
+    static update = MessageProcessingUpdate.create('queue id', consumer, 'message id', 0, PENDING, PROCESSING, 0, null, 'version id')
 
     def monitor = new Slf4jLoggingMonitor()
 
@@ -47,6 +47,7 @@ class Slf4jLoggingMonitorTest extends Specification {
             pollingForMessagesEvent            | TRACE | false
             consumingNewMessageEvent           | DEBUG | false
             consumingTimedOutMessageEvent      | INFO  | false
+            throttlingMessageRetryEvent        | DEBUG | false
             retryingMessageConsumptionEvent    | WARN  | false
             messageConsumptionFailedEvent      | ERROR | true
             messageKeptAliveEvent              | DEBUG | false
@@ -84,6 +85,10 @@ class Slf4jLoggingMonitorTest extends Specification {
 
     Event getConsumingTimedOutMessageEvent() {
         new ConsumingTimedOutMessageEvent(update, 'a message')
+    }
+
+    Event getThrottlingMessageRetryEvent() {
+        new ThrottlingMessageRetryEvent(update, 'a message', new RuntimeException())
     }
 
     Event getRetryingMessageConsumptionEvent() {

@@ -10,6 +10,7 @@ public final class MessageProcessingUpdate<T> {
     public final String queueId;
     public final MessageConsumer<T> consumer;
     public final String messageId;
+    public final long publicationTime;
     public final Status fromStatus;
     public final Status toStatus;
     public final int retries;
@@ -21,6 +22,7 @@ public final class MessageProcessingUpdate<T> {
             String queueId,
             MessageConsumer<T> consumer,
             String messageId,
+            long publicationTime,
             Status fromStatus,
             Status toStatus,
             int retries,
@@ -30,6 +32,7 @@ public final class MessageProcessingUpdate<T> {
         this.queueId = queueId;
         this.consumer = consumer;
         this.messageId = messageId;
+        this.publicationTime = publicationTime;
         this.fromStatus = fromStatus;
         this.toStatus = toStatus;
         this.retries = retries;
@@ -53,29 +56,30 @@ public final class MessageProcessingUpdate<T> {
             String queueId,
             MessageConsumer<T> consumer,
             String messageId,
+            long publicationTime,
             Status fromStatus,
             Status toStatus,
             int retries,
             String errorMessage,
             String fromVersionId) {
-        return new MessageProcessingUpdate<T>(queueId, consumer, messageId, fromStatus, toStatus, retries, errorMessage,
+        return new MessageProcessingUpdate<T>(queueId, consumer, messageId, publicationTime, fromStatus, toStatus, retries, errorMessage,
                 fromVersionId, newVersionId());
     }
 
     public MessageProcessingUpdate<T> processing() {
-        return create(queueId, consumer, messageId, toStatus, PROCESSING, retries, errorMessage, toVersionId);
+        return create(queueId, consumer, messageId, publicationTime, toStatus, PROCESSING, retries, errorMessage, toVersionId);
     }
 
     public MessageProcessingUpdate<T> completed() {
-        return create(queueId, consumer, messageId, toStatus, COMPLETED, retries, errorMessage, toVersionId);
+        return create(queueId, consumer, messageId, publicationTime, toStatus, COMPLETED, retries, errorMessage, toVersionId);
     }
 
     public MessageProcessingUpdate<T> retry(String errorMessage) {
-        return create(queueId, consumer, messageId, toStatus, PROCESSING, retries + 1, errorMessage, toVersionId);
+        return create(queueId, consumer, messageId, publicationTime, toStatus, PROCESSING, retries + 1, errorMessage, toVersionId);
     }
 
     public MessageProcessingUpdate<T> failed(String errorMessage) {
-        return create(queueId, consumer, messageId, toStatus, FAILED, retries, errorMessage, toVersionId);
+        return create(queueId, consumer, messageId, publicationTime, toStatus, FAILED, retries, errorMessage, toVersionId);
     }
 
     public String toString() {

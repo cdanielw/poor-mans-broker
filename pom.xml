@@ -19,7 +19,7 @@
 
     <modules>
         <module>messagebroker-core</module>
-        <module>messagebroker-monitor</module>
+        <module>messagebroker-metrics</module>
         <module>messagebroker-slf4j</module>
         <module>messagebroker-spring</module>
         <module>messagebroker-xstream</module>

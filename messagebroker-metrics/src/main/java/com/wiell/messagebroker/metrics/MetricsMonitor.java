@@ -44,17 +44,17 @@ public class MetricsMonitor implements Monitor<Event> {
 
     }
 
+    private void messageQueueCreated(MessageQueueCreatedEvent event) {
+        metrics.counter("queueCount").inc();
+        for (MessageConsumer<?> consumer : event.consumers)
+            messageHandlingTimesByConsumerId.put(consumer.id, new ConcurrentHashMap<String, Long>());
+    }
+
     private void messagePublished(MessagePublishedEvent event) {
         metrics.counter(event.queueId + ".messageCount").inc();
         metrics.meter(event.queueId + ".messageMeter").mark();
         for (String consumerId : consumerIds())
             metrics.counter(consumerId + ".queueSize").inc();
-    }
-
-    private void messageQueueCreated(MessageQueueCreatedEvent event) {
-        metrics.counter("queueCount").inc();
-        for (MessageConsumer<?> consumer : event.consumers)
-            messageHandlingTimesByConsumerId.put(consumer.id, new ConcurrentHashMap<String, Long>());
     }
 
     private void consumingNewMessage(ConsumingNewMessageEvent event) {

@@ -6,7 +6,15 @@ import com.thoughtworks.xstream.io.xml.StaxDriver;
 import com.wiell.messagebroker.MessageSerializer;
 
 public class XStreamMessageSerializer implements MessageSerializer {
-    private final XStream xstream = new XStream(new StaxDriver());
+    private final XStream xstream;
+
+    public XStreamMessageSerializer() {
+        xstream = new XStream(new StaxDriver());
+    }
+
+    public XStreamMessageSerializer(XStream xstream) {
+        this.xstream = xstream;
+    }
 
     public Object serialize(Object message) throws SerializationFailed {
         if (message == null)

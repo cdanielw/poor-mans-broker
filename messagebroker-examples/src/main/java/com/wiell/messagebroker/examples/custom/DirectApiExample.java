@@ -1,72 +1,107 @@
 package com.wiell.messagebroker.examples.custom;
 
+import com.codahale.metrics.ConsoleReporter;
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.MetricRegistry;
 import com.wiell.messagebroker.*;
+import com.wiell.messagebroker.ThrottlingStrategy.ExponentialBackoff;
 import com.wiell.messagebroker.examples.Database;
 import com.wiell.messagebroker.jdbc.JdbcMessageRepository;
+import com.wiell.messagebroker.metrics.MetricsMonitor;
 import com.wiell.messagebroker.slf4j.Slf4jLoggingMonitor;
 import com.wiell.messagebroker.xstream.XStreamMessageSerializer;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 
-import static com.wiell.messagebroker.ThrottlingStrategy.ExponentialBackoff;
+import static java.util.concurrent.TimeUnit.*;
 
 public class DirectApiExample {
     public static void main(String[] args) throws InterruptedException {
         Database database = new Database();
         SimpleConnectionManager connectionManager = new SimpleConnectionManager(database.getDataSource());
         JdbcMessageRepository messageRepository = new JdbcMessageRepository(connectionManager, "example_");
+        MetricRegistry metricRegistry = new MetricRegistry();
+
+        final JmxReporter jmxReporter = JmxReporter.forRegistry(metricRegistry).build();
+        jmxReporter.start();
+
+        final ConsoleReporter consoleReporter = ConsoleReporter.forRegistry(metricRegistry)
+                .convertRatesTo(SECONDS)
+                .convertDurationsTo(MILLISECONDS)
+                .build();
+        consoleReporter.start(1, MINUTES);
 
         PollingMessageBroker messageBroker = new PollingMessageBroker(
                 MessageBrokerConfig.builder(messageRepository, connectionManager)
                         .messageSerializer(new XStreamMessageSerializer())
                         .monitor(new Slf4jLoggingMonitor())
+                        .monitor(new MetricsMonitor(metricRegistry))
         ).start();
 
-        final MessageQueue<List<String>> queue = messageBroker.<List<String>>queueBuilder("A queue")
-                .consumer(MessageConsumer.builder("Word Joiner", new WordJoiner())
-                                .timeout(10, TimeUnit.SECONDS)
+        final MessageQueue<char[]> queue = messageBroker.<char[]>queueBuilder("A queue")
+                .consumer(MessageConsumer.builder("Word Joiner", new CharacterJoiner())
+                                .timeout(10, SECONDS)
                                 .neverRetry()
                                 .workerCount(1)
                 )
-                .consumer(MessageConsumer.builder("Word Counter", new WordCounter())
-                                .timeout(5, TimeUnit.SECONDS)
-                                .retry(10, new ExponentialBackoff(1, TimeUnit.MINUTES))
+                .consumer(MessageConsumer.builder("Word Counter", new CharacterCounter())
+                                .timeout(5, SECONDS)
+                                .retry(10, new ExponentialBackoff(1, MINUTES))
                                 .workerCount(5)
                 )
                 .build();
 
-        publishSomething(queue, connectionManager);
 
-        Thread.sleep(1000);
-        Thread.sleep(Long.MAX_VALUE);
+        Random random = new Random();
+        for (int i = 0; i < 1000000; i++) {
+            Thread.sleep(random.nextInt(1000));
+            publishSomething(queue, connectionManager);
+        }
 
         messageBroker.stop();
         database.stop();
     }
 
-    private static void publishSomething(final MessageQueue<List<String>> queue, TransactionManager transactionManager) {
+    private static void publishSomething(final MessageQueue<char[]> queue, TransactionManager transactionManager) {
         transactionManager.withTransaction(new Callable<Void>() {
             public Void call() throws Exception {
-                queue.publish(Arrays.asList("Lorem", "ipsum", "ipsum", "dolor", "sit", "amet"));
+                Random random = new Random();
+                int size = random.nextInt(100);
+                char[] chars = new char[size];
+                for (int i = 0; i < size; i++) {
+                    chars[i] = (char) (random.nextInt(26) + 'a');
+
+                }
+                queue.publish(chars);
                 return null;
             }
         });
     }
 
-    private static class WordJoiner implements MessageHandler<List<String>> {
-        public void handle(List<String> words) {
-            System.out.println("Count: " + words.size());
+    private static class CharacterCounter implements MessageHandler<char[]> {
+        public void handle(char[] chars) {
+            System.out.println("Count: " + chars.length);
         }
     }
 
-    private static class WordCounter implements KeepAliveMessageHandler<List<String>> {
-        public void handle(List<String> words, KeepAlive keepAlive) {
-            for (String word : words) {
-                System.out.println(word);
+    private static class CharacterJoiner implements KeepAliveMessageHandler<char[]> {
+        Random random = new Random();
+
+        public void handle(char[] chars, KeepAlive keepAlive) {
+            String result = "";
+            for (Character letter : chars) {
+                sleep();
+                result += letter + " ";
                 keepAlive.send();
+            }
+            System.out.println("Joint: " + result);
+        }
+
+        private void sleep() {
+            try {
+                Thread.sleep(random.nextInt(50));
+            } catch (InterruptedException ignore) {
             }
         }
     }

@@ -10,7 +10,7 @@ public final class MessageConsumer<M> {
     public final String id;
     public final int timeout;
     public final TimeUnit timeUnit;
-    public final int workerCount;
+    public final int messagesHandledInParallel;
     public final int maxRetries;
     public final ThrottlingStrategy throttlingStrategy;
     private final MessageHandler<M> handler;
@@ -20,7 +20,7 @@ public final class MessageConsumer<M> {
         id = builder.consumerId;
         timeout = builder.time;
         timeUnit = builder.timeUnit;
-        workerCount = builder.workerCount;
+        messagesHandledInParallel = builder.messagesHandledInParallel;
         handler = builder.handler;
         keepAliveHandler = builder.keepAliveHandler;
         maxRetries = builder.maxRetries;
@@ -55,7 +55,7 @@ public final class MessageConsumer<M> {
         private int time;
         private TimeUnit timeUnit;
         private ThrottlingStrategy throttlingStrategy;
-        private int workerCount = 1;
+        private int messagesHandledInParallel = 1;
         private int maxRetries;
 
         private Builder(String consumerId, MessageHandler<M> handler, KeepAliveMessageHandler<M> keepAliveHandler) {
@@ -74,18 +74,9 @@ public final class MessageConsumer<M> {
             return this;
         }
 
-        // TODO: workerCount makes it sound like multiple workers per message
-        // concurrentMessages
-        // messagesHandledInParallel
-        // maxMessageHandledInParallel
-        // messagesConsumedInParallel
-        // messagesConcurrentlyConsumed
-        // maxMessagesConcurrentlyConsumed
-        //
-
-        public Builder<M> workerCount(int workerCount) {
-            Is.greaterThenZero(workerCount, "workerCount must be greater then zero");
-            this.workerCount = workerCount;
+        public Builder<M> messagesHandledInParallel(int messagesHandledInParallel) {
+            Is.greaterThenZero(messagesHandledInParallel, "messagesHandledInParallel must be greater then zero");
+            this.messagesHandledInParallel = messagesHandledInParallel;
             return this;
         }
 

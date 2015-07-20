@@ -207,7 +207,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
 
     MessageConsumer consumer(String id, int workCount = Integer.MAX_VALUE) {
         MessageConsumer.builder(id, {} as MessageHandler)
-                .workerCount(workCount)
+                .messagesHandledInParallel(workCount)
                 .build()
     }
 

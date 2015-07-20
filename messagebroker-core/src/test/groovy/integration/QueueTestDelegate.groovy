@@ -18,7 +18,7 @@ class QueueTestDelegate {
                     .monitor(monitor)
     ).start()
 
-    int workerCount = 5
+    int messagesHandledInParallel = 5
     int handlerDelayMillis = 0
     int randomHandlerDelayMillis = 0
     int timeoutSecs = 1
@@ -30,7 +30,7 @@ class QueueTestDelegate {
     MessageQueue<Object> retryingQueue(int retries, TestHandler handler) {
         messageBroker.queueBuilder('queue', Object).consumer(
                 MessageConsumer.builder('consumer', handler)
-                        .workerCount(1)
+                        .messagesHandledInParallel(1)
                         .retry(retries, ThrottlingStrategy.NO_THROTTLING)
         ).build()
     }
@@ -47,11 +47,11 @@ class QueueTestDelegate {
         createHandler(1, handler)
     }
 
-    TestHandler createHandler(int workerCount = 1, Closure handler = null) {
+    TestHandler createHandler(int messagesHandledInParallel = 1, Closure handler = null) {
         new TestHandler(
                 handlerDelayMillis: handlerDelayMillis,
                 randomHandlerDelayMillis: randomHandlerDelayMillis,
-                workerCount: workerCount,
+                messagesHandledInParallel: messagesHandledInParallel,
                 timeoutSecs: timeoutSecs,
                 handler: handler
         )
@@ -60,19 +60,19 @@ class QueueTestDelegate {
     MessageQueue<Object> queue(TestHandler handler) {
         messageBroker.queueBuilder('queue', Object)
                 .consumer(MessageConsumer.builder('consumer', handler)
-                .workerCount(1))
+                .messagesHandledInParallel(1))
                 .build()
     }
 
     MessageQueue<Object> blockingQueue(TestHandler handler) {
-        def consumer = MessageConsumer.builder('blocking consumer', handler).workerCount(1)
+        def consumer = MessageConsumer.builder('blocking consumer', handler).messagesHandledInParallel(1)
         messageBroker.queueBuilder('blocking queue', Object)
                 .consumer(consumer)
                 .build()
     }
 
     MessageQueue<Object> nonBlockingQueue(TestHandler handler) {
-        def consumer = MessageConsumer.builder('non-blocking consumer', handler).workerCount(workerCount)
+        def consumer = MessageConsumer.builder('non-blocking consumer', handler).messagesHandledInParallel(messagesHandledInParallel)
         messageBroker.queueBuilder('blocking queue', Object)
                 .consumer(consumer)
                 .build()

@@ -12,7 +12,7 @@ class TestHandler<T> implements KeepAliveMessageHandler<T> {
     private final currentlyExecuting = new AtomicInteger()
     private final Random random = new Random()
     final ConcurrentHashMap<T, Boolean> messagesHandled = new ConcurrentHashMap()
-    int workerCount = 1
+    int messagesHandledInParallel = 1
     def handlerDelayMillis = 0
     def randomHandlerDelayMillis = 0
     int timeoutSecs = 5
@@ -20,8 +20,8 @@ class TestHandler<T> implements KeepAliveMessageHandler<T> {
 
     void handle(T message, KeepAlive keepAlive) {
         def value = currentlyExecuting.incrementAndGet()
-        if (value > workerCount)
-            throw new IllegalStateException("More than $workerCount handlers executing at the same time")
+        if (value > messagesHandledInParallel)
+            throw new IllegalStateException("More than $messagesHandledInParallel handlers executing at the same time")
 
         if (handler)
             invokeHandler(message, keepAlive)
@@ -29,8 +29,8 @@ class TestHandler<T> implements KeepAliveMessageHandler<T> {
         messagesHandled[message] = true
 
         def afterValue = currentlyExecuting.decrementAndGet()
-        if (afterValue >= workerCount)
-            throw new IllegalStateException("More than $workerCount handlers executing at the same time")
+        if (afterValue >= messagesHandledInParallel)
+            throw new IllegalStateException("More than $messagesHandledInParallel handlers executing at the same time")
     }
 
     private void invokeHandler(T message, KeepAlive keepAlive) {

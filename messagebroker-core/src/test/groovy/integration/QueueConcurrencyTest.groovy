@@ -8,7 +8,7 @@ class QueueConcurrencyTest extends Specification {
     def messages = 1..1000
 
     def setup() {
-        workerCount = 4
+        this.messagesHandledInParallel = 4
         timeoutSecs = 5
     }
 
@@ -49,7 +49,7 @@ class QueueConcurrencyTest extends Specification {
     }
 
     def 'All published messages are handled for a non-blocking queue'() {
-        def handler = createHandler(workerCount)
+        def handler = createHandler(this.messagesHandledInParallel)
         def queue = nonBlockingQueue(handler)
 
         when:
@@ -60,7 +60,7 @@ class QueueConcurrencyTest extends Specification {
     }
 
     def 'All, concurrently published, messages are handled for a non-blocking queue'() {
-        def handler = createHandler(workerCount)
+        def handler = createHandler(this.messagesHandledInParallel)
         def queue = nonBlockingQueue(handler)
 
         when:

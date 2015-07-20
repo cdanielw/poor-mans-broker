@@ -99,7 +99,7 @@ final class MessagePoller {
         for (Map.Entry<MessageConsumer<?>, AtomicInteger> entry : currentlyProcessingMessageCountByConsumer.entrySet()) {
             MessageConsumer<?> consumer = entry.getKey();
             int messageCount = entry.getValue().get();
-            int maxCount = consumer.workerCount - messageCount;
+            int maxCount = consumer.messagesHandledInParallel - messageCount;
             if (maxCount > 0)
                 maxCountByConsumer.put(consumer, maxCount);
         }

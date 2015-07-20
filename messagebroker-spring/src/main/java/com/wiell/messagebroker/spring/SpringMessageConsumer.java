@@ -12,7 +12,7 @@ public final class SpringMessageConsumer<T> implements InitializingBean {
     private final MessageConsumer.Builder<T> builder;
     private MessageConsumer<T> consumer;
 
-    private int workerCount = 1;
+    private int messagesHandledInParallel = 1;
     private Integer retries = null;
     private ThrottlingStrategy throttlingStrategy = new ThrottlingStrategy.ExponentialBackoff(1, TimeUnit.MINUTES);
     private int timeoutSeconds = 600;
@@ -37,8 +37,8 @@ public final class SpringMessageConsumer<T> implements InitializingBean {
         return consumer;
     }
 
-    public void setWorkerCount(int workerCount) {
-        this.workerCount = workerCount;
+    public void setMessagesHandledInParallel(int messagesHandledInParallel) {
+        this.messagesHandledInParallel = messagesHandledInParallel;
     }
 
     public void setRetries(Integer retries) {
@@ -54,9 +54,9 @@ public final class SpringMessageConsumer<T> implements InitializingBean {
     }
 
     public void afterPropertiesSet() throws Exception {
-        if (workerCount < 1)
-            throw new IllegalArgumentException("A consumer must have a workerCount of at least one");
-        builder.workerCount(workerCount);
+        if (messagesHandledInParallel < 1)
+            throw new IllegalArgumentException("A consumer must have a messagesHandledInParallel of at least one");
+        builder.messagesHandledInParallel(messagesHandledInParallel);
 
         ThrottlingStrategy actualThrottlingStrategy = throttlingStrategy == null
                 ? ThrottlingStrategy.NO_THROTTLING

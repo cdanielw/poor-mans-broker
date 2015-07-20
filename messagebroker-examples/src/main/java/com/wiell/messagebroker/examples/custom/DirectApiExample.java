@@ -43,12 +43,12 @@ public class DirectApiExample {
                 .consumer(MessageConsumer.builder("Word Joiner", new CharacterJoiner())
                                 .timeout(10, SECONDS)
                                 .retry(10, new ExponentialBackoff(1, MINUTES))
-                                .workerCount(4)
+                                .messagesHandledInParallel(4)
                 )
                 .consumer(MessageConsumer.builder("Word Counter", new CharacterCounter())
                                 .timeout(5, SECONDS)
                                 .neverRetry()
-                                .workerCount(1)
+                                .messagesHandledInParallel(1)
                 )
                 .build();
 

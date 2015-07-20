@@ -178,7 +178,7 @@ public final class JdbcMessageRepository implements MessageRepository {
             public Map<String, Integer> execute(Connection connection) throws SQLException {
                 PreparedStatement ps = connection.prepareStatement("" +
                         "SELECT consumer_id, count(*) queue_size\n" +
-                        "FROM MESSAGE_CONSUMER mc\n" +
+                        "FROM " + tablePrefix + "MESSAGE_CONSUMER mc\n" +
                         "WHERE (status = 'PENDING'\n" +
                         "OR (status = 'PROCESSING' AND times_out < ?))\n" +
                         "GROUP BY consumer_id");

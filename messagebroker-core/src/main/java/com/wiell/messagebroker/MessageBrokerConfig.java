@@ -14,16 +14,16 @@ public final class MessageBrokerConfig {
     final TransactionSynchronizer transactionSynchronizer;
     final MessageSerializer messageSerializer;
     final Monitors monitors;
-    final long abondonedJobsFinderPeriod;
-    final TimeUnit abondonedJobsFinderTimeUnit;
+    final long repositoryWatcherPollingPeriod;
+    final TimeUnit repositoryWatcherPollingTimeUnit;
 
     private MessageBrokerConfig(Builder builder) {
         this.messageRepository = builder.messageRepository;
         this.transactionSynchronizer = builder.transactionSynchronizer;
         this.messageSerializer = builder.messageSerializer;
         this.monitors = new Monitors(builder.monitors);
-        this.abondonedJobsFinderPeriod = builder.abondonedJobsFinderPeriod;
-        this.abondonedJobsFinderTimeUnit = builder.abondonedJobsFinderTimeUnit;
+        this.repositoryWatcherPollingPeriod = builder.repositoryWatcherPollingPeriod;
+        this.repositoryWatcherPollingTimeUnit = builder.repositoryWatcherPollingTimeUnit;
     }
 
     public String toString() {
@@ -47,8 +47,8 @@ public final class MessageBrokerConfig {
         private final TransactionSynchronizer transactionSynchronizer;
         private MessageSerializer messageSerializer = new ObjectSerializationMessageSerializer();
         private final List<Monitor<Event>> monitors = new ArrayList<Monitor<Event>>();
-        private long abondonedJobsFinderPeriod = 10;
-        private TimeUnit abondonedJobsFinderTimeUnit = TimeUnit.SECONDS;
+        private long repositoryWatcherPollingPeriod = 10;
+        private TimeUnit repositoryWatcherPollingTimeUnit = TimeUnit.SECONDS;
 
         private Builder(MessageRepository messageRepository, TransactionSynchronizer transactionSynchronizer) {
             this.messageRepository = messageRepository;
@@ -60,9 +60,9 @@ public final class MessageBrokerConfig {
             return this;
         }
 
-        public Builder abandonedJobsFinderSchedule(long period, TimeUnit timeUnit) {
-            this.abondonedJobsFinderPeriod = period;
-            this.abondonedJobsFinderTimeUnit = timeUnit;
+        public Builder repositoryWatcherPollingSchedule(long period, TimeUnit timeUnit) {
+            this.repositoryWatcherPollingPeriod = period;
+            this.repositoryWatcherPollingTimeUnit = timeUnit;
             return this;
         }
 

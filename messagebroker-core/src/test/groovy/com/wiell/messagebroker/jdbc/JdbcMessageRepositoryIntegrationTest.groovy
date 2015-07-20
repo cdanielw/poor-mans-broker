@@ -31,6 +31,5 @@ class JdbcMessageRepositoryIntegrationTest extends AbstractMessageRepositoryInte
             callback.gotNoMessages()
 
     }
-
 }
 

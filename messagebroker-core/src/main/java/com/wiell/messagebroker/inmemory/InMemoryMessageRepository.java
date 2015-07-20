@@ -39,6 +39,16 @@ public final class InMemoryMessageRepository implements MessageRepository {
         }
     }
 
+    public Map<String, Integer> messageQueueSizeByConsumerId() {
+        Map<String, Integer> sizeByConsumerId = new HashMap<String, Integer>();
+        for (Map.Entry<MessageConsumer<?>, ConsumerMessages> entry : consumerMessagesByConsumer.entrySet()) {
+            MessageConsumer<?> consumer = entry.getKey();
+            ConsumerMessages messages = entry.getValue();
+            sizeByConsumerId.put(consumer.id, messages.queueSize());
+        }
+        return sizeByConsumerId;
+    }
+
     private void takeForConsumer(MessageConsumer<?> consumer, Integer maxCount, MessageCallback callback) {
         ConsumerMessages messages = consumerMessages(consumer);
         if (messages == null)
@@ -93,7 +103,7 @@ public final class InMemoryMessageRepository implements MessageRepository {
             }
         }
 
-        public Message takePending() {
+        Message takePending() {
             for (Message message : messages) {
                 if (message.isPending() || message.timedOut()) {
                     message.processing();
@@ -101,6 +111,19 @@ public final class InMemoryMessageRepository implements MessageRepository {
                 }
             }
             return null;
+        }
+
+        int queueSize() {
+            int timedOutCount = 0;
+            int i = 0;
+            for (Message message : messages) {
+                if (message.isPending()) // When a message is pending means the rest if the messages are too
+                    return messages.size() - i + timedOutCount;
+                if (message.timedOut())
+                    timedOutCount++;
+                i++;
+            }
+            return timedOutCount;
         }
     }
 

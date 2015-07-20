@@ -2,16 +2,12 @@ package com.wiell.messagebroker;
 
 import com.wiell.messagebroker.monitor.MessagePublishedEvent;
 import com.wiell.messagebroker.monitor.MessageQueueCreatedEvent;
-import com.wiell.messagebroker.monitor.ScheduledMessagePollingFailedEvent;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 final class MessageQueueManager {
     private final MessageRepository repository;
@@ -19,14 +15,11 @@ final class MessageQueueManager {
     private final MessagePoller messagePoller;
     private final MessageSerializer messageSerializer;
     private final Monitors monitors;
-    private final ScheduledExecutorService abandonedJobsFinder = Executors.newSingleThreadScheduledExecutor(
-            NamedThreadFactory.singleThreadFactory("messagebroker.AbandonedJobsFinder")
-    );
-    private final long abondonedJobsFinderPeriod;
-    private final TimeUnit abondonedJobsFinderTimeOut;
 
     private final Map<String, List<MessageConsumer<?>>> consumersByQueueId = new ConcurrentHashMap<String, List<MessageConsumer<?>>>();
     private final Set<String> consumerIds = new HashSet<String>(); // For asserting global consumer id uniqueness
+
+    private final MessageRepositoryWatcher repositoryWatcher;
 
     public MessageQueueManager(MessageBrokerConfig config) {
         this.repository = config.messageRepository;
@@ -34,8 +27,7 @@ final class MessageQueueManager {
         this.messagePoller = new MessagePoller(repository, config.messageSerializer, config.monitors);
         this.messageSerializer = config.messageSerializer;
         this.monitors = config.monitors;
-        this.abondonedJobsFinderPeriod = config.abondonedJobsFinderPeriod;
-        this.abondonedJobsFinderTimeOut = config.abondonedJobsFinderTimeUnit;
+        this.repositoryWatcher = new MessageRepositoryWatcher(messagePoller, config);
     }
 
     <M> void publish(String queueId, M message) {
@@ -48,25 +40,18 @@ final class MessageQueueManager {
 
     void registerQueue(String queueId, List<MessageConsumer<?>> consumers) {
         assertConsumerUniqueness(consumers);
+        repositoryWatcher.includeQueue(queueId, consumers);
         consumersByQueueId.put(queueId, consumers);
         messagePoller.registerConsumers(consumers);
         monitors.onEvent(new MessageQueueCreatedEvent(queueId, consumers));
     }
 
     void start() {
-        abandonedJobsFinder.scheduleWithFixedDelay(new Runnable() {
-            public void run() {
-                try {
-                    messagePoller.poll();
-                } catch (Exception e) {
-                    monitors.onEvent(new ScheduledMessagePollingFailedEvent(e));
-                }
-            }
-        }, 0, abondonedJobsFinderPeriod, abondonedJobsFinderTimeOut);
+        repositoryWatcher.start();
     }
 
     void stop() {
-        ExecutorTerminator.shutdownAndAwaitTermination(abandonedJobsFinder);
+        repositoryWatcher.stop();
         messagePoller.stop();
     }
 

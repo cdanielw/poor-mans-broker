@@ -9,4 +9,6 @@ public interface MessageRepository {
     void take(Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageCallback callback) throws MessageRepositoryException;
 
     boolean update(MessageProcessingUpdate update) throws MessageRepositoryException;
+
+    Map<String,Integer> messageQueueSizeByConsumerId();
 }

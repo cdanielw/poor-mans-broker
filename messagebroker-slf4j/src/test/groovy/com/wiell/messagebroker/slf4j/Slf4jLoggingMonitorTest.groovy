@@ -38,21 +38,22 @@ class Slf4jLoggingMonitorTest extends Specification {
                 assert logEntry.throwable.orNull() != null
 
         where:
-            event                              | level | throwable
-            messageBrokerStartedEvent          | DEBUG | false
-            messageBrokerStoppedEvent          | DEBUG | false
-            messageQueueCreatedEvent           | DEBUG | false
-            scheduledMessagePollingFailedEvent | ERROR | false
-            messagePublishedEvent              | DEBUG | false
-            pollingForMessagesEvent            | TRACE | false
-            consumingNewMessageEvent           | DEBUG | false
-            consumingTimedOutMessageEvent      | INFO  | false
-            throttlingMessageRetryEvent        | DEBUG | false
-            retryingMessageConsumptionEvent    | WARN  | false
-            messageConsumptionFailedEvent      | ERROR | true
-            messageKeptAliveEvent              | DEBUG | false
-            messageConsumedEvent               | DEBUG | false
-            messageUpdateConflictEvent         | ERROR | false
+            event                                        | level | throwable
+            messageBrokerStartedEvent                    | DEBUG | false
+            messageBrokerStoppedEvent                    | DEBUG | false
+            messageQueueCreatedEvent                     | DEBUG | false
+            pollingForTimedOutMessagesFailedEvent        | ERROR | true
+            pollingForMessageQueueSizeChangesFailedEvent | ERROR | true
+            messagePublishedEvent                        | DEBUG | false
+            pollingForMessagesEvent                      | TRACE | false
+            consumingNewMessageEvent                     | DEBUG | false
+            consumingTimedOutMessageEvent                | INFO  | false
+            throttlingMessageRetryEvent                  | DEBUG | false
+            retryingMessageConsumptionEvent              | WARN  | false
+            messageConsumptionFailedEvent                | ERROR | true
+            messageKeptAliveEvent                        | DEBUG | false
+            messageConsumedEvent                         | DEBUG | false
+            messageUpdateConflictEvent                   | ERROR | false
     }
 
     Event getMessageBrokerStartedEvent() {
@@ -67,8 +68,12 @@ class Slf4jLoggingMonitorTest extends Specification {
         new MessageQueueCreatedEvent('queue id', [])
     }
 
-    Event getScheduledMessagePollingFailedEvent() {
-        new ScheduledMessagePollingFailedEvent(new RuntimeException())
+    Event getPollingForTimedOutMessagesFailedEvent() {
+        new PollingForTimedOutMessagesFailedEvent(new RuntimeException())
+    }
+
+    Event getPollingForMessageQueueSizeChangesFailedEvent() {
+        new PollingForMessageQueueSizeChangesFailedEvent(new RuntimeException())
     }
 
     Event getMessagePublishedEvent() {

@@ -12,6 +12,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.wiell.messagebroker.NamedThreadFactory.multipleThreadFactory;
+import static com.wiell.messagebroker.NamedThreadFactory.singleThreadFactory;
 import static com.wiell.messagebroker.Throttler.DefaultThrottler;
 
 final class MessagePoller {
@@ -25,21 +27,21 @@ final class MessagePoller {
     private ConcurrentHashMap<MessageConsumer<?>, AtomicInteger> currentlyProcessingMessageCountByConsumer =
             new ConcurrentHashMap<MessageConsumer<?>, AtomicInteger>();
 
-    public MessagePoller(MessageRepository repository, MessageSerializer messageSerializer, Monitors monitors) {
+    MessagePoller(MessageRepository repository, MessageSerializer messageSerializer, Monitors monitors) {
         this.repository = repository;
         this.messageSerializer = messageSerializer;
         this.monitors = monitors;
-        messageTaker = Executors.newSingleThreadExecutor(NamedThreadFactory.singleThreadFactory("messagebroker.MessageTaker"));
-        workerExecutor = Executors.newCachedThreadPool(NamedThreadFactory.multipleThreadFactory("messagebroker.WorkerExecutor"));
+        messageTaker = Executors.newSingleThreadExecutor(singleThreadFactory("messagebroker.MessageTaker"));
+        workerExecutor = Executors.newCachedThreadPool(multipleThreadFactory("messagebroker.WorkerExecutor"));
     }
 
-    public void registerConsumers(Collection<MessageConsumer<?>> consumers) {
+    void registerConsumers(Collection<MessageConsumer<?>> consumers) {
         for (MessageConsumer<?> consumer : consumers) {
             currentlyProcessingMessageCountByConsumer.put(consumer, new AtomicInteger());
         }
     }
 
-    public void poll() {
+    void poll() {
         messageTaker.execute(new Runnable() {
             public void run() {
                 takeMessages();
@@ -104,7 +106,7 @@ final class MessagePoller {
         return maxCountByConsumer;
     }
 
-    public void stop() {
+    void stop() {
         ExecutorTerminator.shutdownAndAwaitTermination(messageTaker, workerExecutor);
     }
 }

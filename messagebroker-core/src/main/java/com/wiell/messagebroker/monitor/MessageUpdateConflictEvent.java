@@ -10,4 +10,11 @@ public class MessageUpdateConflictEvent implements Event {
         this.update = update;
         this.message = message;
     }
+
+    public String toString() {
+        return "MessageUpdateConflictEvent{" +
+                "update=" + update +
+                ", message=" + message +
+                '}';
+    }
 }

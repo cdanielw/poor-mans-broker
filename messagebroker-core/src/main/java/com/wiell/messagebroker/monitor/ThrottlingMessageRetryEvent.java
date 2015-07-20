@@ -12,4 +12,12 @@ public class ThrottlingMessageRetryEvent implements Event {
         this.message = message;
         this.exception = exception;
     }
+
+    public String toString() {
+        return "ThrottlingMessageRetryEvent{" +
+                "update=" + update +
+                ", message=" + message +
+                ", exception=" + exception +
+                '}';
+    }
 }

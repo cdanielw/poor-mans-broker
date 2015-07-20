@@ -6,6 +6,7 @@ import com.wiell.messagebroker.util.Clock;
 
 import java.io.ByteArrayInputStream;
 import java.sql.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -168,6 +169,27 @@ public final class JdbcMessageRepository implements MessageRepository {
         return withConnection(new ConnectionCallback<Boolean>() {
             public Boolean execute(Connection connection) throws SQLException {
                 return updateMessageProcessing(connection, update);
+            }
+        });
+    }
+
+    public Map<String, Integer> messageQueueSizeByConsumerId() {
+        return withConnection(new ConnectionCallback<Map<String, Integer>>() {
+            public Map<String, Integer> execute(Connection connection) throws SQLException {
+                PreparedStatement ps = connection.prepareStatement("" +
+                        "SELECT consumer_id, count(*) queue_size\n" +
+                        "FROM MESSAGE_CONSUMER mc\n" +
+                        "WHERE (status = 'PENDING'\n" +
+                        "OR (status = 'PROCESSING' AND times_out < ?))\n" +
+                        "GROUP BY consumer_id");
+                ps.setTimestamp(1, new Timestamp(clock.millis()));
+                ResultSet rs = ps.executeQuery();
+                Map<String, Integer> sizeByConsumerId = new HashMap<String, Integer>();
+                while (rs.next())
+                    sizeByConsumerId.put(rs.getString("consumer_id"), rs.getInt("queue_size"));
+                rs.close();
+                ps.close();
+                return sizeByConsumerId;
             }
         });
     }

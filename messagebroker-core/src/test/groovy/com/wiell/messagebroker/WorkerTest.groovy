@@ -136,6 +136,7 @@ class WorkerTest extends Specification {
                     MessageConsumedEvent]
     }
 
+
     void consume(MessageConsumer consumer) {
         def update = MessageProcessingUpdate.create('queue id', consumer, messageId, 0, PENDING, PROCESSING, 0, null, UUID.randomUUID().toString())
         new Worker(repo, throttler, new Monitors([monitor]), update, message).consume()
@@ -171,6 +172,10 @@ class WorkerTest extends Specification {
             updates << update
             versionIdsChainTogether()
             return true
+        }
+
+        Map<String, Integer> messageQueueSizeByConsumerId() {
+            return Collections.EMPTY_MAP;
         }
 
         private void versionIdsChainTogether() {

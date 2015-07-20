@@ -147,6 +147,55 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
     }
 
 
+    def 'Given two consumers and no messages, message queue sizes are empty'() {
+        consumer('consumer 1')
+        consumer('consumer 2')
+        expect:
+            repository.messageQueueSizeByConsumerId().isEmpty()
+    }
+
+    def 'Given two consumers and a message for first, two for second, message queue sizes are 1 and 2'() {
+        def consumer1 = consumer('consumer 1')
+        addMessage('message', consumer1)
+
+        def consumer2 = consumer('consumer 2')
+        addMessage('message', consumer2)
+        addMessage('message', consumer2)
+        expect:
+            repository.messageQueueSizeByConsumerId() == [
+                    'consumer 1': 1,
+                    'consumer 2': 2
+            ]
+    }
+
+    def 'Given two messages where one is taken, queue size is 1'() {
+        def consumer = consumer('consumer')
+        addMessage('A message', consumer)
+        addMessage('Another message', consumer)
+        take((consumer): 1)
+
+        expect:
+            repository.messageQueueSizeByConsumerId() == [
+                    'consumer': 1
+            ]
+    }
+
+
+    def 'Given two messages where one is timed out, queue size is 2'() {
+        def consumer = consumer('consumer')
+
+        clock.inThePast(consumer.timeout + 1, consumer.timeUnit) {
+            addMessage('A message', consumer)
+            addMessage('Another message', consumer)
+            takeWithoutCallback((consumer): 1)
+        }
+
+        expect:
+            repository.messageQueueSizeByConsumerId() == [
+                    'consumer': 2
+            ]
+    }
+
     void take(Map<MessageConsumer, Integer> maxCountbyConsumer) {
         repository.take(maxCountbyConsumer, callback)
     }

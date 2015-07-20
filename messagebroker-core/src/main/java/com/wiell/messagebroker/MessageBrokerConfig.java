@@ -7,18 +7,23 @@ import com.wiell.messagebroker.util.Is;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public final class MessageBrokerConfig {
     final MessageRepository messageRepository;
     final TransactionSynchronizer transactionSynchronizer;
     final MessageSerializer messageSerializer;
     final Monitors monitors;
+    final long abondonedJobsFinderPeriod;
+    final TimeUnit abondonedJobsFinderTimeUnit;
 
     private MessageBrokerConfig(Builder builder) {
         this.messageRepository = builder.messageRepository;
         this.transactionSynchronizer = builder.transactionSynchronizer;
         this.messageSerializer = builder.messageSerializer;
         this.monitors = new Monitors(builder.monitors);
+        this.abondonedJobsFinderPeriod = builder.abondonedJobsFinderPeriod;
+        this.abondonedJobsFinderTimeUnit = builder.abondonedJobsFinderTimeUnit;
     }
 
     public String toString() {
@@ -42,6 +47,8 @@ public final class MessageBrokerConfig {
         private final TransactionSynchronizer transactionSynchronizer;
         private MessageSerializer messageSerializer = new ObjectSerializationMessageSerializer();
         private final List<Monitor<Event>> monitors = new ArrayList<Monitor<Event>>();
+        private long abondonedJobsFinderPeriod;
+        private TimeUnit abondonedJobsFinderTimeUnit;
 
         private Builder(MessageRepository messageRepository, TransactionSynchronizer transactionSynchronizer) {
             this.messageRepository = messageRepository;
@@ -50,6 +57,12 @@ public final class MessageBrokerConfig {
 
         public Builder messageSerializer(MessageSerializer messageSerializer) {
             this.messageSerializer = messageSerializer;
+            return this;
+        }
+
+        public Builder abandonedJobsFinderSchedule(long period, TimeUnit timeUnit) {
+            this.abondonedJobsFinderPeriod = period;
+            this.abondonedJobsFinderTimeUnit = timeUnit;
             return this;
         }
 

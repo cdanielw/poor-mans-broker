@@ -19,9 +19,11 @@ final class MessageQueueManager {
     private final MessagePoller messagePoller;
     private final MessageSerializer messageSerializer;
     private final Monitors monitors;
-    private final ScheduledExecutorService pollingScheduler = Executors.newSingleThreadScheduledExecutor(
-            NamedThreadFactory.singleThreadFactory("messagebroker.PollingScheduler")
+    private final ScheduledExecutorService abandonedJobsFinder = Executors.newSingleThreadScheduledExecutor(
+            NamedThreadFactory.singleThreadFactory("messagebroker.AbandonedJobsFinder")
     );
+    private final long abondonedJobsFinderPeriod;
+    private final TimeUnit abondonedJobsFinderTimeOut;
 
     private final Map<String, List<MessageConsumer<?>>> consumersByQueueId = new ConcurrentHashMap<String, List<MessageConsumer<?>>>();
     private final Set<String> consumerIds = new HashSet<String>(); // For asserting global consumer id uniqueness
@@ -32,6 +34,8 @@ final class MessageQueueManager {
         this.messagePoller = new MessagePoller(repository, config.messageSerializer, config.monitors);
         this.messageSerializer = config.messageSerializer;
         this.monitors = config.monitors;
+        this.abondonedJobsFinderPeriod = config.abondonedJobsFinderPeriod;
+        this.abondonedJobsFinderTimeOut = config.abondonedJobsFinderTimeUnit;
     }
 
     <M> void publish(String queueId, M message) {
@@ -50,7 +54,7 @@ final class MessageQueueManager {
     }
 
     void start() {
-        pollingScheduler.scheduleWithFixedDelay(new Runnable() {
+        abandonedJobsFinder.scheduleWithFixedDelay(new Runnable() {
             public void run() {
                 try {
                     messagePoller.poll();
@@ -58,11 +62,11 @@ final class MessageQueueManager {
                     monitors.onEvent(new ScheduledMessagePollingFailedEvent(e));
                 }
             }
-        }, 0, 10, TimeUnit.SECONDS);
+        }, 0, abondonedJobsFinderPeriod, abondonedJobsFinderTimeOut);
     }
 
     void stop() {
-        ExecutorTerminator.shutdownAndAwaitTermination(pollingScheduler);
+        ExecutorTerminator.shutdownAndAwaitTermination(abandonedJobsFinder);
         messagePoller.stop();
     }
 

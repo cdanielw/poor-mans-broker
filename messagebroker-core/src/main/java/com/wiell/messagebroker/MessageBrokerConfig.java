@@ -47,8 +47,8 @@ public final class MessageBrokerConfig {
         private final TransactionSynchronizer transactionSynchronizer;
         private MessageSerializer messageSerializer = new ObjectSerializationMessageSerializer();
         private final List<Monitor<Event>> monitors = new ArrayList<Monitor<Event>>();
-        private long abondonedJobsFinderPeriod;
-        private TimeUnit abondonedJobsFinderTimeUnit;
+        private long abondonedJobsFinderPeriod = 10;
+        private TimeUnit abondonedJobsFinderTimeUnit = TimeUnit.SECONDS;
 
         private Builder(MessageRepository messageRepository, TransactionSynchronizer transactionSynchronizer) {
             this.messageRepository = messageRepository;

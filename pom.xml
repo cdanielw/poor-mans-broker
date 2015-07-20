@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.wiell.messagebroker</groupId>
-    <artifactId>messagebroker</artifactId>
+    <groupId>org.openforis.rmb</groupId>
+    <artifactId>repository-message-broker</artifactId>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
@@ -18,12 +18,12 @@
     </properties>
 
     <modules>
-        <module>messagebroker-core</module>
-        <module>messagebroker-metrics</module>
-        <module>messagebroker-slf4j</module>
-        <module>messagebroker-spring</module>
-        <module>messagebroker-xstream</module>
-        <module>messagebroker-examples</module>
+        <module>repository-message-broker-core</module>
+        <module>repository-message-broker-metrics</module>
+        <module>repository-message-broker-slf4j</module>
+        <module>repository-message-broker-spring</module>
+        <module>repository-message-broker-xstream</module>
+        <module>repository-message-broker-examples</module>
     </modules>
 
     <dependencies>

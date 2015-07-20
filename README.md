@@ -1,2 +1,2 @@
-poor-mans-broker
+Repository Message Broker
 ================

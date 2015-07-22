@@ -1,6 +1,6 @@
 package org.openforis.rmb.messagebroker.monitor;
 
-import org.openforis.rmb.messagebroker.MessageProcessingUpdate;
+import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate;
 
 public class MessageUpdateConflictEvent implements Event {
     public final MessageProcessingUpdate<?> update;

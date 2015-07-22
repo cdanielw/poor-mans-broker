@@ -1,4 +1,4 @@
-package org.openforis.rmb.messagebroker;
+package org.openforis.rmb.messagebroker.spi;
 
 public interface MessageSerializer {
     Object serialize(Object message) throws SerializationFailed;

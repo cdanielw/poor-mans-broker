@@ -1,11 +1,12 @@
 package org.openforis.rmb.messagebroker.inmemory;
 
-import org.openforis.rmb.messagebroker.*;
+import org.openforis.rmb.messagebroker.MessageConsumer;
+import org.openforis.rmb.messagebroker.spi.*;
 import org.openforis.rmb.messagebroker.util.Clock;
 
 import java.util.*;
 
-import static org.openforis.rmb.messagebroker.MessageProcessingUpdate.Status.*;
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status.*;
 
 public final class InMemoryMessageRepository implements MessageRepository {
     private final Object lock = new Object();
@@ -22,10 +23,9 @@ public final class InMemoryMessageRepository implements MessageRepository {
             for (MessageConsumer<?> consumer : consumers) {
                 ConsumerMessages consumerMessages = consumerMessages(consumer);
                 String messageId = UUID.randomUUID().toString();
-                String fromVersionId = UUID.randomUUID().toString();
                 long publicationTime = clock.millis();
                 MessageProcessingUpdate<?> update = MessageProcessingUpdate
-                        .create(queueId, consumer, messageId, publicationTime, PENDING, PENDING, 0, null, fromVersionId);
+                        .createNew(consumer, new MessageDetails(queueId, messageId, publicationTime));
                 consumerMessages.add(new Message(update, serializedMessage));
             }
         }

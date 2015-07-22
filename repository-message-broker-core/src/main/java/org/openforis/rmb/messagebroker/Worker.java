@@ -1,6 +1,8 @@
 package org.openforis.rmb.messagebroker;
 
 import org.openforis.rmb.messagebroker.monitor.*;
+import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate;
+import org.openforis.rmb.messagebroker.spi.MessageRepository;
 
 @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
 final class Worker<T> {

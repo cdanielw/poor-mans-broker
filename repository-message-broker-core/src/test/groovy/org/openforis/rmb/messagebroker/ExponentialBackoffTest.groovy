@@ -4,7 +4,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
-import static org.openforis.rmb.messagebroker.ThrottlingStrategy.ExponentialBackoff
+import static org.openforis.rmb.messagebroker.spi.ThrottlingStrategy.ExponentialBackoff
 
 class ExponentialBackoffTest extends Specification {
     def oneMinute = TimeUnit.MINUTES.toMillis(1)

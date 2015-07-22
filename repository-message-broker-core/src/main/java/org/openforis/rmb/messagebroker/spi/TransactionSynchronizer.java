@@ -1,4 +1,4 @@
-package org.openforis.rmb.messagebroker;
+package org.openforis.rmb.messagebroker.spi;
 
 public interface TransactionSynchronizer {
     TransactionSynchronizer NULL_TRANSACTION_SYNCHRONIZER = new TransactionSynchronizer() {

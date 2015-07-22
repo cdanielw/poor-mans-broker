@@ -1,16 +1,21 @@
 package org.openforis.rmb.messagebroker.slf4j
 
-import org.openforis.rmb.messagebroker.*
+import org.openforis.rmb.messagebroker.MessageBrokerConfig
+import org.openforis.rmb.messagebroker.MessageConsumer
+import org.openforis.rmb.messagebroker.MessageHandler
+import org.openforis.rmb.messagebroker.RepositoryMessageBroker
 import org.openforis.rmb.messagebroker.inmemory.InMemoryMessageRepository
 import org.openforis.rmb.messagebroker.monitor.*
+import org.openforis.rmb.messagebroker.spi.MessageDetails
+import org.openforis.rmb.messagebroker.spi.MessageProcessingStatus
+import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate
 import spock.lang.Specification
 import spock.lang.Unroll
 import uk.org.lidalia.slf4jtest.TestLogger
 import uk.org.lidalia.slf4jtest.TestLoggerFactory
 
-import static org.openforis.rmb.messagebroker.MessageProcessingUpdate.Status.PENDING
-import static org.openforis.rmb.messagebroker.MessageProcessingUpdate.Status.PROCESSING
-import static org.openforis.rmb.messagebroker.TransactionSynchronizer.NULL_TRANSACTION_SYNCHRONIZER
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status.PENDING
+import static org.openforis.rmb.messagebroker.spi.TransactionSynchronizer.NULL_TRANSACTION_SYNCHRONIZER
 import static uk.org.lidalia.slf4jext.Level.*
 
 class Slf4jLoggingMonitorTest extends Specification {
@@ -18,7 +23,9 @@ class Slf4jLoggingMonitorTest extends Specification {
             MessageBrokerConfig.builder(new InMemoryMessageRepository(), NULL_TRANSACTION_SYNCHRONIZER)
     )
     static consumer = MessageConsumer.builder('consumer id', {} as MessageHandler).build()
-    static update = MessageProcessingUpdate.create('queue id', consumer, 'message id', 0, PENDING, PROCESSING, 0, null, 'version id')
+    static update = MessageProcessingUpdate.take(consumer,
+            new MessageDetails('queue id', 'message id', 0),
+            new MessageProcessingStatus(PENDING, 0, null))
 
     def monitor = new Slf4jLoggingMonitor()
 

@@ -2,11 +2,12 @@ package org.openforis.rmb.messagebroker
 
 import integration.QueueTestDelegate
 import org.openforis.rmb.messagebroker.monitor.*
+import org.openforis.rmb.messagebroker.spi.*
 import spock.lang.Specification
 import util.CollectingMonitor
 import util.TestHandler
 
-import static org.openforis.rmb.messagebroker.MessageProcessingUpdate.Status.*
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status.*
 
 class WorkerTest extends Specification {
     @SuppressWarnings("GroovyUnusedDeclaration")
@@ -138,13 +139,19 @@ class WorkerTest extends Specification {
 
 
     void consume(MessageConsumer consumer) {
-        def update = MessageProcessingUpdate.create('queue id', consumer, messageId, 0, PENDING, PROCESSING, 0, null, UUID.randomUUID().toString())
+        MessageProcessingUpdate update = takeUpdate(consumer, PENDING)
         new Worker(repo, throttler, new Monitors([monitor]), update, message).consume()
     }
 
     void consumeTimedOut(MessageConsumer consumer) {
-        def update = MessageProcessingUpdate.create('queue id', consumer, messageId, 0, PROCESSING, PROCESSING, 0, null, UUID.randomUUID().toString())
+        def update = takeUpdate(consumer, PROCESSING)
         new Worker(repo, throttler, new Monitors([monitor]), update, message).consume()
+    }
+
+    MessageProcessingUpdate takeUpdate(MessageConsumer consumer, MessageProcessingUpdate.Status fromState) {
+        return MessageProcessingUpdate.take(consumer,
+                new MessageDetails('queue id', messageId, 0),
+                new MessageProcessingStatus(fromState, 0, null))
     }
 
     MessageConsumer consumer(TestHandler handler) {

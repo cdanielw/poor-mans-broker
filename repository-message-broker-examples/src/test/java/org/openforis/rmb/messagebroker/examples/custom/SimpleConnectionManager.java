@@ -1,8 +1,8 @@
 package org.openforis.rmb.messagebroker.examples.custom;
 
-import org.openforis.rmb.messagebroker.TransactionSynchronizer;
 import org.openforis.rmb.messagebroker.examples.DatabaseException;
 import org.openforis.rmb.messagebroker.jdbc.JdbcConnectionManager;
+import org.openforis.rmb.messagebroker.spi.TransactionSynchronizer;
 
 import javax.sql.DataSource;
 import java.sql.Connection;

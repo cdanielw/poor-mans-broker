@@ -1,6 +1,6 @@
 package org.openforis.rmb.messagebroker.spring;
 
-import org.openforis.rmb.messagebroker.TransactionSynchronizer;
+import org.openforis.rmb.messagebroker.spi.TransactionSynchronizer;
 import org.springframework.jdbc.datasource.ConnectionHolder;
 import org.springframework.jdbc.datasource.DelegatingDataSource;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;

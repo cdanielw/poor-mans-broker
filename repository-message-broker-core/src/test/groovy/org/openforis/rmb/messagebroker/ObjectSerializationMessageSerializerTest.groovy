@@ -1,6 +1,7 @@
 package org.openforis.rmb.messagebroker
 
 import org.openforis.rmb.messagebroker.objectserialization.ObjectSerializationMessageSerializer
+import org.openforis.rmb.messagebroker.spi.MessageSerializer
 import spock.lang.Specification
 import spock.lang.Unroll
 

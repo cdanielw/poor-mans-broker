@@ -1,11 +1,14 @@
 package org.openforis.rmb.messagebroker
 
+import org.openforis.rmb.messagebroker.spi.MessageCallback
+import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate
+import org.openforis.rmb.messagebroker.spi.MessageRepository
 import spock.lang.Specification
 import util.AdjustableClock
 
 import static groovyx.gpars.GParsPool.withPool
-import static org.openforis.rmb.messagebroker.MessageProcessingUpdate.Status.PENDING
-import static org.openforis.rmb.messagebroker.MessageProcessingUpdate.Status.PROCESSING
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status.PENDING
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status.PROCESSING
 
 abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
     def callback = new MockCallback()

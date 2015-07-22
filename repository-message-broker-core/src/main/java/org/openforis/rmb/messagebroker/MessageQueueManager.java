@@ -2,6 +2,9 @@ package org.openforis.rmb.messagebroker;
 
 import org.openforis.rmb.messagebroker.monitor.MessagePublishedEvent;
 import org.openforis.rmb.messagebroker.monitor.MessageQueueCreatedEvent;
+import org.openforis.rmb.messagebroker.spi.MessageRepository;
+import org.openforis.rmb.messagebroker.spi.MessageSerializer;
+import org.openforis.rmb.messagebroker.spi.TransactionSynchronizer;
 
 import java.util.HashSet;
 import java.util.List;

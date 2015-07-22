@@ -1,6 +1,7 @@
 package org.openforis.rmb.messagebroker;
 
 import org.openforis.rmb.messagebroker.monitor.MessageQueueSizeChangedEvent;
+import org.openforis.rmb.messagebroker.spi.MessageRepository;
 
 import java.util.List;
 import java.util.Map;

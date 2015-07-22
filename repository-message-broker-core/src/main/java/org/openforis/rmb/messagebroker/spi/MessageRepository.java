@@ -1,4 +1,6 @@
-package org.openforis.rmb.messagebroker;
+package org.openforis.rmb.messagebroker.spi;
+
+import org.openforis.rmb.messagebroker.MessageConsumer;
 
 import java.util.List;
 import java.util.Map;

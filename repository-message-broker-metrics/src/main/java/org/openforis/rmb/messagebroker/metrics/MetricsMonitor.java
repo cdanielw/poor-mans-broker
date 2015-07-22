@@ -4,8 +4,8 @@ package org.openforis.rmb.messagebroker.metrics;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import org.openforis.rmb.messagebroker.MessageConsumer;
-import org.openforis.rmb.messagebroker.MessageProcessingUpdate;
 import org.openforis.rmb.messagebroker.monitor.*;
+import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate;
 import org.openforis.rmb.messagebroker.util.Clock;
 
 import java.util.Map;

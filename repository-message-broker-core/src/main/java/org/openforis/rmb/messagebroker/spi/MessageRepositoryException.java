@@ -1,4 +1,4 @@
-package org.openforis.rmb.messagebroker;
+package org.openforis.rmb.messagebroker.spi;
 
 public class MessageRepositoryException extends RuntimeException {
     public MessageRepositoryException(Exception cause) {

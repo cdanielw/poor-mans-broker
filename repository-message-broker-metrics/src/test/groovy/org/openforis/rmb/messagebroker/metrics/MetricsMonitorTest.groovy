@@ -3,12 +3,14 @@ package org.openforis.rmb.messagebroker.metrics
 import com.codahale.metrics.MetricRegistry
 import org.openforis.rmb.messagebroker.MessageConsumer
 import org.openforis.rmb.messagebroker.MessageHandler
-import org.openforis.rmb.messagebroker.MessageProcessingUpdate
 import org.openforis.rmb.messagebroker.monitor.*
+import org.openforis.rmb.messagebroker.spi.MessageDetails
+import org.openforis.rmb.messagebroker.spi.MessageProcessingStatus
+import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate
 import org.openforis.rmb.messagebroker.util.Clock
 import spock.lang.Specification
 
-import static org.openforis.rmb.messagebroker.MessageProcessingUpdate.Status.FAILED
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status.FAILED
 
 class MetricsMonitorTest extends Specification {
     def metrics = new MetricRegistry()
@@ -207,7 +209,9 @@ class MetricsMonitorTest extends Specification {
     }
 
     private MessageProcessingUpdate update(String consumerId) {
-        MessageProcessingUpdate.create('someQueueId', consumer(consumerId), 'messageId', publicationTime, FAILED, FAILED, 0, null, 'fromVersionId')
+        MessageProcessingUpdate.create(consumer(consumerId), new MessageDetails('someQueueId', 'messageId', publicationTime),
+                new MessageProcessingStatus(FAILED, 0, null, 'fromVersionId'),
+                new MessageProcessingStatus(FAILED, 0, null))
     }
 
     MessageConsumer consumer(String consumerId) {

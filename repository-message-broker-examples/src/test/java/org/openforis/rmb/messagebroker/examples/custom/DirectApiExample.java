@@ -4,11 +4,11 @@ import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import org.openforis.rmb.messagebroker.*;
-import org.openforis.rmb.messagebroker.ThrottlingStrategy.ExponentialBackoff;
 import org.openforis.rmb.messagebroker.examples.Database;
 import org.openforis.rmb.messagebroker.jdbc.JdbcMessageRepository;
 import org.openforis.rmb.messagebroker.metrics.MetricsMonitor;
 import org.openforis.rmb.messagebroker.slf4j.Slf4jLoggingMonitor;
+import org.openforis.rmb.messagebroker.spi.ThrottlingStrategy.ExponentialBackoff;
 import org.openforis.rmb.messagebroker.xstream.XStreamMessageSerializer;
 
 import java.util.Random;

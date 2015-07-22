@@ -3,7 +3,7 @@ package org.openforis.rmb.messagebroker.xstream;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.XStreamException;
 import com.thoughtworks.xstream.io.xml.StaxDriver;
-import org.openforis.rmb.messagebroker.MessageSerializer;
+import org.openforis.rmb.messagebroker.spi.MessageSerializer;
 
 public class XStreamMessageSerializer implements MessageSerializer {
     private final XStream xstream;

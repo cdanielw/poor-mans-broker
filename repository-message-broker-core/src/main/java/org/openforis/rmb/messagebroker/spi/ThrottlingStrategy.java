@@ -1,4 +1,4 @@
-package org.openforis.rmb.messagebroker;
+package org.openforis.rmb.messagebroker.spi;
 
 import java.util.concurrent.TimeUnit;
 

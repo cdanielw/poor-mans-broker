@@ -2,11 +2,12 @@ package integration
 
 import org.openforis.rmb.messagebroker.*
 import org.openforis.rmb.messagebroker.inmemory.InMemoryMessageRepository
+import org.openforis.rmb.messagebroker.spi.ThrottlingStrategy
 import util.CollectingMonitor
 import util.TestHandler
 
-import static TransactionSynchronizer.NULL_TRANSACTION_SYNCHRONIZER
 import static groovyx.gpars.GParsPool.withPool
+import static org.openforis.rmb.messagebroker.spi.TransactionSynchronizer.NULL_TRANSACTION_SYNCHRONIZER
 
 class QueueTestDelegate {
     CollectingMonitor monitor = new CollectingMonitor()

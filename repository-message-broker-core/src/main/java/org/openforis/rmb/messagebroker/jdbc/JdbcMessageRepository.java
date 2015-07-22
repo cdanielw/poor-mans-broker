@@ -1,7 +1,8 @@
 package org.openforis.rmb.messagebroker.jdbc;
 
-import org.openforis.rmb.messagebroker.*;
-import org.openforis.rmb.messagebroker.MessageProcessingUpdate.Status;
+import org.openforis.rmb.messagebroker.MessageConsumer;
+import org.openforis.rmb.messagebroker.spi.*;
+import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status;
 import org.openforis.rmb.messagebroker.util.Clock;
 
 import java.io.ByteArrayInputStream;
@@ -131,10 +132,9 @@ public final class JdbcMessageRepository implements MessageRepository {
         String versionId = rs.getString("version_id");
         int retries = rs.getInt("retries");
         String errorMessage = rs.getString("error_message");
-        MessageProcessingUpdate update = MessageProcessingUpdate.create(
-                queueId, consumer, messageId, publicationTime.getTime(),
-                fromStatus, Status.PROCESSING, retries, errorMessage, versionId
-        );
+        MessageProcessingUpdate update = MessageProcessingUpdate.take(consumer,
+                new MessageDetails(queueId, messageId, publicationTime.getTime()),
+                new MessageProcessingStatus(fromStatus, retries, errorMessage, versionId));
         if (updateMessageProcessing(connection, update))
             callback.messageTaken(update, serializedMessage);
     }
@@ -184,9 +184,10 @@ public final class JdbcMessageRepository implements MessageRepository {
         return success;
     }
 
-    private boolean deleteFromMessageConsumer(Connection connection, MessageProcessingUpdate update) throws SQLException {PreparedStatement ps = connection.prepareStatement("" +
-            "DELETE FROM message_consumer\n" +
-            "WHERE message_id = ? AND consumer_id = ? AND version_id = ?");
+    private boolean deleteFromMessageConsumer(Connection connection, MessageProcessingUpdate update) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement("" +
+                "DELETE FROM message_consumer\n" +
+                "WHERE message_id = ? AND consumer_id = ? AND version_id = ?");
         ps.setString(1, update.messageId);
         ps.setString(2, update.consumer.id);
         ps.setString(3, update.fromVersionId);
@@ -196,10 +197,11 @@ public final class JdbcMessageRepository implements MessageRepository {
         return rowsDeleted != 0;
     }
 
-    private void deleteOrphanedMessages(Connection connection, MessageProcessingUpdate update) throws SQLException {PreparedStatement ps = connection.prepareStatement("" +
-            "DELETE FROM message\n" +
-            "WHERE id = ?\n" +
-            "AND id NOT IN (SELECT message_id FROM message_consumer)");
+    private void deleteOrphanedMessages(Connection connection, MessageProcessingUpdate update) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement("" +
+                "DELETE FROM message\n" +
+                "WHERE id = ?\n" +
+                "AND id NOT IN (SELECT message_id FROM message_consumer)");
         ps.setString(1, update.messageId);
         ps.executeUpdate();
     }

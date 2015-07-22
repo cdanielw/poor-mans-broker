@@ -1,5 +1,6 @@
 package org.openforis.rmb.messagebroker;
 
+import org.openforis.rmb.messagebroker.spi.ThrottlingStrategy;
 import org.openforis.rmb.messagebroker.util.Is;
 
 import java.util.concurrent.TimeUnit;

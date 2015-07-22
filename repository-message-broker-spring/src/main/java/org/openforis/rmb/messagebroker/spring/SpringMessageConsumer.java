@@ -3,7 +3,7 @@ package org.openforis.rmb.messagebroker.spring;
 import org.openforis.rmb.messagebroker.KeepAliveMessageHandler;
 import org.openforis.rmb.messagebroker.MessageConsumer;
 import org.openforis.rmb.messagebroker.MessageHandler;
-import org.openforis.rmb.messagebroker.ThrottlingStrategy;
+import org.openforis.rmb.messagebroker.spi.ThrottlingStrategy;
 import org.springframework.beans.factory.InitializingBean;
 
 import java.util.concurrent.TimeUnit;

@@ -2,6 +2,10 @@ package org.openforis.rmb.messagebroker;
 
 import org.openforis.rmb.messagebroker.monitor.MessageUpdateConflictEvent;
 import org.openforis.rmb.messagebroker.monitor.PollingForMessagesEvent;
+import org.openforis.rmb.messagebroker.spi.MessageCallback;
+import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate;
+import org.openforis.rmb.messagebroker.spi.MessageRepository;
+import org.openforis.rmb.messagebroker.spi.MessageSerializer;
 import org.openforis.rmb.messagebroker.util.Clock;
 
 import java.util.Collection;

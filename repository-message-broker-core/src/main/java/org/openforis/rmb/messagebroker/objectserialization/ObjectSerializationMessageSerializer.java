@@ -1,6 +1,6 @@
 package org.openforis.rmb.messagebroker.objectserialization;
 
-import org.openforis.rmb.messagebroker.MessageSerializer;
+import org.openforis.rmb.messagebroker.spi.MessageSerializer;
 
 import java.io.*;
 

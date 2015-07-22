@@ -3,6 +3,9 @@ package org.openforis.rmb.messagebroker;
 import org.openforis.rmb.messagebroker.monitor.Event;
 import org.openforis.rmb.messagebroker.monitor.Monitor;
 import org.openforis.rmb.messagebroker.objectserialization.ObjectSerializationMessageSerializer;
+import org.openforis.rmb.messagebroker.spi.MessageRepository;
+import org.openforis.rmb.messagebroker.spi.MessageSerializer;
+import org.openforis.rmb.messagebroker.spi.TransactionSynchronizer;
 import org.openforis.rmb.messagebroker.util.Is;
 
 import java.util.ArrayList;

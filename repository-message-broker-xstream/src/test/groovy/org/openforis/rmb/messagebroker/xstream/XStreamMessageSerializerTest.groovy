@@ -3,7 +3,7 @@ package org.openforis.rmb.messagebroker.xstream
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static org.openforis.rmb.messagebroker.MessageSerializer.DeserilizationFailed
+import static org.openforis.rmb.messagebroker.spi.MessageSerializer.DeserilizationFailed
 
 class XStreamMessageSerializerTest extends Specification {
     def serializer = new XStreamMessageSerializer()

@@ -14,8 +14,8 @@ class MessageRepositoryWatcher {
     private final Monitors monitors;
     private final long pollingPeriod;
     private final TimeUnit pollingTimeUnit;
-    private final ScheduledExecutorService abandonedJobsFinder = Executors.newSingleThreadScheduledExecutor(
-            NamedThreadFactory.singleThreadFactory("messagebroker.AbandonedJobsFinder")
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
+            NamedThreadFactory.singleThreadFactory("rmb.MessageRepositoryWatcher")
     );
 
     MessageRepositoryWatcher(MessagePoller messagePoller, MessageBrokerConfig config) {
@@ -32,7 +32,7 @@ class MessageRepositoryWatcher {
 
 
     void start() {
-        abandonedJobsFinder.scheduleWithFixedDelay(new Runnable() {
+        executor.scheduleWithFixedDelay(new Runnable() {
             public void run() {
                 pollForTimedOutMessages();
                 pollForQueueSizeUpdates();
@@ -57,6 +57,6 @@ class MessageRepositoryWatcher {
     }
 
     void stop() {
-        ExecutorTerminator.shutdownAndAwaitTermination(abandonedJobsFinder);
+        ExecutorTerminator.shutdownAndAwaitTermination(executor);
     }
 }

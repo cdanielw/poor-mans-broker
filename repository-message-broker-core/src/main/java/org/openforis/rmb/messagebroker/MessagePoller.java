@@ -31,8 +31,8 @@ final class MessagePoller {
         this.repository = repository;
         this.messageSerializer = messageSerializer;
         this.monitors = monitors;
-        messageTaker = Executors.newSingleThreadExecutor(singleThreadFactory("messagebroker.MessageTaker"));
-        workerExecutor = Executors.newCachedThreadPool(multipleThreadFactory("messagebroker.WorkerExecutor"));
+        messageTaker = Executors.newSingleThreadExecutor(singleThreadFactory("rmb.MessageTaker"));
+        workerExecutor = Executors.newCachedThreadPool(multipleThreadFactory("rmb.WorkerExecutor"));
     }
 
     void registerConsumers(Collection<MessageConsumer<?>> consumers) {

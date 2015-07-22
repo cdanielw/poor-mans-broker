@@ -159,18 +159,49 @@ public final class JdbcMessageRepository implements MessageRepository {
         int rowsUpdated = ps.executeUpdate();
         if (rowsUpdated > 1)
             throw new IllegalStateException("More than one row with message_id " + update.messageId);
-        boolean updated = rowsUpdated != 0;
-        if (updated)
+        boolean success = rowsUpdated != 0;
+        if (success)
             connection.commit();
-        return updated;
+        return success;
     }
 
     public boolean update(final MessageProcessingUpdate update) {
         return withConnection(new ConnectionCallback<Boolean>() {
             public Boolean execute(Connection connection) throws SQLException {
-                return updateMessageProcessing(connection, update);
+                return update.toStatus == Status.COMPLETED
+                        ? deleteCompleted(connection, update)
+                        : updateMessageProcessing(connection, update);
             }
         });
+    }
+
+    private boolean deleteCompleted(Connection connection, MessageProcessingUpdate update) throws SQLException {
+        boolean success = deleteFromMessageConsumer(connection, update);
+        if (success) {
+            deleteFromMessageIfLastConsumer(connection, update);
+            connection.commit();
+        }
+        return success;
+    }
+
+    private boolean deleteFromMessageConsumer(Connection connection, MessageProcessingUpdate update) throws SQLException {PreparedStatement ps = connection.prepareStatement("" +
+            "DELETE FROM message_consumer\n" +
+            "WHERE message_id = ? AND consumer_id = ? AND version_id = ?");
+        ps.setString(1, update.messageId);
+        ps.setString(2, update.consumer.id);
+        ps.setString(3, update.fromVersionId);
+        int rowsDeleted = ps.executeUpdate();
+        if (rowsDeleted > 1)
+            throw new IllegalStateException("More than one row with message_id " + update.messageId);
+        return rowsDeleted != 0;
+    }
+
+    private void deleteFromMessageIfLastConsumer(Connection connection, MessageProcessingUpdate update) throws SQLException {PreparedStatement ps = connection.prepareStatement("" +
+            "DELETE FROM message\n" +
+            "WHERE id = ?\n" +
+            "AND id NOT IN (SELECT message_id FROM message_consumer)");
+        ps.setString(1, update.messageId);
+        ps.executeUpdate();
     }
 
     public Map<String, Integer> messageQueueSizeByConsumerId() {

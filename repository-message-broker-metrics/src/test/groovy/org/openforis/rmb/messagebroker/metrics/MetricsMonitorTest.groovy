@@ -10,7 +10,8 @@ import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate
 import org.openforis.rmb.messagebroker.spi.Clock
 import spock.lang.Specification
 
-import static org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status.FAILED
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.*
+
 
 class MetricsMonitorTest extends Specification {
     def metrics = new MetricRegistry()

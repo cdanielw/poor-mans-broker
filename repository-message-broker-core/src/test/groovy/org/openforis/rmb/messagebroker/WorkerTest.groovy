@@ -7,7 +7,8 @@ import spock.lang.Specification
 import util.CollectingMonitor
 import util.TestHandler
 
-import static org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status.*
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.*
+
 
 class WorkerTest extends Specification {
     @SuppressWarnings("GroovyUnusedDeclaration")
@@ -28,7 +29,7 @@ class WorkerTest extends Specification {
             handler.handled(message)
             repo.updates.size() == 1
             with(repo[0]) {
-                toStatus == COMPLETED
+                toState == COMPLETED
                 retries == 0
             }
     }
@@ -43,12 +44,12 @@ class WorkerTest extends Specification {
             handler.handled(message)
             repo.updates.size() == 2
             with(repo[0]) {
-                toStatus == PROCESSING
+                toState == PROCESSING
                 retries == 1
                 errorMessage == 'Error message'
             }
             with(repo[1]) {
-                toStatus == COMPLETED
+                toState == COMPLETED
                 retries == 1
                 errorMessage == 'Error message'
             }
@@ -64,7 +65,7 @@ class WorkerTest extends Specification {
         then:
             repo.updates.size() == 1
             with(repo[0]) {
-                toStatus == FAILED
+                toState == FAILED
                 retries == 0
             }
     }
@@ -82,11 +83,11 @@ class WorkerTest extends Specification {
         then:
             repo.updates.size() == 2
             with(repo[0]) {
-                toStatus == PROCESSING
+                toState == PROCESSING
                 retries == 0
             }
             with(repo[1]) {
-                toStatus == COMPLETED
+                toState == COMPLETED
                 retries == 0
             }
             monitor.eventTypes().contains(MessageKeptAliveEvent)
@@ -148,7 +149,7 @@ class WorkerTest extends Specification {
         new Worker(repo, throttler, new Monitors([monitor]), update, message).consume()
     }
 
-    MessageProcessingUpdate takeUpdate(MessageConsumer consumer, MessageProcessingUpdate.Status fromState) {
+    MessageProcessingUpdate takeUpdate(MessageConsumer consumer, MessageProcessingStatus.State fromState) {
         return MessageProcessingUpdate.take(consumer,
                 new MessageDetails('queue id', messageId, 0),
                 new MessageProcessingStatus(fromState, 0, null))

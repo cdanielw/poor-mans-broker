@@ -6,7 +6,7 @@ import org.openforis.rmb.messagebroker.spi.Clock;
 
 import java.util.*;
 
-import static org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status.*;
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.*;
 
 public final class InMemoryMessageRepository implements MessageRepository {
     private final Object lock = new Object();
@@ -147,15 +147,15 @@ public final class InMemoryMessageRepository implements MessageRepository {
         }
 
         boolean isPending() {
-            return update.toStatus == PENDING;
+            return update.toState == PENDING;
         }
 
         boolean timedOut() {
-            return update.toStatus == PROCESSING && timesOut.before(new Date());
+            return update.toState == PROCESSING && timesOut.before(new Date());
         }
 
         boolean isCompleted() {
-            return update.toStatus == COMPLETED;
+            return update.toState == COMPLETED;
         }
     }
 }

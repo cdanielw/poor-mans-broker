@@ -1,14 +1,15 @@
 package org.openforis.rmb.messagebroker
 
-import org.openforis.rmb.messagebroker.spi.MessageTakenCallback
 import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate
 import org.openforis.rmb.messagebroker.spi.MessageRepository
+import org.openforis.rmb.messagebroker.spi.MessageTakenCallback
 import spock.lang.Specification
 import util.AdjustableClock
 
 import static groovyx.gpars.GParsPool.withPool
-import static org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status.PENDING
-import static org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status.PROCESSING
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.PENDING
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.PROCESSING
+
 
 abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
     def callback = new MockTakenCallback()
@@ -27,8 +28,8 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
 
         then:
             def callbackInvocation = callback.gotOneMessage('A message', consumer)
-            callbackInvocation.update.fromStatus == PENDING
-            callbackInvocation.update.toStatus == PROCESSING
+            callbackInvocation.update.fromState == PENDING
+            callbackInvocation.update.toState == PROCESSING
     }
 
     def 'Given no message, when taking message, callback is not invoked'() {
@@ -116,8 +117,8 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
 
         then:
             def callbackInvocation = callback.gotOneMessage('A message')
-            callbackInvocation.update.fromStatus == PROCESSING
-            callbackInvocation.update.toStatus == PROCESSING
+            callbackInvocation.update.fromState == PROCESSING
+            callbackInvocation.update.toState == PROCESSING
     }
 
     def 'When concurrently trying to take messages, each message is only taken once'() {

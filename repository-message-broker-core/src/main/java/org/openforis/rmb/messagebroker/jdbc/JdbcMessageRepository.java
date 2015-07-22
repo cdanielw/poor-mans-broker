@@ -2,8 +2,8 @@ package org.openforis.rmb.messagebroker.jdbc;
 
 import org.openforis.rmb.messagebroker.MessageConsumer;
 import org.openforis.rmb.messagebroker.spi.*;
-import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status;
 import org.openforis.rmb.messagebroker.spi.Clock;
+import org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State;
 
 import java.io.ByteArrayInputStream;
 import java.sql.*;
@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.*;
 
 public final class JdbcMessageRepository implements MessageRepository {
     private final JdbcConnectionManager connectionManager;
@@ -39,14 +41,14 @@ public final class JdbcMessageRepository implements MessageRepository {
     private void insertMessageConsumers(Connection connection, String messageId, List<MessageConsumer<?>> consumers)
             throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
-                "INSERT INTO " + tablePrefix + "message_consumer(message_id, consumer_id, version_id, status, last_updated, times_out, retries)\n" +
+                "INSERT INTO " + tablePrefix + "message_consumer(message_id, consumer_id, version_id, state, last_updated, times_out, retries)\n" +
                 "VALUES(?, ?, ?, ?, ?, ?, ?)");
         for (MessageConsumer<?> consumer : consumers) {
             long creationTime = clock.millis();
             ps.setString(1, messageId);
             ps.setString(2, consumer.id);
             ps.setString(3, UUID.randomUUID().toString());
-            ps.setString(4, Status.PENDING.name());
+            ps.setString(4, PENDING.name());
             ps.setTimestamp(5, new Timestamp(creationTime));
             ps.setTimestamp(6, new Timestamp(timesOut(consumer, creationTime)));
             ps.setInt(7, 0);
@@ -95,12 +97,12 @@ public final class JdbcMessageRepository implements MessageRepository {
     private void takeMessages(Connection connection, MessageConsumer<?> consumer, int maxCount, MessageTakenCallback callback)
             throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
-                "SELECT queue_id, message_id, publication_time, version_id, status, message_string, message_bytes, " +
+                "SELECT queue_id, message_id, publication_time, version_id, state, message_string, message_bytes, " +
                 "       times_out, retries, error_message \n" +
                 "FROM " + tablePrefix + "message_consumer mc\n" +
                 "JOIN " + tablePrefix + "message m ON mc.message_id = m.id\n" +
                 "WHERE consumer_id = ?\n" +
-                "AND status IN ('PENDING', 'PROCESSING')\n" +
+                "AND state IN ('PENDING', 'PROCESSING')\n" +
                 "ORDER BY sequence_no");
         ps.setString(1, consumer.id);
         ps.setMaxRows(maxCount);
@@ -114,17 +116,17 @@ public final class JdbcMessageRepository implements MessageRepository {
 
     private boolean canTakeMessage(ResultSet rs) throws SQLException {
         Timestamp now = new Timestamp(clock.millis());
-        String status = rs.getString("status");
+        String state = rs.getString("state");
         Timestamp timesOut = rs.getTimestamp("times_out");
 
-        return status.equals("PENDING") || timesOut.before(now);
+        return state.equals("PENDING") || timesOut.before(now);
     }
 
     private void takeMessage(Connection connection, ResultSet rs, MessageConsumer<?> consumer, MessageTakenCallback callback)
             throws SQLException {
         String queueId = rs.getString("queue_id");
         Timestamp publicationTime = rs.getTimestamp("publication_time");
-        Status fromStatus = Status.valueOf(rs.getString("status"));
+        State fromState = valueOf(rs.getString("state"));
         String messageId = rs.getString("message_id");
         String stringMessage = rs.getString("message_string");
         byte[] bytesMessage = rs.getBytes("message_bytes");
@@ -134,7 +136,7 @@ public final class JdbcMessageRepository implements MessageRepository {
         String errorMessage = rs.getString("error_message");
         MessageProcessingUpdate update = MessageProcessingUpdate.take(consumer,
                 new MessageDetails(queueId, messageId, publicationTime.getTime()),
-                new MessageProcessingStatus(fromStatus, retries, errorMessage, versionId));
+                new MessageProcessingStatus(fromState, retries, errorMessage, versionId));
         if (updateMessageProcessing(connection, update))
             callback.messageTaken(update, serializedMessage);
     }
@@ -144,9 +146,9 @@ public final class JdbcMessageRepository implements MessageRepository {
         long now = clock.millis();
         PreparedStatement ps = connection.prepareStatement("" +
                 "UPDATE " + tablePrefix + "message_consumer\n" +
-                "SET status = ?, last_updated = ?, times_out = ?, version_id = ?, retries = ?, error_message = ? \n" +
+                "SET state = ?, last_updated = ?, times_out = ?, version_id = ?, retries = ?, error_message = ? \n" +
                 "WHERE message_id = ? AND consumer_id = ? AND version_id = ?");
-        ps.setString(1, update.toStatus.name());
+        ps.setString(1, update.toState.name());
         ps.setTimestamp(2, new Timestamp(now));
         ps.setTimestamp(3, new Timestamp(timesOut(update.consumer, now)));
         ps.setString(4, update.toVersionId);
@@ -168,7 +170,7 @@ public final class JdbcMessageRepository implements MessageRepository {
     public boolean update(final MessageProcessingUpdate update) {
         return withConnection(new ConnectionCallback<Boolean>() {
             public Boolean execute(Connection connection) throws SQLException {
-                return update.toStatus == Status.COMPLETED
+                return update.toState == COMPLETED
                         ? deleteCompleted(connection, update)
                         : updateMessageProcessing(connection, update);
             }
@@ -212,8 +214,8 @@ public final class JdbcMessageRepository implements MessageRepository {
                 PreparedStatement ps = connection.prepareStatement("" +
                         "SELECT consumer_id, count(*) queue_size\n" +
                         "FROM " + tablePrefix + "MESSAGE_CONSUMER mc\n" +
-                        "WHERE (status = 'PENDING'\n" +
-                        "OR (status = 'PROCESSING' AND times_out < ?))\n" +
+                        "WHERE (state = 'PENDING'\n" +
+                        "OR (state = 'PROCESSING' AND times_out < ?))\n" +
                         "GROUP BY consumer_id");
                 ps.setTimestamp(1, new Timestamp(clock.millis()));
                 ResultSet rs = ps.executeQuery();

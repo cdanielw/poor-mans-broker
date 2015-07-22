@@ -3,15 +3,15 @@ package org.openforis.rmb.messagebroker.spi;
 import org.openforis.rmb.messagebroker.MessageConsumer;
 import org.openforis.rmb.messagebroker.util.Is;
 
-import static org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status.*;
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.*;
 
 public final class MessageProcessingUpdate<T> {
     public final String queueId;
     public final String messageId;
     public final long publicationTime;
     public final MessageConsumer<T> consumer;
-    public final Status fromStatus;
-    public final Status toStatus;
+    public final MessageProcessingStatus.State fromState;
+    public final MessageProcessingStatus.State toState;
     public final int retries;
     public final String errorMessage;
     public final String fromVersionId;
@@ -25,8 +25,8 @@ public final class MessageProcessingUpdate<T> {
         this.consumer = consumer;
         this.messageId = messageDetails.messageId;
         this.publicationTime = messageDetails.publicationTime;
-        this.fromStatus = fromStatus.status;
-        this.toStatus = toStatus.status;
+        this.fromState = fromStatus.state;
+        this.toState = toStatus.state;
         this.retries = toStatus.retries;
         this.errorMessage = toStatus.errorMessage;
         this.fromVersionId = fromStatus.versionId;
@@ -38,8 +38,8 @@ public final class MessageProcessingUpdate<T> {
         Is.notNull(queueId, "queueId must not be null");
         Is.notNull(consumer, "consumer must not be null");
         Is.notNull(messageId, "messageId must not be null");
-        Is.notNull(fromStatus, "fromStatus must not be null");
-        Is.notNull(toStatus, "toStatus must not be null");
+        Is.notNull(fromState, "fromStatus must not be null");
+        Is.notNull(toState, "toStatus must not be null");
         Is.notNull(fromVersionId, "fromVersionId must not be null");
         Is.notNull(toVersionId, "toVersionId must not be null");
     }
@@ -86,8 +86,8 @@ public final class MessageProcessingUpdate<T> {
                 "queueId=" + queueId +
                 ", consumer='" + consumer + '\'' +
                 ", messageId='" + messageId + '\'' +
-                ", fromStatus=" + fromStatus +
-                ", toStatus=" + toStatus +
+                ", fromStatus=" + fromState +
+                ", toStatus=" + toState +
                 ", retries=" + retries +
                 ", errorMessage='" + errorMessage + '\'' +
                 ", fromVersionId='" + fromVersionId + '\'' +
@@ -100,10 +100,7 @@ public final class MessageProcessingUpdate<T> {
     }
 
     private MessageProcessingStatus toStatus() {
-        return new MessageProcessingStatus(toStatus, retries, errorMessage, toVersionId);
+        return new MessageProcessingStatus(toState, retries, errorMessage, toVersionId);
     }
 
-    public enum Status {
-        PENDING, PROCESSING, COMPLETED, FAILED
-    }
 }

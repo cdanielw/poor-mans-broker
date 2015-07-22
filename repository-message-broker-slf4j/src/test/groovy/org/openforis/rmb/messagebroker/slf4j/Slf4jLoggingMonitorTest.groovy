@@ -14,7 +14,7 @@ import spock.lang.Unroll
 import uk.org.lidalia.slf4jtest.TestLogger
 import uk.org.lidalia.slf4jtest.TestLoggerFactory
 
-import static org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status.PENDING
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.PENDING
 import static org.openforis.rmb.messagebroker.spi.TransactionSynchronizer.NULL_TRANSACTION_SYNCHRONIZER
 import static uk.org.lidalia.slf4jext.Level.*
 

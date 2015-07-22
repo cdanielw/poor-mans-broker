@@ -3,6 +3,10 @@ package org.openforis.rmb.messagebroker.jdbc
 import groovy.sql.Sql
 import integration.TestConnectionManager
 import org.openforis.rmb.messagebroker.AbstractMessageRepositoryIntegrationTest
+import org.openforis.rmb.messagebroker.spi.MessageDetails
+import org.openforis.rmb.messagebroker.spi.MessageProcessingCallback
+import org.openforis.rmb.messagebroker.spi.MessageProcessingFilter
+import org.openforis.rmb.messagebroker.spi.MessageProcessingStatus
 import util.Database
 
 class JdbcMessageRepositoryIntegrationTest extends AbstractMessageRepositoryIntegrationTest {
@@ -17,6 +21,20 @@ class JdbcMessageRepositoryIntegrationTest extends AbstractMessageRepositoryInte
     void withTransaction(Closure unitOfWork) {
         connectionManager.withTransaction(unitOfWork)
     }
+
+//    def 'Test'() {
+//        def filter = new MessageProcessingFilter()
+//         callback = new MessageProcessingCallback() {
+//            void messageProcessing(MessageDetails messageDetails, MessageProcessingStatus status, Object serializedMessage) {
+//
+//            }
+//        }
+//
+//        when: repository.findMessageProcessing(filter, callback)
+//        then:
+//            false
+//    }
+
 
     def 'A blocking consumer will not let a message be be taken while another is processing'() {
         def consumer = consumer('consumer id', 1)

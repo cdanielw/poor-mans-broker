@@ -1,6 +1,7 @@
 package org.openforis.rmb.messagebroker;
 
 import org.openforis.rmb.messagebroker.monitor.*;
+import org.openforis.rmb.messagebroker.spi.MessageProcessingStatus;
 import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate;
 import org.openforis.rmb.messagebroker.spi.MessageRepository;
 
@@ -49,7 +50,7 @@ final class Worker<T> {
     }
 
     private synchronized void notifyOnWorkerStart() {
-        boolean timedOutMessage = update.fromStatus == MessageProcessingUpdate.Status.PROCESSING;
+        boolean timedOutMessage = update.fromState == MessageProcessingStatus.State.PROCESSING;
         if (timedOutMessage)
             monitors.onEvent(new ConsumingTimedOutMessageEvent(update, message));
         else

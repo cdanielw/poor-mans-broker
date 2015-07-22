@@ -6,9 +6,7 @@ import org.openforis.rmb.messagebroker.MessageHandler
 import org.openforis.rmb.messagebroker.RepositoryMessageBroker
 import org.openforis.rmb.messagebroker.inmemory.InMemoryMessageRepository
 import org.openforis.rmb.messagebroker.monitor.*
-import org.openforis.rmb.messagebroker.spi.MessageDetails
-import org.openforis.rmb.messagebroker.spi.MessageProcessing
-import org.openforis.rmb.messagebroker.spi.MessageProcessingStatus
+import org.openforis.rmb.messagebroker.spi.*
 import spock.lang.Specification
 import spock.lang.Unroll
 import uk.org.lidalia.slf4jtest.TestLogger
@@ -23,10 +21,6 @@ class Slf4jLoggingMonitorTest extends Specification {
             MessageBrokerConfig.builder(new InMemoryMessageRepository(), NULL_TRANSACTION_SYNCHRONIZER)
     )
     static consumer = MessageConsumer.builder('consumer id', {} as MessageHandler).build()
-    static update = MessageProcessing.create(new MessageDetails('queue id', 'message id', 0),
-            consumer,
-            new MessageProcessingStatus(PENDING, 0, null)
-    ).take()
 
     def monitor = new Slf4jLoggingMonitor()
 
@@ -122,5 +116,12 @@ class Slf4jLoggingMonitorTest extends Specification {
 
     Event getMessageUpdateConflictEvent() {
         new MessageUpdateConflictEvent(update, 'a message')
+    }
+
+    private static MessageProcessingUpdate getUpdate() {
+        MessageProcessing.create(new MessageDetails('queue id', 'message id', new Date(0)),
+                consumer,
+                new MessageProcessingStatus(PENDING, 0, null, new Date(0), UUID.randomUUID().toString())
+        ).take(new Clock.SystemClock())
     }
 }

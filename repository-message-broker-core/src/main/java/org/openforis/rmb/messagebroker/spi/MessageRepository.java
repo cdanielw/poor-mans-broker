@@ -28,6 +28,6 @@ public interface MessageRepository {
     }
 
     interface MessageProcessingFoundCallback {
-        void found(String consumerId, MessageDetails messageDetails, MessageProcessingStatus status, Object serializedMessage);
+        void found(MessageProcessing messageProcessing, Object serializedMessage);
     }
 }

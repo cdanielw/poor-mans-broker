@@ -5,8 +5,8 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import org.openforis.rmb.messagebroker.MessageConsumer;
 import org.openforis.rmb.messagebroker.monitor.*;
-import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate;
 import org.openforis.rmb.messagebroker.spi.Clock;
+import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -63,7 +63,7 @@ public class MetricsMonitor implements Monitor<Event> {
     }
 
     private void consumingNewMessage(ConsumingNewMessageEvent event) {
-        long timeFromPublicationTime = clock.millis() - event.update.publicationTime;
+        long timeFromPublicationTime = clock.millis() - event.update.publicationTime.getTime();
         metrics.histogram(name(event.update.queueId, event.update.consumer.id, "timesFromPublicationToTaken"))
                 .update(timeFromPublicationTime);
         metrics.counter(name(event.update.queueId, event.update.consumer.id, "takenCount")).inc();
@@ -90,7 +90,7 @@ public class MetricsMonitor implements Monitor<Event> {
     }
 
     private void messageConsumed(MessageConsumedEvent event) {
-        long timeFromPublicationTime = clock.millis() - event.update.publicationTime;
+        long timeFromPublicationTime = clock.millis() - event.update.publicationTime.getTime();
         long handlingTime = clock.millis() - handlingStartTime(event.update);
         metrics.histogram(name(event.update.queueId, event.update.consumer.id, "timesFromPublicationToCompletion"))
                 .update(timeFromPublicationTime);
@@ -102,7 +102,7 @@ public class MetricsMonitor implements Monitor<Event> {
     }
 
     private void messageConsumptionFailed(MessageConsumptionFailedEvent event) {
-        long timeFromPublicationTime = clock.millis() - event.update.publicationTime;
+        long timeFromPublicationTime = clock.millis() - event.update.publicationTime.getTime();
         long handlingTime = clock.millis() - handlingStartTime(event.update);
         metrics.histogram(name(event.update.queueId, event.update.consumer.id, "timesFromPublicationToFailure"))
                 .update(timeFromPublicationTime);

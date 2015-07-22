@@ -3,16 +3,20 @@ package org.openforis.rmb.messagebroker.spi;
 import org.openforis.rmb.messagebroker.MessageConsumer;
 import org.openforis.rmb.messagebroker.util.Is;
 
+import java.util.Date;
+import java.util.UUID;
+
 import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.PROCESSING;
 
 public final class MessageProcessing<T> {
     public final String queueId;
     public final String messageId;
-    public final long publicationTime;
+    public final Date publicationTime;
     public final MessageConsumer<T> consumer;
     public final MessageProcessingStatus.State state;
     public final int retries;
     public final String errorMessage;
+    public final Date lastUpdated;
     public final String versionId;
 
     private MessageProcessing(MessageDetails messageDetails,
@@ -28,16 +32,25 @@ public final class MessageProcessing<T> {
         this.state = status.state;
         this.retries = status.retries;
         this.errorMessage = status.errorMessage;
+        this.lastUpdated = status.lastUpdated;
         this.versionId = status.versionId;
     }
 
-    public MessageProcessingUpdate<T> take() {
+    public MessageProcessingUpdate<T> take(Clock clock) {
         return MessageProcessingUpdate.create(messageDetails(), consumer, status(),
-                new MessageProcessingStatus(PROCESSING, retries, errorMessage));
+                new MessageProcessingStatus(PROCESSING, retries, errorMessage, now(clock), randomUuid()));
+    }
+
+    private Date now(Clock clock) {
+        return new Date(clock.millis());
+    }
+
+    private String randomUuid() {
+        return UUID.randomUUID().toString();
     }
 
     private MessageProcessingStatus status() {
-        return new MessageProcessingStatus(state, retries, errorMessage, versionId);
+        return new MessageProcessingStatus(state, retries, errorMessage, lastUpdated, versionId);
     }
 
     private MessageDetails messageDetails() {

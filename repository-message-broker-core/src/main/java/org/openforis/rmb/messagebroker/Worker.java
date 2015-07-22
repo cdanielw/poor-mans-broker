@@ -1,6 +1,7 @@
 package org.openforis.rmb.messagebroker;
 
 import org.openforis.rmb.messagebroker.monitor.*;
+import org.openforis.rmb.messagebroker.spi.Clock;
 import org.openforis.rmb.messagebroker.spi.MessageProcessingStatus;
 import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate;
 import org.openforis.rmb.messagebroker.spi.MessageRepository;
@@ -13,6 +14,7 @@ final class Worker<T> {
     private final T message;
     private final MessageConsumer<T> consumer;
     private final KeepAlive keepAlive;
+    private final Clock clock = new Clock.SystemClock();
 
     private MessageProcessingUpdate<T> update;
 
@@ -71,24 +73,24 @@ final class Worker<T> {
     // Since keep-alive can be sent from a separate thread, this.update is shared mutable state
     // All access to it has been synchronized
     private synchronized void keepAlive() {
-        updateRepo(update.processing());
+        updateRepo(update.processing(clock));
         monitors.onEvent(new MessageKeptAliveEvent(update, message));
     }
 
     private synchronized void retry(Exception e) throws InterruptedException {
-        updateRepo(update.retry(e.getMessage()));
+        updateRepo(update.retry(clock, e.getMessage()));
         monitors.onEvent(new ThrottlingMessageRetryEvent(update, message, e));
         throttler.throttle(update.retries, consumer, keepAlive);
         monitors.onEvent(new RetryingMessageConsumptionEvent(update, message, e));
     }
 
     private synchronized void failed(Exception e) {
-        updateRepo(update.failed(e.getMessage()));
+        updateRepo(update.failed(clock, e.getMessage()));
         monitors.onEvent(new MessageConsumptionFailedEvent(update, message, e));
     }
 
     private synchronized void completed() {
-        updateRepo(update.completed());
+        updateRepo(update.completed(clock));
         monitors.onEvent(new MessageConsumedEvent(update, message));
     }
 

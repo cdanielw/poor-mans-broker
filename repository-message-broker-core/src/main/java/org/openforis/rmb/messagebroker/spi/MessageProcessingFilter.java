@@ -11,16 +11,16 @@ public final class MessageProcessingFilter {
     public final Set<State> states;
     public final Date publishedBefore;
     public final Date publishedAfter;
-    public final Date lastChangedBefore;
-    public final Date lastChangedAfter;
+    public final Date lastUpdatedBefore;
+    public final Date lastUpdatedAfter;
     public final Set<String> messageIds;
 
     public MessageProcessingFilter(Builder builder) {
         this.states = builder.states;
         this.publishedBefore = builder.publishedBefore;
         this.publishedAfter = builder.publishedAfter;
-        this.lastChangedBefore = builder.lastChangedBefore;
-        this.lastChangedAfter = builder.lastChangedAfter;
+        this.lastUpdatedBefore = builder.lastUpdatedBefore;
+        this.lastUpdatedAfter = builder.lastUpdatedAfter;
         this.messageIds = builder.messageIds;
     }
 
@@ -32,8 +32,8 @@ public final class MessageProcessingFilter {
         private Set<State> states = new HashSet<State>();
         private Date publishedBefore;
         private Date publishedAfter;
-        private Date lastChangedBefore;
-        private Date lastChangedAfter;
+        private Date lastUpdatedBefore;
+        private Date lastUpdatedAfter;
         private Set<String> messageIds = new HashSet<String>();
 
         private Builder() { }
@@ -59,19 +59,19 @@ public final class MessageProcessingFilter {
             return this;
         }
 
-        public Builder lastChangedBetween(Date from, Date to) {
-            lastChangedAfter = from;
-            lastChangedBefore = to;
+        public Builder lastUpdatedBetween(Date from, Date to) {
+            lastUpdatedAfter = from;
+            lastUpdatedBefore = to;
             return this;
         }
 
-        public Builder lastChangedBefore(Date date) {
-            lastChangedBefore = date;
+        public Builder lastUpdatedBefore(Date date) {
+            lastUpdatedBefore = date;
             return this;
         }
 
-        public Builder lastChangedAfter(Date date) {
-            lastChangedAfter = date;
+        public Builder lastUpdatedAfter(Date date) {
+            lastUpdatedAfter = date;
             return this;
         }
 

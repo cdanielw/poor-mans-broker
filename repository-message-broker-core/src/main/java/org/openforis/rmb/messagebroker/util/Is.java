@@ -1,5 +1,7 @@
 package org.openforis.rmb.messagebroker.util;
 
+import java.util.Collection;
+
 public final class Is {
     public static void notNull(Object o, String message) {
         if (o == null)
@@ -24,5 +26,10 @@ public final class Is {
     public static void lessThanEqual(int i, int lessThanValue, String message) {
         if (i > lessThanValue)
             throw new IllegalArgumentException(message + ". Value: '" + i + "'");
+    }
+
+    public static void notEmpty(Collection<?> collection, String message) {
+        if (collection.isEmpty())
+            throw new IllegalArgumentException(message + ".");
     }
 }

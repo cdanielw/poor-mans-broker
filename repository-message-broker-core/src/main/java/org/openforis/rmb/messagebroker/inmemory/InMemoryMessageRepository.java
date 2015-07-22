@@ -21,18 +21,22 @@ public final class InMemoryMessageRepository implements MessageRepository {
         synchronized (lock) {
             for (MessageConsumer<?> consumer : consumers) {
                 ConsumerMessages consumerMessages = consumerMessages(consumer);
-                String messageId = UUID.randomUUID().toString();
-                long publicationTime = clock.millis();
+                String messageId = randomUuid();
+                Date publicationTime = now();
                 MessageProcessingUpdate<?> update = MessageProcessingUpdate
                         .create(
                                 new MessageDetails(queueId, messageId, publicationTime),
                                 consumer,
-                                new MessageProcessingStatus(PENDING, 0, null),
-                                new MessageProcessingStatus(PENDING, 0, null)
+                                new MessageProcessingStatus(PENDING, 0, null, now(), randomUuid()),
+                                new MessageProcessingStatus(PENDING, 0, null, now(), randomUuid())
                         );
                 consumerMessages.add(new Message(update, serializedMessage));
             }
         }
+    }
+
+    private String randomUuid() {
+        return UUID.randomUUID().toString();
     }
 
     public void take(Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageTakenCallback callback) {
@@ -56,22 +60,58 @@ public final class InMemoryMessageRepository implements MessageRepository {
     public void findMessageProcessing(Collection<MessageConsumer<?>> consumers,
                                       MessageProcessingFilter filter,
                                       MessageProcessingFoundCallback callback) {
+        for (MessageConsumer<?> consumer : consumers) {
+            if (consumerMessagesByConsumer.containsKey(consumer))
+                findMessageProcessing(consumer, filter, callback);
+        }
+    }
 
+    private void findMessageProcessing(MessageConsumer<?> consumer,
+                                       MessageProcessingFilter filter,
+                                       MessageProcessingFoundCallback callback) {
+        ConsumerMessages consumerMessages = consumerMessagesByConsumer.get(consumer);
+        List<Message> messages = new ArrayList<Message>();
+        for (Message message : consumerMessages.messages)
+            if (include(message, filter))
+                messages.add(message);
+        for (Message message : messages) {
+            MessageProcessingUpdate update = message.update;
+            callback.found(MessageProcessing.create(
+                    new MessageDetails(update.queueId, update.messageId, update.publicationTime),
+                    consumer,
+                    new MessageProcessingStatus(update.toState, update.retries, update.errorMessage, now(), update.toVersionId)
+            ), message.serializedMessage);
+        }
+    }
+
+    @SuppressWarnings("RedundantIfStatement")
+    private boolean include(Message message, MessageProcessingFilter filter) {
+        MessageProcessingUpdate update = message.update;
+        if (!filter.states.isEmpty()) {
+            boolean notMatchingState = !filter.states.contains(update.toState);
+            boolean notMatchingTimedOut = !filter.states.contains(TIMED_OUT) || !message.timedOut();
+            if (notMatchingState && notMatchingTimedOut)
+                return false;
+        }
+        if (filter.publishedBefore != null && !update.publicationTime.before(filter.publishedBefore))
+            return false;
+        if (filter.publishedAfter != null && !update.publicationTime.after(filter.publishedAfter))
+            return false;
+        if (filter.lastUpdatedBefore != null && !update.updateTime.before(filter.lastUpdatedBefore))
+            return false;
+        if (filter.lastUpdatedAfter != null && !update.updateTime.after(filter.lastUpdatedAfter))
+            return false;
+        if (!filter.messageIds.isEmpty() && !filter.messageIds.contains(message.update.messageId))
+            return false;
+
+        return true;
     }
 
     private void takeForConsumer(MessageConsumer<?> consumer, Integer maxCount, MessageTakenCallback callback) {
         ConsumerMessages messages = consumerMessages(consumer);
         if (messages == null)
             return;
-        for (int i = 0; i < maxCount; i++) {
-            Message message;
-            synchronized (lock) {
-                message = messages.takePending();
-            }
-            if (message == null)
-                return;
-            callback.taken(message.update, message.serializedMessage);
-        }
+        messages.takePending(maxCount, callback);
     }
 
     private ConsumerMessages consumerMessages(MessageConsumer<?> consumer) {
@@ -92,7 +132,12 @@ public final class InMemoryMessageRepository implements MessageRepository {
         }
     }
 
-    private static class ConsumerMessages {
+    private Date now() {
+        return new Date(clock.millis());
+    }
+
+
+    private class ConsumerMessages {
         Set<Message> messages = new LinkedHashSet<Message>();
         Map<String, Message> messageById = new HashMap<String, Message>();
 
@@ -113,14 +158,21 @@ public final class InMemoryMessageRepository implements MessageRepository {
             }
         }
 
-        Message takePending() {
+        public void takePending(Integer maxCount, MessageTakenCallback callback) {
+            int i = 0;
             for (Message message : messages) {
-                if (message.isPending() || message.timedOut()) {
-                    message.processing();
-                    return message;
+                if (i >= maxCount) return;
+                boolean taken = false;
+                synchronized (lock) {
+                    if (message.isPending() || message.timedOut()) {
+                        message.take();
+                        taken = true;
+                    }
                 }
+                if (taken)
+                    callback.taken(message.update, message.serializedMessage);
+                i++;
             }
-            return null;
         }
 
         int queueSize() {
@@ -137,6 +189,7 @@ public final class InMemoryMessageRepository implements MessageRepository {
         }
     }
 
+
     private class Message {
         MessageProcessingUpdate update;
         Date timesOut;
@@ -144,16 +197,17 @@ public final class InMemoryMessageRepository implements MessageRepository {
 
         Message(MessageProcessingUpdate update, Object serializedMessage) {
             this.update = update;
-            this.timesOut = new Date(update.publicationTime + update.consumer.timeUnit.toMillis(update.consumer.timeout));
+            long timeoutMillis = update.consumer.timeUnit.toMillis(update.consumer.timeout);
+            this.timesOut = new Date(update.publicationTime.getTime() + timeoutMillis);
             this.serializedMessage = serializedMessage;
         }
 
-        void processing() {
+        void take() {
             MessageProcessingStatus.State fromState = timedOut() ? TIMED_OUT : update.toState;
             setUpdate(MessageProcessingUpdate.create(
                     new MessageDetails(update.queueId, update.messageId, update.publicationTime), update.consumer,
-                    new MessageProcessingStatus(fromState, update.retries, update.errorMessage, update.toVersionId),
-                    new MessageProcessingStatus(PROCESSING, update.retries, update.errorMessage)
+                    new MessageProcessingStatus(fromState, update.retries, update.errorMessage, now(), update.toVersionId),
+                    new MessageProcessingStatus(PROCESSING, update.retries, update.errorMessage, now(), randomUuid())
             ));
         }
 
@@ -166,7 +220,7 @@ public final class InMemoryMessageRepository implements MessageRepository {
         }
 
         boolean timedOut() {
-            return update.toState == PROCESSING && timesOut.before(new Date());
+            return update.toState == PROCESSING && timesOut.before(now());
         }
 
         boolean isCompleted() {

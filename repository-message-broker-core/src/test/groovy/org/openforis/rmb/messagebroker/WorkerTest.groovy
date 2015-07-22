@@ -150,9 +150,13 @@ class WorkerTest extends Specification {
     }
 
     MessageProcessingUpdate takeUpdate(MessageConsumer consumer, MessageProcessingStatus.State fromState) {
-        return MessageProcessing.create(new MessageDetails('queue id', messageId, 0),
+        return MessageProcessing.create(new MessageDetails('queue id', messageId, new Date(0)),
                 consumer,
-                new MessageProcessingStatus(fromState, 0, null)).take()
+                new MessageProcessingStatus(fromState, 0, null, new Date(0), randomUuid())).take(new DefaultThrottlerTest.StaticClock())
+    }
+
+    String randomUuid() {
+        return UUID.randomUUID().toString();
     }
 
     MessageConsumer consumer(TestHandler handler) {

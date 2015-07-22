@@ -3,10 +3,12 @@ package org.openforis.rmb.messagebroker.jdbc;
 import org.openforis.rmb.messagebroker.MessageConsumer;
 import org.openforis.rmb.messagebroker.spi.*;
 import org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State;
+import org.openforis.rmb.messagebroker.util.Is;
 
 import java.io.ByteArrayInputStream;
 import java.sql.*;
 import java.util.*;
+import java.util.Date;
 
 import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.*;
 
@@ -130,10 +132,10 @@ public final class JdbcMessageRepository implements MessageRepository {
         int retries = rs.getInt("retries");
         String errorMessage = rs.getString("error_message");
         MessageProcessingUpdate update = MessageProcessing.create(
-                new MessageDetails(queueId, messageId, publicationTime.getTime()),
+                new MessageDetails(queueId, messageId, toDate(publicationTime)),
                 consumer,
-                new MessageProcessingStatus(fromState, retries, errorMessage, versionId)
-        ).take();
+                new MessageProcessingStatus(fromState, retries, errorMessage, now(), versionId)
+        ).take(clock);
         if (updateMessageProcessing(connection, update))
             callback.taken(update, serializedMessage);
     }
@@ -226,20 +228,32 @@ public final class JdbcMessageRepository implements MessageRepository {
         });
     }
 
-    public void findMessageProcessing(Collection<MessageConsumer<?>> consumers, MessageProcessingFilter filter, final MessageProcessingFoundCallback callback) {
+    public void findMessageProcessing(final Collection<MessageConsumer<?>> consumers,
+                                      final MessageProcessingFilter filter,
+                                      final MessageProcessingFoundCallback callback) {
+        Is.notEmpty(consumers, "Must provide at least one consumer");
+        Is.notNull(filter, "Filter cannot be null");
+        Is.notNull(callback, "Callback cannot be null");
         withConnection(new ConnectionCallback<Void>() {
             public Void execute(Connection connection) throws SQLException {
+                ConstraintBuilder constraintBuilder = new ConstraintBuilder(consumers, filter, clock);
                 PreparedStatement ps = connection.prepareStatement("" +
                         "SELECT consumer_id, queue_id, message_id, publication_time, times_out, state, retries, error_message, version_id, message_string, message_bytes\n" +
                         "FROM " + tablePrefix + "message_consumer mc\n" +
                         "JOIN " + tablePrefix + "message m ON mc.message_id = m.id\n" +
-                        "WHERE 1 = 1");
+                        "WHERE " + constraintBuilder.whereClause() + "\n" +
+                        "ORDER BY sequence_no, consumer_id");
+
+                constraintBuilder.updateStatement(ps);
+
                 ResultSet rs = ps.executeQuery();
+                Map<String, MessageConsumer<?>> consumerById = byId(consumers);
+
                 while (rs.next()) {
                     String consumerId = rs.getString("consumer_id");
                     String queueId = rs.getString("queue_id");
                     String messageId = rs.getString("message_id");
-                    long publicationTime = rs.getTimestamp("publication_time").getTime();
+                    Date publicationTime = toDate(rs.getTimestamp("publication_time"));
                     State state = state(rs);
                     int retries = rs.getInt("retries");
                     String errorMessage = rs.getString("error_message");
@@ -247,17 +261,32 @@ public final class JdbcMessageRepository implements MessageRepository {
                     Object serializedMessage = serializedMessage(rs);
 
                     callback.found(
-                            consumerId,
-                            new MessageDetails(queueId, messageId, publicationTime),
-                            new MessageProcessingStatus(state, retries, errorMessage, versionId),
-                            serializedMessage
-                    );
+                            MessageProcessing.create(
+                                    new MessageDetails(queueId, messageId, publicationTime),
+                                    consumerById.get(consumerId),
+                                    new MessageProcessingStatus(state, retries, errorMessage, now(), versionId)
+                            ), serializedMessage);
                 }
                 rs.close();
                 ps.close();
                 return null;
             }
         });
+    }
+
+    private Date toDate(Timestamp timestamp) {
+        return new Date(timestamp.getTime());
+    }
+
+    private Date now() {
+        return new Date(clock.millis());
+    }
+
+    private Map<String, MessageConsumer<?>> byId(Collection<MessageConsumer<?>> consumers) {
+        Map<String, MessageConsumer<?>> consumerById = new HashMap<String, MessageConsumer<?>>();
+        for (MessageConsumer<?> consumer : consumers)
+            consumerById.put(consumer.id, consumer);
+        return consumerById;
     }
 
     private State state(ResultSet rs) throws SQLException {

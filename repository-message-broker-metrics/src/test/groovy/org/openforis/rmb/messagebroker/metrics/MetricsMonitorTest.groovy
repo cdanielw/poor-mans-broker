@@ -17,7 +17,7 @@ class MetricsMonitorTest extends Specification {
     def metrics = new MetricRegistry()
     def clock = new StaticClock()
     def monitor = new MetricsMonitor(metrics)
-    def publicationTime = 100
+    def publicationTime = new Date(100)
 
 
     def setup() {
@@ -47,7 +47,7 @@ class MetricsMonitorTest extends Specification {
             monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), null))
         then:
             metrics.histogram('someQueueId.someConsumerId.timesFromPublicationToTaken').count == 1
-            metrics.histogram('someQueueId.someConsumerId.timesFromPublicationToTaken').snapshot.max == clock.time - publicationTime
+            metrics.histogram('someQueueId.someConsumerId.timesFromPublicationToTaken').snapshot.max == clock.time - publicationTime.time
     }
 
     def 'ConsumingNewMessageEvent increases queueId.consumerId.takenCount and marks consumerId.takenMeter'() {
@@ -127,7 +127,7 @@ class MetricsMonitorTest extends Specification {
             monitor.onEvent(new MessageConsumedEvent(update('someConsumerId'), null))
         then:
             metrics.histogram('someQueueId.someConsumerId.timesFromPublicationToCompletion').count == 1
-            metrics.histogram('someQueueId.someConsumerId.timesFromPublicationToCompletion').snapshot.max == clock.time - publicationTime
+            metrics.histogram('someQueueId.someConsumerId.timesFromPublicationToCompletion').snapshot.max == clock.time - publicationTime.time
     }
 
     def 'MessageConsumptionFailedEvent updates queueId.consumerId.timesFromPublicationToFailure with time since publication time'() {
@@ -139,7 +139,7 @@ class MetricsMonitorTest extends Specification {
             monitor.onEvent(new MessageConsumptionFailedEvent(update('someConsumerId'), null, null))
         then:
             metrics.histogram('someQueueId.someConsumerId.timesFromPublicationToFailure').count == 1
-            metrics.histogram('someQueueId.someConsumerId.timesFromPublicationToFailure').snapshot.max == clock.time - publicationTime
+            metrics.histogram('someQueueId.someConsumerId.timesFromPublicationToFailure').snapshot.max == clock.time - publicationTime.time
     }
 
     def 'Given a new message, MessageConsumedEvent mark queueId.consumerId.handlingTimes with time since taking the event'() {
@@ -211,8 +211,8 @@ class MetricsMonitorTest extends Specification {
 
     private MessageProcessingUpdate update(String consumerId) {
         MessageProcessingUpdate.create(new MessageDetails('someQueueId', 'messageId', publicationTime), consumer(consumerId),
-                new MessageProcessingStatus(FAILED, 0, null, 'fromVersionId'),
-                new MessageProcessingStatus(FAILED, 0, null))
+                new MessageProcessingStatus(FAILED, 0, null, new Date(0), 'fromVersionId'),
+                new MessageProcessingStatus(FAILED, 0, null, new Date(0), UUID.randomUUID().toString()))
     }
 
     MessageConsumer consumer(String consumerId) {

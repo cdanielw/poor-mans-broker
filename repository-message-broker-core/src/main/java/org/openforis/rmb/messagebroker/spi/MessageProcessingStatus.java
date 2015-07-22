@@ -24,6 +24,6 @@ public final class MessageProcessingStatus {
     }
 
     public enum State {
-        PENDING, PROCESSING, COMPLETED, FAILED
+        PENDING, PROCESSING, TIMED_OUT, COMPLETED, FAILED
     }
 }

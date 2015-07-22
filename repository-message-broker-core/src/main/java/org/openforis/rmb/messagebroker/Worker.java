@@ -50,7 +50,7 @@ final class Worker<T> {
     }
 
     private synchronized void notifyOnWorkerStart() {
-        boolean timedOutMessage = update.fromState == MessageProcessingStatus.State.PROCESSING;
+        boolean timedOutMessage = update.fromState == MessageProcessingStatus.State.TIMED_OUT;
         if (timedOutMessage)
             monitors.onEvent(new ConsumingTimedOutMessageEvent(update, message));
         else

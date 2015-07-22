@@ -145,7 +145,7 @@ class WorkerTest extends Specification {
     }
 
     void consumeTimedOut(MessageConsumer consumer) {
-        def update = takeUpdate(consumer, PROCESSING)
+        def update = takeUpdate(consumer, TIMED_OUT)
         new Worker(repo, throttler, new Monitors([monitor]), update, message).consume()
     }
 

@@ -2,7 +2,6 @@ package org.openforis.rmb.messagebroker.inmemory;
 
 import org.openforis.rmb.messagebroker.MessageConsumer;
 import org.openforis.rmb.messagebroker.spi.*;
-import org.openforis.rmb.messagebroker.spi.Clock;
 
 import java.util.*;
 
@@ -139,7 +138,12 @@ public final class InMemoryMessageRepository implements MessageRepository {
         }
 
         void processing() {
-            setUpdate(update.processing());
+            MessageProcessingStatus.State fromState = timedOut() ? TIMED_OUT : update.toState;
+            setUpdate(MessageProcessingUpdate.take(
+                    update.consumer,
+                    new MessageDetails(update.queueId, update.messageId, update.publicationTime),
+                    new MessageProcessingStatus(fromState, update.retries, update.errorMessage, update.toVersionId)
+            ));
         }
 
         void setUpdate(MessageProcessingUpdate update) {

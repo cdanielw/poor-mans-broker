@@ -9,6 +9,7 @@ import util.AdjustableClock
 import static groovyx.gpars.GParsPool.withPool
 import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.PENDING
 import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.PROCESSING
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.TIMED_OUT
 
 
 abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
@@ -117,7 +118,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
 
         then:
             def callbackInvocation = callback.gotOneMessage('A message')
-            callbackInvocation.update.fromState == PROCESSING
+            callbackInvocation.update.fromState == TIMED_OUT
             callbackInvocation.update.toState == PROCESSING
     }
 

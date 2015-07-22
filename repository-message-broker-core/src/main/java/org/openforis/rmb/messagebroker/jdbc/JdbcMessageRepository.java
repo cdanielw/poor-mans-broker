@@ -2,7 +2,6 @@ package org.openforis.rmb.messagebroker.jdbc;
 
 import org.openforis.rmb.messagebroker.MessageConsumer;
 import org.openforis.rmb.messagebroker.spi.*;
-import org.openforis.rmb.messagebroker.spi.Clock;
 import org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State;
 
 import java.io.ByteArrayInputStream;
@@ -126,7 +125,7 @@ public final class JdbcMessageRepository implements MessageRepository {
             throws SQLException {
         String queueId = rs.getString("queue_id");
         Timestamp publicationTime = rs.getTimestamp("publication_time");
-        State fromState = valueOf(rs.getString("state"));
+        State fromState = rs.getString("state").equals("PROCESSING") ? TIMED_OUT : PENDING;
         String messageId = rs.getString("message_id");
         String stringMessage = rs.getString("message_string");
         byte[] bytesMessage = rs.getBytes("message_bytes");

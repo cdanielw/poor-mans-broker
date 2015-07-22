@@ -2,7 +2,6 @@ package org.openforis.rmb.messagebroker;
 
 import org.openforis.rmb.messagebroker.monitor.MessageUpdateConflictEvent;
 import org.openforis.rmb.messagebroker.monitor.PollingForMessagesEvent;
-import org.openforis.rmb.messagebroker.spi.MessageTakenCallback;
 import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate;
 import org.openforis.rmb.messagebroker.spi.MessageRepository;
 import org.openforis.rmb.messagebroker.spi.MessageSerializer;
@@ -57,8 +56,8 @@ final class MessagePoller {
         final Map<MessageConsumer<?>, Integer> maxCountByConsumer = determineMaxCountByConsumer();
         if (!maxCountByConsumer.isEmpty())
             monitors.onEvent(new PollingForMessagesEvent(maxCountByConsumer));
-        repository.take(maxCountByConsumer, new MessageTakenCallback() {
-            public void messageTaken(MessageProcessingUpdate update, Object serializedMessage) {
+        repository.take(maxCountByConsumer, new MessageRepository.MessageTakenCallback() {
+            public void taken(MessageProcessingUpdate update, Object serializedMessage) {
                 consume(update, serializedMessage);
             }
         });

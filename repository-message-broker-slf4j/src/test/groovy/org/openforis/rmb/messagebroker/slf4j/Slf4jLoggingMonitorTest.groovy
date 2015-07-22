@@ -7,8 +7,8 @@ import org.openforis.rmb.messagebroker.RepositoryMessageBroker
 import org.openforis.rmb.messagebroker.inmemory.InMemoryMessageRepository
 import org.openforis.rmb.messagebroker.monitor.*
 import org.openforis.rmb.messagebroker.spi.MessageDetails
+import org.openforis.rmb.messagebroker.spi.MessageProcessing
 import org.openforis.rmb.messagebroker.spi.MessageProcessingStatus
-import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate
 import spock.lang.Specification
 import spock.lang.Unroll
 import uk.org.lidalia.slf4jtest.TestLogger
@@ -23,9 +23,10 @@ class Slf4jLoggingMonitorTest extends Specification {
             MessageBrokerConfig.builder(new InMemoryMessageRepository(), NULL_TRANSACTION_SYNCHRONIZER)
     )
     static consumer = MessageConsumer.builder('consumer id', {} as MessageHandler).build()
-    static update = MessageProcessingUpdate.take(consumer,
-            new MessageDetails('queue id', 'message id', 0),
-            new MessageProcessingStatus(PENDING, 0, null))
+    static update = MessageProcessing.create(new MessageDetails('queue id', 'message id', 0),
+            consumer,
+            new MessageProcessingStatus(PENDING, 0, null)
+    ).take()
 
     def monitor = new Slf4jLoggingMonitor()
 

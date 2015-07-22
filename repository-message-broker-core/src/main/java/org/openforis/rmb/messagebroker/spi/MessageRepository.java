@@ -2,6 +2,7 @@ package org.openforis.rmb.messagebroker.spi;
 
 import org.openforis.rmb.messagebroker.MessageConsumer;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -15,9 +16,18 @@ public interface MessageRepository {
     // TODO: Delete this, and use generic count
     Map<String, Integer> messageQueueSizeByConsumerId();
 
-//    void findMessageProcessing(MessageProcessingFilter filter, MessageProcessingCallback callback);
+    void findMessageProcessing(Collection<MessageConsumer<?>> consumers, MessageProcessingFilter filter, MessageProcessingFoundCallback callback);
 //
 //    Map<String, Integer> countByConsumerId(MessageProcessingFilter filter);
 //
 //    void deleteMessageProcessing(MessageProcessingFilter filter);
+
+
+    interface MessageTakenCallback {
+        void taken(MessageProcessingUpdate update, Object serializedMessage);
+    }
+
+    interface MessageProcessingFoundCallback {
+        void found(String consumerId, MessageDetails messageDetails, MessageProcessingStatus status, Object serializedMessage);
+    }
 }

@@ -6,10 +6,7 @@ import org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State;
 
 import java.io.ByteArrayInputStream;
 import java.sql.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.*;
 
@@ -93,6 +90,7 @@ public final class JdbcMessageRepository implements MessageRepository {
         });
     }
 
+
     private void takeMessages(Connection connection, MessageConsumer<?> consumer, int maxCount, MessageTakenCallback callback)
             throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
@@ -127,17 +125,17 @@ public final class JdbcMessageRepository implements MessageRepository {
         Timestamp publicationTime = rs.getTimestamp("publication_time");
         State fromState = rs.getString("state").equals("PROCESSING") ? TIMED_OUT : PENDING;
         String messageId = rs.getString("message_id");
-        String stringMessage = rs.getString("message_string");
-        byte[] bytesMessage = rs.getBytes("message_bytes");
-        Object serializedMessage = stringMessage == null ? bytesMessage : stringMessage;
+        Object serializedMessage = serializedMessage(rs);
         String versionId = rs.getString("version_id");
         int retries = rs.getInt("retries");
         String errorMessage = rs.getString("error_message");
-        MessageProcessingUpdate update = MessageProcessingUpdate.take(consumer,
+        MessageProcessingUpdate update = MessageProcessing.create(
                 new MessageDetails(queueId, messageId, publicationTime.getTime()),
-                new MessageProcessingStatus(fromState, retries, errorMessage, versionId));
+                consumer,
+                new MessageProcessingStatus(fromState, retries, errorMessage, versionId)
+        ).take();
         if (updateMessageProcessing(connection, update))
-            callback.messageTaken(update, serializedMessage);
+            callback.taken(update, serializedMessage);
     }
 
     private boolean updateMessageProcessing(Connection connection, MessageProcessingUpdate update)
@@ -226,6 +224,51 @@ public final class JdbcMessageRepository implements MessageRepository {
                 return sizeByConsumerId;
             }
         });
+    }
+
+    public void findMessageProcessing(Collection<MessageConsumer<?>> consumers, MessageProcessingFilter filter, final MessageProcessingFoundCallback callback) {
+        withConnection(new ConnectionCallback<Void>() {
+            public Void execute(Connection connection) throws SQLException {
+                PreparedStatement ps = connection.prepareStatement("" +
+                        "SELECT consumer_id, queue_id, message_id, publication_time, times_out, state, retries, error_message, version_id, message_string, message_bytes\n" +
+                        "FROM " + tablePrefix + "message_consumer mc\n" +
+                        "JOIN " + tablePrefix + "message m ON mc.message_id = m.id\n" +
+                        "WHERE 1 = 1");
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    String consumerId = rs.getString("consumer_id");
+                    String queueId = rs.getString("queue_id");
+                    String messageId = rs.getString("message_id");
+                    long publicationTime = rs.getTimestamp("publication_time").getTime();
+                    State state = state(rs);
+                    int retries = rs.getInt("retries");
+                    String errorMessage = rs.getString("error_message");
+                    String versionId = rs.getString("version_id");
+                    Object serializedMessage = serializedMessage(rs);
+
+                    callback.found(
+                            consumerId,
+                            new MessageDetails(queueId, messageId, publicationTime),
+                            new MessageProcessingStatus(state, retries, errorMessage, versionId),
+                            serializedMessage
+                    );
+                }
+                rs.close();
+                ps.close();
+                return null;
+            }
+        });
+    }
+
+    private State state(ResultSet rs) throws SQLException {
+        long timesOut = rs.getTimestamp("times_out").getTime();
+        return timesOut < clock.millis() ? TIMED_OUT : valueOf(rs.getString("state"));
+    }
+
+    private Object serializedMessage(ResultSet rs) throws SQLException {
+        String stringMessage = rs.getString("message_string");
+        byte[] bytesMessage = rs.getBytes("message_bytes");
+        return stringMessage == null ? bytesMessage : stringMessage;
     }
 
     private long timesOut(MessageConsumer<?> consumer, long now) {

@@ -17,10 +17,14 @@ public final class MessageProcessingUpdate<T> {
     public final String fromVersionId;
     public final String toVersionId;
 
-    private MessageProcessingUpdate(MessageConsumer<T> consumer,
-                                    MessageDetails messageDetails,
+    private MessageProcessingUpdate(MessageDetails messageDetails,
+                                    MessageConsumer<T> consumer,
                                     MessageProcessingStatus fromStatus,
                                     MessageProcessingStatus toStatus) {
+        Is.notNull(messageDetails, "messageDetails must not be null");
+        Is.notNull(consumer, "consumer must not be null");
+        Is.notNull(fromStatus, "fromStatus must not be null");
+        Is.notNull(toStatus, "toStatus must not be null");
         this.queueId = messageDetails.queueId;
         this.consumer = consumer;
         this.messageId = messageDetails.messageId;
@@ -31,63 +35,39 @@ public final class MessageProcessingUpdate<T> {
         this.errorMessage = toStatus.errorMessage;
         this.fromVersionId = fromStatus.versionId;
         this.toVersionId = toStatus.versionId;
-        validateState();
     }
 
-    private void validateState() {
-        Is.notNull(queueId, "queueId must not be null");
-        Is.notNull(consumer, "consumer must not be null");
-        Is.notNull(messageId, "messageId must not be null");
-        Is.notNull(fromState, "fromStatus must not be null");
-        Is.notNull(toState, "toStatus must not be null");
-        Is.notNull(fromVersionId, "fromVersionId must not be null");
-        Is.notNull(toVersionId, "toVersionId must not be null");
-    }
-
-    public static <T> MessageProcessingUpdate<T> createNew(MessageConsumer<T> consumer,
-                                                           MessageDetails messageDetails) {
-        return new MessageProcessingUpdate<T>(consumer, messageDetails,
-                new MessageProcessingStatus(PENDING, 0, null),
-                new MessageProcessingStatus(PENDING, 0, null));
-    }
-
-    public static <T> MessageProcessingUpdate<T> create(MessageConsumer<T> consumer,
-                                                        MessageDetails messageDetails,
+    public static <T> MessageProcessingUpdate<T> create(MessageDetails messageDetails,
+                                                        MessageConsumer<T> consumer,
                                                         MessageProcessingStatus fromStatus,
                                                         MessageProcessingStatus toStatus) {
-        return new MessageProcessingUpdate<T>(consumer, messageDetails, fromStatus, toStatus);
-    }
-
-    public static <T> MessageProcessingUpdate<T> take(MessageConsumer<T> consumer,
-                                                      MessageDetails messageDetails,
-                                                      MessageProcessingStatus fromStatus) {
-        return new MessageProcessingUpdate<T>(consumer, messageDetails, fromStatus,
-                new MessageProcessingStatus(PROCESSING, fromStatus.retries, fromStatus.errorMessage));
+        return new MessageProcessingUpdate<T>(messageDetails, consumer, fromStatus, toStatus);
     }
 
     public MessageProcessingUpdate<T> processing() {
-        return create(consumer, messageDetails(), toStatus(), new MessageProcessingStatus(PROCESSING, retries, errorMessage));
+        return create(messageDetails(), consumer, toStatus(), new MessageProcessingStatus(PROCESSING, retries, errorMessage));
     }
 
     public MessageProcessingUpdate<T> completed() {
-        return create(consumer, messageDetails(), toStatus(), new MessageProcessingStatus(COMPLETED, retries, errorMessage));
+        return create(messageDetails(), consumer, toStatus(), new MessageProcessingStatus(COMPLETED, retries, errorMessage));
     }
 
     public MessageProcessingUpdate<T> retry(String errorMessage) {
-        return create(consumer, messageDetails(), toStatus(), new MessageProcessingStatus(PROCESSING, retries + 1, errorMessage));
+        return create(messageDetails(), consumer, toStatus(), new MessageProcessingStatus(PROCESSING, retries + 1, errorMessage));
     }
 
     public MessageProcessingUpdate<T> failed(String errorMessage) {
-        return create(consumer, messageDetails(), toStatus(), new MessageProcessingStatus(FAILED, retries, errorMessage));
+        return create(messageDetails(), consumer, toStatus(), new MessageProcessingStatus(FAILED, retries, errorMessage));
     }
 
     public String toString() {
         return "MessageProcessingUpdate{" +
-                "queueId=" + queueId +
-                ", consumer='" + consumer + '\'' +
+                "queueId='" + queueId + '\'' +
                 ", messageId='" + messageId + '\'' +
-                ", fromStatus=" + fromState +
-                ", toStatus=" + toState +
+                ", publicationTime=" + publicationTime +
+                ", consumer=" + consumer +
+                ", fromState=" + fromState +
+                ", toState=" + toState +
                 ", retries=" + retries +
                 ", errorMessage='" + errorMessage + '\'' +
                 ", fromVersionId='" + fromVersionId + '\'' +

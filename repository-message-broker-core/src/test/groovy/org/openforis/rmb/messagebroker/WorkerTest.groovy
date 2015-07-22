@@ -150,9 +150,9 @@ class WorkerTest extends Specification {
     }
 
     MessageProcessingUpdate takeUpdate(MessageConsumer consumer, MessageProcessingStatus.State fromState) {
-        return MessageProcessingUpdate.take(consumer,
-                new MessageDetails('queue id', messageId, 0),
-                new MessageProcessingStatus(fromState, 0, null))
+        return MessageProcessing.create(new MessageDetails('queue id', messageId, 0),
+                consumer,
+                new MessageProcessingStatus(fromState, 0, null)).take()
     }
 
     MessageConsumer consumer(TestHandler handler) {
@@ -172,7 +172,7 @@ class WorkerTest extends Specification {
             assert false, "No call to MessageRepository.add expected"
         }
 
-        void take(Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageTakenCallback callback) throws MessageRepositoryException {
+        void take(Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageRepository.MessageTakenCallback callback) throws MessageRepositoryException {
             assert false, "No call to MessageRepository.take expected"
         }
 
@@ -184,6 +184,12 @@ class WorkerTest extends Specification {
 
         Map<String, Integer> messageQueueSizeByConsumerId() {
             return Collections.EMPTY_MAP;
+        }
+
+        void findMessageProcessing(Collection<MessageConsumer<?>> consumers,
+                                   MessageProcessingFilter filter,
+                                   MessageRepository.MessageProcessingFoundCallback callback) {
+
         }
 
         private void versionIdsChainTogether() {

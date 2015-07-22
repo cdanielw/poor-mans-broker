@@ -210,7 +210,7 @@ class MetricsMonitorTest extends Specification {
     }
 
     private MessageProcessingUpdate update(String consumerId) {
-        MessageProcessingUpdate.create(consumer(consumerId), new MessageDetails('someQueueId', 'messageId', publicationTime),
+        MessageProcessingUpdate.create(new MessageDetails('someQueueId', 'messageId', publicationTime), consumer(consumerId),
                 new MessageProcessingStatus(FAILED, 0, null, 'fromVersionId'),
                 new MessageProcessingStatus(FAILED, 0, null))
     }

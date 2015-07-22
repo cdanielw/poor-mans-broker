@@ -2,7 +2,7 @@ package org.openforis.rmb.messagebroker
 
 import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate
 import org.openforis.rmb.messagebroker.spi.MessageRepository
-import org.openforis.rmb.messagebroker.spi.MessageTakenCallback
+
 import spock.lang.Specification
 import util.AdjustableClock
 
@@ -13,7 +13,7 @@ import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.
 
 
 abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
-    def callback = new MockTakenCallback()
+    def takenCallback = new MockTakenCallback()
     def clock = new AdjustableClock()
 
     abstract MessageRepository getRepository()
@@ -28,7 +28,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             take((consumer): 1)
 
         then:
-            def callbackInvocation = callback.gotOneMessage('A message', consumer)
+            def callbackInvocation = takenCallback.gotOneMessage('A message', consumer)
             callbackInvocation.update.fromState == PENDING
             callbackInvocation.update.toState == PROCESSING
     }
@@ -40,7 +40,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             take((consumer): 1)
 
         then:
-            callback.gotNoMessages()
+            takenCallback.notInvoked()
     }
 
     def 'Given two messages, when taking one message, callback is only invoked for the first message'() {
@@ -52,7 +52,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             take((consumer): 1)
 
         then:
-            callback.gotOneMessage('message 1')
+            takenCallback.gotOneMessage('message 1')
     }
 
     def 'Given one message, when taking two messages, callback is invoked for the existing message'() {
@@ -63,7 +63,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             take((consumer): 2)
 
         then:
-            callback.gotOneMessage('message 1')
+            takenCallback.gotOneMessage('message 1')
     }
 
     def 'Given two messages, when taking two messages, callback is invoked for both in order'() {
@@ -75,9 +75,9 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             take((consumer): 2)
 
         then:
-            callback.messages.size() == 2
-            callback[0].message == 'message 1'
-            callback[1].message == 'message 2'
+            takenCallback.invocations.size() == 2
+            takenCallback[0].message == 'message 1'
+            takenCallback[1].message == 'message 2'
     }
 
     def 'Given two consumers, when taking message for first consumer, callback is only invoked for that consumer'() {
@@ -90,7 +90,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             take((consumer1): 2)
 
         then:
-            callback.gotOneMessage('message 1', consumer1)
+            takenCallback.gotOneMessage('message 1', consumer1)
     }
 
     def 'Given a taken message, when taking messages, callback is not invoked'() {
@@ -102,7 +102,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             take((consumer): 1)
 
         then:
-            callback.gotNoMessages()
+            takenCallback.notInvoked()
     }
 
     def 'Given a timed out message, when taking messages, callback is invoked with the message and an update from PROCESSING to PROCESSING'() {
@@ -117,7 +117,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             take((consumer): 1)
 
         then:
-            def callbackInvocation = callback.gotOneMessage('A message')
+            def callbackInvocation = takenCallback.gotOneMessage('A message')
             callbackInvocation.update.fromState == TIMED_OUT
             callbackInvocation.update.toState == PROCESSING
     }
@@ -135,7 +135,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             }
 
         then:
-            callback.gotOneMessage('A message')
+            takenCallback.gotOneMessage('A message')
     }
 
     def 'Given a byte[] message, when taking the message, the byte[] is returned'() {
@@ -148,7 +148,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             take((consumer): 1)
 
         then:
-            callback.gotOneMessage(message)
+            takenCallback.gotOneMessage(message)
     }
 
 
@@ -202,12 +202,12 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
     }
 
     void take(Map<MessageConsumer, Integer> maxCountbyConsumer) {
-        repository.take(maxCountbyConsumer, callback)
+        repository.take(maxCountbyConsumer, takenCallback)
     }
 
 
     void takeWithoutCallback(Map<MessageConsumer, Integer> maxCountbyConsumer) {
-        repository.take(maxCountbyConsumer, Mock(MessageTakenCallback))
+        repository.take(maxCountbyConsumer, Mock(MessageRepository.MessageTakenCallback))
     }
 
     MessageConsumer consumer(String id, int workCount = Integer.MAX_VALUE) {
@@ -223,39 +223,39 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
         }
     }
 
-    static class MockTakenCallback implements MessageTakenCallback {
-        final List<CallbackInvocation> messages = []
+    static class MockTakenCallback implements MessageRepository.MessageTakenCallback {
+        final List<TakenCallbackInvocation> invocations = []
 
-        void messageTaken(MessageProcessingUpdate update, Object serializedMessage) {
-            messages << new CallbackInvocation(update, serializedMessage)
+        void taken(MessageProcessingUpdate update, Object serializedMessage) {
+            invocations << new TakenCallbackInvocation(update, serializedMessage)
         }
 
-        CallbackInvocation getAt(int index) {
-            messages[index]
+        TakenCallbackInvocation getAt(int index) {
+            invocations[index]
         }
 
-        CallbackInvocation gotOneMessage(message, MessageConsumer consumer = null) {
-            assert messages.size() == 1
-            assert messages[0].message == message
+        TakenCallbackInvocation gotOneMessage(message, MessageConsumer consumer = null) {
+            assert invocations.size() == 1
+            assert invocations[0].message == message
             if (consumer)
-                assert messages[0].update.consumer == consumer
-            return messages[0]
+                assert invocations[0].update.consumer == consumer
+            return invocations[0]
         }
 
-        void gotNoMessages() {
-            assert messages.empty
+        void notInvoked() {
+            assert invocations.empty
         }
 
-        void clear() {
-            messages.clear()
+        void reset() {
+            invocations.clear()
         }
     }
 
-    static class CallbackInvocation {
+    static class TakenCallbackInvocation {
         final MessageProcessingUpdate update
         final message
 
-        CallbackInvocation(MessageProcessingUpdate update, Object message) {
+        TakenCallbackInvocation(MessageProcessingUpdate update, Object message) {
             this.update = update
             this.message = message
         }

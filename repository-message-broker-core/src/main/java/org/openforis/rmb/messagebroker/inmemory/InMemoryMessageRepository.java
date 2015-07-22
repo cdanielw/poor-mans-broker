@@ -24,7 +24,12 @@ public final class InMemoryMessageRepository implements MessageRepository {
                 String messageId = UUID.randomUUID().toString();
                 long publicationTime = clock.millis();
                 MessageProcessingUpdate<?> update = MessageProcessingUpdate
-                        .createNew(consumer, new MessageDetails(queueId, messageId, publicationTime));
+                        .create(
+                                new MessageDetails(queueId, messageId, publicationTime),
+                                consumer,
+                                new MessageProcessingStatus(PENDING, 0, null),
+                                new MessageProcessingStatus(PENDING, 0, null)
+                        );
                 consumerMessages.add(new Message(update, serializedMessage));
             }
         }
@@ -48,6 +53,12 @@ public final class InMemoryMessageRepository implements MessageRepository {
         return sizeByConsumerId;
     }
 
+    public void findMessageProcessing(Collection<MessageConsumer<?>> consumers,
+                                      MessageProcessingFilter filter,
+                                      MessageProcessingFoundCallback callback) {
+
+    }
+
     private void takeForConsumer(MessageConsumer<?> consumer, Integer maxCount, MessageTakenCallback callback) {
         ConsumerMessages messages = consumerMessages(consumer);
         if (messages == null)
@@ -59,7 +70,7 @@ public final class InMemoryMessageRepository implements MessageRepository {
             }
             if (message == null)
                 return;
-            callback.messageTaken(message.update, message.serializedMessage);
+            callback.taken(message.update, message.serializedMessage);
         }
     }
 
@@ -139,10 +150,10 @@ public final class InMemoryMessageRepository implements MessageRepository {
 
         void processing() {
             MessageProcessingStatus.State fromState = timedOut() ? TIMED_OUT : update.toState;
-            setUpdate(MessageProcessingUpdate.take(
-                    update.consumer,
-                    new MessageDetails(update.queueId, update.messageId, update.publicationTime),
-                    new MessageProcessingStatus(fromState, update.retries, update.errorMessage, update.toVersionId)
+            setUpdate(MessageProcessingUpdate.create(
+                    new MessageDetails(update.queueId, update.messageId, update.publicationTime), update.consumer,
+                    new MessageProcessingStatus(fromState, update.retries, update.errorMessage, update.toVersionId),
+                    new MessageProcessingStatus(PROCESSING, update.retries, update.errorMessage)
             ));
         }
 

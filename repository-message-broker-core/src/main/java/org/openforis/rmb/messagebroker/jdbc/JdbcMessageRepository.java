@@ -178,7 +178,7 @@ public final class JdbcMessageRepository implements MessageRepository {
     private boolean deleteCompleted(Connection connection, MessageProcessingUpdate update) throws SQLException {
         boolean success = deleteFromMessageConsumer(connection, update);
         if (success) {
-            deleteFromMessageIfLastConsumer(connection, update);
+            deleteOrphanedMessages(connection, update);
             connection.commit();
         }
         return success;
@@ -196,7 +196,7 @@ public final class JdbcMessageRepository implements MessageRepository {
         return rowsDeleted != 0;
     }
 
-    private void deleteFromMessageIfLastConsumer(Connection connection, MessageProcessingUpdate update) throws SQLException {PreparedStatement ps = connection.prepareStatement("" +
+    private void deleteOrphanedMessages(Connection connection, MessageProcessingUpdate update) throws SQLException {PreparedStatement ps = connection.prepareStatement("" +
             "DELETE FROM message\n" +
             "WHERE id = ?\n" +
             "AND id NOT IN (SELECT message_id FROM message_consumer)");

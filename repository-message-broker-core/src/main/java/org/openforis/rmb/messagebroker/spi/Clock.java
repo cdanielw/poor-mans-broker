@@ -1,4 +1,4 @@
-package org.openforis.rmb.messagebroker.util;
+package org.openforis.rmb.messagebroker.spi;
 
 public interface Clock {
     long millis();

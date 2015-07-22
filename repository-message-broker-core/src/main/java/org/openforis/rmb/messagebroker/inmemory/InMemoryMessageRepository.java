@@ -2,7 +2,7 @@ package org.openforis.rmb.messagebroker.inmemory;
 
 import org.openforis.rmb.messagebroker.MessageConsumer;
 import org.openforis.rmb.messagebroker.spi.*;
-import org.openforis.rmb.messagebroker.util.Clock;
+import org.openforis.rmb.messagebroker.spi.Clock;
 
 import java.util.*;
 
@@ -31,7 +31,7 @@ public final class InMemoryMessageRepository implements MessageRepository {
         }
     }
 
-    public void take(Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageCallback callback) {
+    public void take(Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageTakenCallback callback) {
         for (Map.Entry<MessageConsumer<?>, Integer> entry : maxCountByConsumer.entrySet()) {
             MessageConsumer<?> consumer = entry.getKey();
             Integer maxCount = entry.getValue();
@@ -49,7 +49,7 @@ public final class InMemoryMessageRepository implements MessageRepository {
         return sizeByConsumerId;
     }
 
-    private void takeForConsumer(MessageConsumer<?> consumer, Integer maxCount, MessageCallback callback) {
+    private void takeForConsumer(MessageConsumer<?> consumer, Integer maxCount, MessageTakenCallback callback) {
         ConsumerMessages messages = consumerMessages(consumer);
         if (messages == null)
             return;

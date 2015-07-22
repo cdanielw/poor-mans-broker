@@ -171,7 +171,7 @@ class WorkerTest extends Specification {
             assert false, "No call to MessageRepository.add expected"
         }
 
-        void take(Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageCallback callback) throws MessageRepositoryException {
+        void take(Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageTakenCallback callback) throws MessageRepositoryException {
             assert false, "No call to MessageRepository.take expected"
         }
 

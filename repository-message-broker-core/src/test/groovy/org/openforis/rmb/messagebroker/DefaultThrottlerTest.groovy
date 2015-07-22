@@ -1,7 +1,7 @@
 package org.openforis.rmb.messagebroker
 
 import org.openforis.rmb.messagebroker.spi.ThrottlingStrategy
-import org.openforis.rmb.messagebroker.util.Clock
+import org.openforis.rmb.messagebroker.spi.Clock
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit

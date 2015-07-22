@@ -3,7 +3,7 @@ package org.openforis.rmb.messagebroker.jdbc;
 import org.openforis.rmb.messagebroker.MessageConsumer;
 import org.openforis.rmb.messagebroker.spi.*;
 import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status;
-import org.openforis.rmb.messagebroker.util.Clock;
+import org.openforis.rmb.messagebroker.spi.Clock;
 
 import java.io.ByteArrayInputStream;
 import java.sql.*;
@@ -79,7 +79,7 @@ public final class JdbcMessageRepository implements MessageRepository {
     }
 
 
-    public void take(final Map<MessageConsumer<?>, Integer> maxCountByConsumer, final MessageCallback callback) {
+    public void take(final Map<MessageConsumer<?>, Integer> maxCountByConsumer, final MessageTakenCallback callback) {
         withConnection(new ConnectionCallback() {
             public Void execute(Connection connection) throws SQLException {
                 for (Map.Entry<MessageConsumer<?>, Integer> entry : maxCountByConsumer.entrySet()) {
@@ -92,7 +92,7 @@ public final class JdbcMessageRepository implements MessageRepository {
         });
     }
 
-    private void takeMessages(Connection connection, MessageConsumer<?> consumer, int maxCount, MessageCallback callback)
+    private void takeMessages(Connection connection, MessageConsumer<?> consumer, int maxCount, MessageTakenCallback callback)
             throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
                 "SELECT queue_id, message_id, publication_time, version_id, status, message_string, message_bytes, " +
@@ -120,7 +120,7 @@ public final class JdbcMessageRepository implements MessageRepository {
         return status.equals("PENDING") || timesOut.before(now);
     }
 
-    private void takeMessage(Connection connection, ResultSet rs, MessageConsumer<?> consumer, MessageCallback callback)
+    private void takeMessage(Connection connection, ResultSet rs, MessageConsumer<?> consumer, MessageTakenCallback callback)
             throws SQLException {
         String queueId = rs.getString("queue_id");
         Timestamp publicationTime = rs.getTimestamp("publication_time");

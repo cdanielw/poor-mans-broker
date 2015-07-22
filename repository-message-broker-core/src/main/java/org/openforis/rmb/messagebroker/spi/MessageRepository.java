@@ -8,7 +8,7 @@ import java.util.Map;
 public interface MessageRepository {
     void add(String queueId, List<MessageConsumer<?>> consumers, Object serializedMessage) throws MessageRepositoryException;
 
-    void take(Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageCallback callback) throws MessageRepositoryException;
+    void take(Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageTakenCallback callback) throws MessageRepositoryException;
 
     boolean update(MessageProcessingUpdate update) throws MessageRepositoryException;
 

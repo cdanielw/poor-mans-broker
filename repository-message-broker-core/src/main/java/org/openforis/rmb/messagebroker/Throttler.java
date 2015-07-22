@@ -1,6 +1,6 @@
 package org.openforis.rmb.messagebroker;
 
-import org.openforis.rmb.messagebroker.util.Clock;
+import org.openforis.rmb.messagebroker.spi.Clock;
 
 interface Throttler {
     void throttle(int retry, MessageConsumer<?> consumer, KeepAlive keepAlive) throws InterruptedException;

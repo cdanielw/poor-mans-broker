@@ -1,6 +1,6 @@
 package org.openforis.rmb.messagebroker
 
-import org.openforis.rmb.messagebroker.spi.MessageCallback
+import org.openforis.rmb.messagebroker.spi.MessageTakenCallback
 import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate
 import org.openforis.rmb.messagebroker.spi.MessageRepository
 import spock.lang.Specification
@@ -11,7 +11,7 @@ import static org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status
 import static org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate.Status.PROCESSING
 
 abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
-    def callback = new MockCallback()
+    def callback = new MockTakenCallback()
     def clock = new AdjustableClock()
 
     abstract MessageRepository getRepository()
@@ -205,7 +205,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
 
 
     void takeWithoutCallback(Map<MessageConsumer, Integer> maxCountbyConsumer) {
-        repository.take(maxCountbyConsumer, Mock(MessageCallback))
+        repository.take(maxCountbyConsumer, Mock(MessageTakenCallback))
     }
 
     MessageConsumer consumer(String id, int workCount = Integer.MAX_VALUE) {
@@ -221,7 +221,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
         }
     }
 
-    static class MockCallback implements MessageCallback {
+    static class MockTakenCallback implements MessageTakenCallback {
         final List<CallbackInvocation> messages = []
 
         void messageTaken(MessageProcessingUpdate update, Object serializedMessage) {

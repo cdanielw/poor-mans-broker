@@ -6,7 +6,7 @@ import com.codahale.metrics.MetricRegistry;
 import org.openforis.rmb.messagebroker.MessageConsumer;
 import org.openforis.rmb.messagebroker.monitor.*;
 import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate;
-import org.openforis.rmb.messagebroker.util.Clock;
+import org.openforis.rmb.messagebroker.spi.Clock;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

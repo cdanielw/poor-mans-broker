@@ -16,7 +16,6 @@
         <property name="dataSource" value="#{database.dataSource}"/>
     </bean>
 
-
     <bean id="messagePublishingService" class="org.openforis.rmb.spring.MessagePublishingService">
         <constructor-arg ref="fullyConfiguredQueue"/>
     </bean>
@@ -24,6 +23,7 @@
     <bean id="messageCollectingHandler" class="org.openforis.rmb.spring.MessageCollectingHandler"/>
 
     <bean id="eventCollectingMonitor" class="org.openforis.rmb.spring.EventCollectingMonitor"/>
+
 
     <!-- Full configuration -->
     <bean id="fullyConfiguredMessageBroker" class="org.openforis.rmb.spring.SpringJdbcMessageBroker">

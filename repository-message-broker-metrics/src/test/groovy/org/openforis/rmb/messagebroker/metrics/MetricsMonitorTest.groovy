@@ -18,6 +18,7 @@ class MetricsMonitorTest extends Specification {
     def clock = new StaticClock()
     def monitor = new MetricsMonitor(metrics)
     def publicationTime = new Date(100)
+    def message = 'A message'
 
 
     def setup() {
@@ -33,7 +34,7 @@ class MetricsMonitorTest extends Specification {
 
     def 'MessagePublishedEvent increases queueId.messageCount and marks queueId.messageMeter'() {
         when:
-            monitor.onEvent(new MessagePublishedEvent('someQueueId', null))
+            monitor.onEvent(new MessagePublishedEvent('someQueueId', message))
         then:
             metrics.counter('someQueueId.messageCount').count == 1
             metrics.meter('someQueueId.messageMeter').count == 1
@@ -44,7 +45,7 @@ class MetricsMonitorTest extends Specification {
         monitor.onEvent(new MessageQueueCreatedEvent('someQueueId', [consumer('someConsumerId')]))
 
         when:
-            monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), null))
+            monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), message))
         then:
             metrics.histogram('someQueueId.someConsumerId.timesFromPublicationToTaken').count == 1
             metrics.histogram('someQueueId.someConsumerId.timesFromPublicationToTaken').snapshot.max == clock.time - publicationTime.time
@@ -53,7 +54,7 @@ class MetricsMonitorTest extends Specification {
     def 'ConsumingNewMessageEvent increases queueId.consumerId.takenCount and marks consumerId.takenMeter'() {
         monitor.onEvent(new MessageQueueCreatedEvent('someQueueId', [consumer('someConsumerId')]))
         when:
-            monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), null))
+            monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), message))
 
         then:
             metrics.counter('someQueueId.someConsumerId.takenCount').count == 1
@@ -63,7 +64,7 @@ class MetricsMonitorTest extends Specification {
     def 'ConsumingTimedOutMessageEvent increases queueId.consumerId.takenCount and marks consumerId.takenMeter'() {
         monitor.onEvent(new MessageQueueCreatedEvent('someQueueId', [consumer('someConsumerId')]))
         when:
-            monitor.onEvent(new ConsumingTimedOutMessageEvent(update('someConsumerId'), null))
+            monitor.onEvent(new ConsumingTimedOutMessageEvent(update('someConsumerId'), message))
 
         then:
             metrics.counter('someQueueId.someConsumerId.takenCount').count == 1
@@ -73,7 +74,7 @@ class MetricsMonitorTest extends Specification {
     def 'ConsumingTimedOutMessageEvent increases queueId.consumerId.timedOutTakenCount and marks consumerId.timedOutTakenMeter'() {
         monitor.onEvent(new MessageQueueCreatedEvent('someQueueId', [consumer('someConsumerId')]))
         when:
-            monitor.onEvent(new ConsumingTimedOutMessageEvent(update('someConsumerId'), null))
+            monitor.onEvent(new ConsumingTimedOutMessageEvent(update('someConsumerId'), message))
 
         then:
             metrics.counter('someQueueId.someConsumerId.timedOutTakenCount').count == 1
@@ -82,10 +83,10 @@ class MetricsMonitorTest extends Specification {
 
     def 'RetryingMessageConsumptionEvent increments queueId.consumerId.retryCount and marks consumerId.retryMeter'() {
         monitor.onEvent(new MessageQueueCreatedEvent('someQueueId', [consumer('someConsumerId')]))
-        monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), null))
+        monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), message))
 
         when:
-            monitor.onEvent(new RetryingMessageConsumptionEvent(update('someConsumerId'), null, null))
+            monitor.onEvent(new RetryingMessageConsumptionEvent(update('someConsumerId'), message, null))
 
         then:
             metrics.counter('someQueueId.someConsumerId.retryCount').count == 1
@@ -94,10 +95,10 @@ class MetricsMonitorTest extends Specification {
 
     def 'MessageConsumedEvent decreases queueId.consumerId.takenCount, increases consumerId.completedCount, and marks consumerId.completedMeter'() {
         monitor.onEvent(new MessageQueueCreatedEvent('someQueueId', [consumer('someConsumerId')]))
-        monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), null))
+        monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), message))
 
         when:
-            monitor.onEvent(new MessageConsumedEvent(update('someConsumerId'), null))
+            monitor.onEvent(new MessageConsumedEvent(update('someConsumerId'), message))
 
         then:
             metrics.counter('someQueueId.someConsumerId.takenCount').count == 0
@@ -107,10 +108,10 @@ class MetricsMonitorTest extends Specification {
 
     def 'MessageConsumptionFailedEvent decreases queueId.consumerId.takenCount, increases consumerId.failedCount, and marks consumerId.failedMeter'() {
         monitor.onEvent(new MessageQueueCreatedEvent('someQueueId', [consumer('someConsumerId')]))
-        monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), null))
+        monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), message))
 
         when:
-            monitor.onEvent(new MessageConsumptionFailedEvent(update('someConsumerId'), null, null))
+            monitor.onEvent(new MessageConsumptionFailedEvent(update('someConsumerId'), message, null))
 
         then:
             metrics.counter('someQueueId.someConsumerId.takenCount').count == 0
@@ -121,10 +122,10 @@ class MetricsMonitorTest extends Specification {
     def 'MessageConsumedEvent updates queueId.consumerId.timesFromPublicationToCompletion with time since publication time'() {
         clock.time = 300
         monitor.onEvent(new MessageQueueCreatedEvent('someQueueId', [consumer('someConsumerId')]))
-        monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), null))
+        monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), message))
 
         when:
-            monitor.onEvent(new MessageConsumedEvent(update('someConsumerId'), null))
+            monitor.onEvent(new MessageConsumedEvent(update('someConsumerId'), message))
         then:
             metrics.histogram('someQueueId.someConsumerId.timesFromPublicationToCompletion').count == 1
             metrics.histogram('someQueueId.someConsumerId.timesFromPublicationToCompletion').snapshot.max == clock.time - publicationTime.time
@@ -133,69 +134,77 @@ class MetricsMonitorTest extends Specification {
     def 'MessageConsumptionFailedEvent updates queueId.consumerId.timesFromPublicationToFailure with time since publication time'() {
         clock.time = 300
         monitor.onEvent(new MessageQueueCreatedEvent('someQueueId', [consumer('someConsumerId')]))
-        monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), null))
+        monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), message))
 
         when:
-            monitor.onEvent(new MessageConsumptionFailedEvent(update('someConsumerId'), null, null))
+            monitor.onEvent(new MessageConsumptionFailedEvent(update('someConsumerId'), message, null))
         then:
             metrics.histogram('someQueueId.someConsumerId.timesFromPublicationToFailure').count == 1
             metrics.histogram('someQueueId.someConsumerId.timesFromPublicationToFailure').snapshot.max == clock.time - publicationTime.time
     }
 
-    def 'Given a new message, MessageConsumedEvent mark queueId.consumerId.handlingTimes with time since taking the event'() {
+    def 'Given a new message, MessageConsumedEvent updates queueId.consumerId.handlingTimes with time since taking the event'() {
         monitor.onEvent(new MessageQueueCreatedEvent('someQueueId', [consumer('someConsumerId')]))
 
         def start = clock.time = 300
-        monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), null))
+        monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), message))
         def end = clock.time = 500
 
         when:
-            monitor.onEvent(new MessageConsumedEvent(update('someConsumerId'), null))
+            monitor.onEvent(new MessageConsumedEvent(update('someConsumerId'), message))
         then:
             metrics.histogram('someQueueId.someConsumerId.handlingTimes').count == 1
             metrics.histogram('someQueueId.someConsumerId.handlingTimes').snapshot.max == end - start
+            metrics.histogram('someQueueId.someConsumerId.handlingTimes[java.lang.String]').count == 1
+            metrics.histogram('someQueueId.someConsumerId.handlingTimes[java.lang.String]').snapshot.max == end - start
     }
 
-    def 'Given a taken message, MessageConsumedEvent mark queueId.consumerId.handlingTimes with time since taking the event'() {
+    def 'Given a taken message, MessageConsumedEvent updates queueId.consumerId.handlingTimes with time since taking the event'() {
         monitor.onEvent(new MessageQueueCreatedEvent('someQueueId', [consumer('someConsumerId')]))
 
         def start = clock.time = 300
-        monitor.onEvent(new ConsumingTimedOutMessageEvent(update('someConsumerId'), null))
+        monitor.onEvent(new ConsumingTimedOutMessageEvent(update('someConsumerId'), message))
         def end = clock.time = 500
 
         when:
-            monitor.onEvent(new MessageConsumedEvent(update('someConsumerId'), null))
+            monitor.onEvent(new MessageConsumedEvent(update('someConsumerId'), message))
         then:
             metrics.histogram('someQueueId.someConsumerId.handlingTimes').count == 1
             metrics.histogram('someQueueId.someConsumerId.handlingTimes').snapshot.max == end - start
+            metrics.histogram('someQueueId.someConsumerId.handlingTimes[java.lang.String]').count == 1
+            metrics.histogram('someQueueId.someConsumerId.handlingTimes[java.lang.String]').snapshot.max == end - start
     }
 
-    def 'ThrottlingMessageRetryEvent mark queueId.consumerId.handlingTimes with time since taking the event'() {
+    def 'ThrottlingMessageRetryEvent updates queueId.consumerId.handlingTimes with time since taking the event'() {
         monitor.onEvent(new MessageQueueCreatedEvent('someQueueId', [consumer('someConsumerId')]))
 
         def start = clock.time = 300
-        monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), null))
+        monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), message))
         def end = clock.time = 500
 
         when:
-            monitor.onEvent(new ThrottlingMessageRetryEvent(update('someConsumerId'), null, null))
+            monitor.onEvent(new ThrottlingMessageRetryEvent(update('someConsumerId'), message, null))
         then:
             metrics.histogram('someQueueId.someConsumerId.failingHandlingTimes').count == 1
             metrics.histogram('someQueueId.someConsumerId.failingHandlingTimes').snapshot.max == end - start
+            metrics.histogram('someQueueId.someConsumerId.failingHandlingTimes[java.lang.String]').count == 1
+            metrics.histogram('someQueueId.someConsumerId.failingHandlingTimes[java.lang.String]').snapshot.max == end - start
     }
 
-    def 'ScheduledMessagePollingFailedEvent mark queueId.consumerId.handlingTimes with time since taking the event'() {
+    def 'ScheduledMessagePollingFailedEvent updates queueId.consumerId.handlingTimes with time since taking the event'() {
         monitor.onEvent(new MessageQueueCreatedEvent('someQueueId', [consumer('someConsumerId')]))
 
         def start = clock.time = 300
-        monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), null))
+        monitor.onEvent(new ConsumingNewMessageEvent(update('someConsumerId'), message))
         def end = clock.time = 500
 
         when:
-            monitor.onEvent(new MessageConsumptionFailedEvent(update('someConsumerId'), null, null))
+            monitor.onEvent(new MessageConsumptionFailedEvent(update('someConsumerId'), message, null))
         then:
             metrics.histogram('someQueueId.someConsumerId.failingHandlingTimes').count == 1
             metrics.histogram('someQueueId.someConsumerId.failingHandlingTimes').snapshot.max == end - start
+            metrics.histogram('someQueueId.someConsumerId.failingHandlingTimes[java.lang.String]').count == 1
+            metrics.histogram('someQueueId.someConsumerId.failingHandlingTimes[java.lang.String]').snapshot.max == end - start
     }
 
     def 'MessageQueueSizeChangedEvent updates queueId.consumerId.queueSize gauge'() {

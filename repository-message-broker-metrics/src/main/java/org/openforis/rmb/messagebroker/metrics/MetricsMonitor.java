@@ -82,6 +82,8 @@ public class MetricsMonitor implements Monitor<Event> {
     private void throttlingMessageRetry(ThrottlingMessageRetryEvent event) {
         long handlingTime = clock.millis() - handlingStartTime(event.update);
         metrics.histogram(name(event.update.queueId, event.update.consumer.id, "failingHandlingTimes")).update(handlingTime);
+        metrics.histogram(name(event.update.queueId, event.update.consumer.id, "failingHandlingTimes["
+                + event.message.getClass().getName() + "]")).update(handlingTime);
     }
 
     private void retryingMessageConsumption(RetryingMessageConsumptionEvent event) {
@@ -95,6 +97,8 @@ public class MetricsMonitor implements Monitor<Event> {
         metrics.histogram(name(event.update.queueId, event.update.consumer.id, "timesFromPublicationToCompletion"))
                 .update(timeFromPublicationTime);
         metrics.histogram(name(event.update.queueId, event.update.consumer.id, "handlingTimes")).update(handlingTime);
+        metrics.histogram(name(event.update.queueId, event.update.consumer.id, "handlingTimes["
+                + event.message.getClass().getName() + "]")).update(handlingTime);
         metrics.counter(name(event.update.queueId, event.update.consumer.id, "takenCount")).dec();
         metrics.counter(name(event.update.queueId, event.update.consumer.id, "completedCount")).inc();
         metrics.meter(name(event.update.queueId, event.update.consumer.id, "completedMeter")).mark();
@@ -108,6 +112,8 @@ public class MetricsMonitor implements Monitor<Event> {
                 .update(timeFromPublicationTime);
         metrics.histogram(name(event.update.queueId, event.update.consumer.id, "failingHandlingTimes"))
                 .update(handlingTime);
+        metrics.histogram(name(event.update.queueId, event.update.consumer.id, "failingHandlingTimes["
+                + event.message.getClass().getName() + "]")).update(handlingTime);
         metrics.counter(name(event.update.queueId, event.update.consumer.id, "takenCount")).dec();
         metrics.counter(name(event.update.queueId, event.update.consumer.id, "failedCount")).inc();
         metrics.meter(name(event.update.queueId, event.update.consumer.id, "failedMeter")).mark();

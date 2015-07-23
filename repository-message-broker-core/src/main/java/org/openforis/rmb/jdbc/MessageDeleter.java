@@ -17,7 +17,7 @@ final class MessageDeleter extends Operation {
     void delete(Collection<MessageConsumer<?>> consumers, MessageProcessingFilter filter) throws SQLException {
         ConstraintBuilder constraintBuilder = new ConstraintBuilder(consumers, filter, clock);
         PreparedStatement ps = connection.prepareStatement("" +
-                "DELETE FROM message_processing WHERE " + constraintBuilder.whereClause());
+                "DELETE FROM " + tablePrefix + "message_processing WHERE " + constraintBuilder.whereClause());
         constraintBuilder.bind(ps);
         int rowsDeleted = ps.executeUpdate();
         if (rowsDeleted > 0) {

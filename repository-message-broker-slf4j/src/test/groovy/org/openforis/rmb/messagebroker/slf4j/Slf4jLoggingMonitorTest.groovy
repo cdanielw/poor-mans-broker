@@ -67,7 +67,7 @@ class Slf4jLoggingMonitorTest extends Specification {
     }
 
     Event getMessageQueueCreatedEvent() {
-        new MessageQueueCreatedEvent('queue id', [])
+        new MessageQueueCreatedEvent('queue id', [consumer])
     }
 
     Event getPollingForTimedOutMessagesFailedEvent() {

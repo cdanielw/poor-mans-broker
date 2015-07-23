@@ -50,6 +50,7 @@ public final class MessageProcessingUpdate<T> {
     }
 
     public MessageProcessingUpdate<T> processing(Clock clock) {
+        Is.notNull(clock, "clock must not be null");
         return new MessageProcessingUpdate<T>(
                 messageDetails(),
                 consumer,
@@ -59,6 +60,7 @@ public final class MessageProcessingUpdate<T> {
     }
 
     public MessageProcessingUpdate<T> completed(Clock clock) {
+        Is.notNull(clock, "clock must not be null");
         return new MessageProcessingUpdate<T>(
                 messageDetails(),
                 consumer,
@@ -68,6 +70,7 @@ public final class MessageProcessingUpdate<T> {
     }
 
     public MessageProcessingUpdate<T> retry(Clock clock, String errorMessage) {
+        Is.notNull(clock, "clock must not be null");
         return new MessageProcessingUpdate<T>(
                 messageDetails(),
                 consumer,
@@ -77,6 +80,7 @@ public final class MessageProcessingUpdate<T> {
     }
 
     public MessageProcessingUpdate<T> failed(Clock clock, String errorMessage) {
+        Is.notNull(clock, "clock must not be null");
         return new MessageProcessingUpdate<T>(
                 messageDetails(),
                 consumer,

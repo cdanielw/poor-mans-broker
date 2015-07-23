@@ -1,15 +1,15 @@
 package org.openforis.rmb.messagebroker.objectserialization;
 
 import org.openforis.rmb.messagebroker.spi.MessageSerializer;
+import org.openforis.rmb.messagebroker.util.Is;
 
 import java.io.*;
 
 public final class ObjectSerializationMessageSerializer implements MessageSerializer {
     public Object serialize(Object message) throws SerializationFailed {
-        if (message == null)
-            throw new IllegalArgumentException("message is null");
+        Is.notNull(message, "message must not be null");
         if (!(message instanceof Serializable))
-            throw new IllegalArgumentException("Expected serialized message to be Serializable. Message type: " + message.getClass());
+            throw new IllegalArgumentException("message must be Serializable. Message type: " + message.getClass());
 
         ObjectOutputStream objectOutputStream = null;
         try {

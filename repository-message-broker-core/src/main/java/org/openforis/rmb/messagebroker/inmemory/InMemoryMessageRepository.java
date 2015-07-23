@@ -1,7 +1,11 @@
 package org.openforis.rmb.messagebroker.inmemory;
 
 import org.openforis.rmb.messagebroker.MessageConsumer;
-import org.openforis.rmb.messagebroker.spi.*;
+import org.openforis.rmb.messagebroker.spi.Clock;
+import org.openforis.rmb.messagebroker.spi.MessageProcessingFilter;
+import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate;
+import org.openforis.rmb.messagebroker.spi.MessageRepository;
+import org.openforis.rmb.messagebroker.util.Is;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -13,13 +17,18 @@ public final class InMemoryMessageRepository implements MessageRepository {
     private InMemoryDatabase database = new InMemoryDatabase();
 
     void setClock(Clock clock) {
+        Is.notNull(clock, "clock must not be null");
         this.clock = clock;
     }
 
     public void add(
-            String queueId, List<MessageConsumer<?>> consumers,
+            String queueId,
+            List<MessageConsumer<?>> consumers,
             Object serializedMessage
-    ) throws MessageRepositoryException {
+    ) {
+        Is.hasText(queueId, "queueId must be specified");
+        Is.notEmpty(consumers, "consumers must not be empty");
+        Is.notNull(serializedMessage, "serializedMessage must not be null");
         for (MessageConsumer<?> consumer : consumers) {
             database.write(consumer, new AddMessage(clock, queueId, serializedMessage));
         }
@@ -28,7 +37,9 @@ public final class InMemoryMessageRepository implements MessageRepository {
     public void take(
             Map<MessageConsumer<?>, Integer> maxCountByConsumer,
             MessageTakenCallback callback
-    ) throws MessageRepositoryException {
+    ) {
+        Is.notEmpty(maxCountByConsumer, "maxCountByConsumer must not be empty");
+        Is.notNull(callback, "callback must not be null");
         for (Map.Entry<MessageConsumer<?>, Integer> entry : maxCountByConsumer.entrySet()) {
             MessageConsumer<?> consumer = entry.getKey();
             Integer maxCount = entry.getValue();
@@ -38,7 +49,8 @@ public final class InMemoryMessageRepository implements MessageRepository {
 
     public boolean update(
             MessageProcessingUpdate update
-    ) throws MessageRepositoryException {
+    ) {
+        Is.notNull(update, "update must not be null");
         return database.write(update.getConsumer(), new UpdateMessageProcessing(clock, update));
     }
 
@@ -46,7 +58,10 @@ public final class InMemoryMessageRepository implements MessageRepository {
             Collection<MessageConsumer<?>> consumers,
             MessageProcessingFilter filter,
             MessageProcessingFoundCallback callback
-    ) throws MessageRepositoryException {
+    ) {
+        Is.notEmpty(consumers, "consumers must not be empty");
+        Is.notNull(filter, "filter must not be null");
+        Is.notNull(callback, "callback must not be null");
         for (MessageConsumer<?> consumer : consumers)
             database.read(consumer, new FindMessageProcessing(clock, filter, callback));
     }
@@ -54,7 +69,9 @@ public final class InMemoryMessageRepository implements MessageRepository {
     public Map<MessageConsumer<?>, Integer> messageCountByConsumer(
             Collection<MessageConsumer<?>> consumers,
             MessageProcessingFilter filter
-    ) throws MessageRepositoryException {
+    ) {
+        Is.notEmpty(consumers, "consumers must not be empty");
+        Is.notNull(filter, "filter must not be null");
         Map<MessageConsumer<?>, Integer> countByConsumer = new HashMap<MessageConsumer<?>, Integer>();
         for (MessageConsumer<?> consumer : consumers)
             countByConsumer.put(consumer, database.read(consumer, new CountMessages(clock, filter)));
@@ -64,7 +81,9 @@ public final class InMemoryMessageRepository implements MessageRepository {
     public void deleteMessageProcessing(
             Collection<MessageConsumer<?>> consumers,
             MessageProcessingFilter filter
-    ) throws MessageRepositoryException {
+    ) {
+        Is.notEmpty(consumers, "consumers must not be empty");
+        Is.notNull(filter, "filter must not be null");
         for (MessageConsumer<?> consumer : consumers)
             database.write(consumer, new DeleteMessageProcessing(clock, filter));
     }

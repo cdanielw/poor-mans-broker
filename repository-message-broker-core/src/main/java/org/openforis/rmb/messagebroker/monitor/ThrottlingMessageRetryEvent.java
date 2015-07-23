@@ -1,6 +1,7 @@
 package org.openforis.rmb.messagebroker.monitor;
 
 import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate;
+import org.openforis.rmb.messagebroker.util.Is;
 
 public class ThrottlingMessageRetryEvent implements Event {
     public final MessageProcessingUpdate<?> update;
@@ -8,6 +9,9 @@ public class ThrottlingMessageRetryEvent implements Event {
     public final Exception exception;
 
     public ThrottlingMessageRetryEvent(MessageProcessingUpdate<?> update, Object message, Exception exception) {
+        Is.notNull(update, "update must not be null");
+        Is.notNull(message, "message must not be null");
+        Is.notNull(exception, "exception must not be null");
         this.update = update;
         this.message = message;
         this.exception = exception;

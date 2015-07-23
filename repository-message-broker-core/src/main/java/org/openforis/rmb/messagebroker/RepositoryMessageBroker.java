@@ -20,11 +20,11 @@ public final class RepositoryMessageBroker implements MessageBroker {
         this.queueManager = new MessageQueueManager(config);
     }
 
-    public RepositoryMessageBroker(MessageBrokerConfig.Builder configBuilder) {
-        Is.notNull(configBuilder, "configBuilder must not be null");
-        this.config = configBuilder.build();
-        this.monitors = config.monitors;
-        this.queueManager = new MessageQueueManager(config);
+    public RepositoryMessageBroker(MessageBrokerConfig.Builder config) {
+        Is.notNull(config, "config must not be null");
+        this.config = config.build();
+        this.monitors = this.config.monitors;
+        this.queueManager = new MessageQueueManager(this.config);
     }
 
     public RepositoryMessageBroker start() {
@@ -44,12 +44,13 @@ public final class RepositoryMessageBroker implements MessageBroker {
     }
 
     public <M> MessageQueue.Builder<M> queueBuilder(String queueId, Class<M> messageType) {
+        Is.hasText(queueId, "queueId must be specified");
         Is.notNull(messageType, "messageType must not be null");
         return new MessageQueue.Builder<M>(queueId, queueManager);
     }
 
     public <M> MessageQueue.Builder<M> queueBuilder(String queueId) {
-        Is.haveText(queueId, "queueId must be specified");
+        Is.hasText(queueId, "queueId must be specified");
         return new MessageQueue.Builder<M>(queueId, queueManager);
     }
 

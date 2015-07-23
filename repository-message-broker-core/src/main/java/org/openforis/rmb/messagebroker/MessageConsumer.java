@@ -40,12 +40,14 @@ public final class MessageConsumer<M> {
     }
 
     public static <M> Builder<M> builder(String consumerId, MessageHandler<M> messageHandler) {
-        Is.haveText(consumerId, "consumerId must be specified");
+        Is.hasText(consumerId, "consumerId must be specified");
         Is.notNull(messageHandler, "messageHandler must not be null");
         return new Builder<M>(consumerId, messageHandler, null);
     }
 
     public static <M> Builder<M> builder(String consumerId, KeepAliveMessageHandler<M> handler) {
+        Is.hasText(consumerId, "consumerId must be specified");
+        Is.notNull(handler, "handler must not be null");
         return new Builder<M>(consumerId, null, handler);
     }
 
@@ -80,7 +82,7 @@ public final class MessageConsumer<M> {
         private int maxRetries;
 
         private Builder(String consumerId, MessageHandler<M> handler, KeepAliveMessageHandler<M> keepAliveHandler) {
-            this.consumerId = consumerId;
+            this.consumerId = consumerId.trim();
             this.handler = handler;
             this.keepAliveHandler = keepAliveHandler;
             timeout(1, MINUTES);

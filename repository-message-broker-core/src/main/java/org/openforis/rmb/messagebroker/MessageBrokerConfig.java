@@ -59,17 +59,21 @@ public final class MessageBrokerConfig {
         }
 
         public Builder messageSerializer(MessageSerializer messageSerializer) {
+            Is.notNull(messageSerializer, "messageSerializer must not be null");
             this.messageSerializer = messageSerializer;
             return this;
         }
 
         public Builder repositoryWatcherPollingSchedule(long period, TimeUnit timeUnit) {
+            Is.greaterThenZero(period, "period must be greater than zero");
+            Is.notNull(timeUnit, "timeUnit must not be null");
             this.repositoryWatcherPollingPeriod = period;
             this.repositoryWatcherPollingTimeUnit = timeUnit;
             return this;
         }
 
         public Builder monitor(Monitor<Event> monitor) {
+            Is.notNull(monitor, "monitor must not be null");
             monitors.add(monitor);
             return this;
         }

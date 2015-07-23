@@ -15,7 +15,6 @@ public interface MessageQueue<M> {
         private List<MessageConsumer<M>> consumers = new ArrayList<MessageConsumer<M>>();
 
         @SuppressWarnings("UnusedParameters")
-//        Builder(String queueId, Class<M> messageType, MessageQueueManager queueManager) {
         Builder(String queueId, MessageQueueManager queueManager) {
             this.queueId = queueId;
             this.queueManager = queueManager;

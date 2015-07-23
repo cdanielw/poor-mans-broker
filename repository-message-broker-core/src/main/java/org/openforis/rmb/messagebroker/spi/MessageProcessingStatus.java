@@ -12,6 +12,10 @@ public final class MessageProcessingStatus {
     final String versionId;
 
     public MessageProcessingStatus(State state, int retries, String errorMessage, Date lastUpdated, String versionId) {
+        Is.notNull(state, "state must not be null");
+        Is.zeroOrGreater(retries, "retries must be zero or greater");
+        Is.notNull(lastUpdated, "lastUpdated must not be null");
+        Is.hasText(versionId, "versionId must be specified");
         this.state = state;
         this.retries = retries;
         this.errorMessage = errorMessage;

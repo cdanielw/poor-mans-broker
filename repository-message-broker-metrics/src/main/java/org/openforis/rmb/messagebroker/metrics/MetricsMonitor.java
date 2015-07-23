@@ -7,6 +7,7 @@ import org.openforis.rmb.messagebroker.MessageConsumer;
 import org.openforis.rmb.messagebroker.monitor.*;
 import org.openforis.rmb.messagebroker.spi.Clock;
 import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate;
+import org.openforis.rmb.messagebroker.util.Is;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,14 +21,17 @@ public class MetricsMonitor implements Monitor<Event> {
     private Clock clock = new Clock.SystemClock();
 
     public MetricsMonitor(MetricRegistry metrics) {
+        Is.notNull(metrics, "metrics must not be null");
         this.metrics = metrics;
     }
 
     void setClock(Clock clock) {
+        Is.notNull(clock, "clock must not be null");
         this.clock = clock;
     }
 
     public void onEvent(Event event) {
+        Is.notNull(event, "event must not be null");
         if (event instanceof MessageQueueCreatedEvent)
             messageQueueCreated((MessageQueueCreatedEvent) event);
         else if (event instanceof MessagePublishedEvent)

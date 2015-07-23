@@ -10,7 +10,7 @@ import java.util.List;
 
 import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.TIMED_OUT;
 
-public abstract class FilteringOperation<T> extends InMemoryDatabase.Operation<T> {
+abstract class FilteringOperation<T> extends InMemoryDatabase.Operation<T> {
     final MessageProcessingFilter filter;
 
     public FilteringOperation(Clock clock, MessageProcessingFilter filter) {

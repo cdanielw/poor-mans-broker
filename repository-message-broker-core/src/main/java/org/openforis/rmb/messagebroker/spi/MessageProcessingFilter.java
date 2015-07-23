@@ -1,6 +1,7 @@
 package org.openforis.rmb.messagebroker.spi;
 
 import org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State;
+import org.openforis.rmb.messagebroker.util.Is;
 
 import java.util.Collections;
 import java.util.Date;
@@ -68,33 +69,41 @@ public final class MessageProcessingFilter {
         }
 
         public Builder publishedBetween(Date from, Date to) {
+            Is.notNull(from, "from must not be null");
+            Is.notNull(to, "to must not be null");
             publishedAfter = from;
             publishedBefore = to;
             return this;
         }
 
         public Builder publishedBefore(Date date) {
+            Is.notNull(date, "date must not be null");
             publishedBefore = date;
             return this;
         }
 
         public Builder publishedAfter(Date date) {
+            Is.notNull(date, "date must not be null");
             publishedAfter = date;
             return this;
         }
 
         public Builder lastUpdatedBetween(Date from, Date to) {
+            Is.notNull(from, "from must not be null");
+            Is.notNull(to, "to must not be null");
             lastUpdatedAfter = from;
             lastUpdatedBefore = to;
             return this;
         }
 
         public Builder lastUpdatedBefore(Date date) {
+            Is.notNull(date, "date must not be null");
             lastUpdatedBefore = date;
             return this;
         }
 
         public Builder lastUpdatedAfter(Date date) {
+            Is.notNull(date, "date must not be null");
             lastUpdatedAfter = date;
             return this;
         }

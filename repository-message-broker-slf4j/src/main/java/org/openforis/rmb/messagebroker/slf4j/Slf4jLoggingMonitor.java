@@ -1,6 +1,7 @@
 package org.openforis.rmb.messagebroker.slf4j;
 
 import org.openforis.rmb.messagebroker.monitor.*;
+import org.openforis.rmb.messagebroker.util.Is;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +13,6 @@ public final class Slf4jLoggingMonitor implements Monitor<Event> {
             new HashMap<Class<? extends Event>, Monitor<?>>();
 
     public Slf4jLoggingMonitor() {
-
         add(MessageBrokerStartedEvent.class, new LoggingMonitor<MessageBrokerStartedEvent>() {
             public void onEvent(MessageBrokerStartedEvent event, Logger log) {
                 log.debug("{} started",
@@ -108,6 +108,7 @@ public final class Slf4jLoggingMonitor implements Monitor<Event> {
 
     @SuppressWarnings("unchecked")
     public void onEvent(Event event) {
+        Is.notNull(event, "event must not be null");
         Monitor monitor = monitors.get(event.getClass());
         if (monitor != null)
             monitor.onEvent(event);

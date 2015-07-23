@@ -10,6 +10,9 @@ public final class MessageDetails {
     final Date publicationTime;
 
     public MessageDetails(String queueId, String messageId, Date publicationTime) {
+        Is.hasText(queueId, "queueId must be specified");
+        Is.hasText(messageId, "messageId must be specified");
+        Is.notNull(publicationTime, "publicationTime must not be null");
         this.queueId = queueId;
         this.messageId = messageId;
         this.publicationTime = publicationTime;

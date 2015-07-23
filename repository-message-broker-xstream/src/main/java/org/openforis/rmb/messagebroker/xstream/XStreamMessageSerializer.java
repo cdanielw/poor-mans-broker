@@ -4,6 +4,7 @@ import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.XStreamException;
 import com.thoughtworks.xstream.io.xml.StaxDriver;
 import org.openforis.rmb.messagebroker.spi.MessageSerializer;
+import org.openforis.rmb.messagebroker.util.Is;
 
 public class XStreamMessageSerializer implements MessageSerializer {
     private final XStream xstream;
@@ -13,12 +14,12 @@ public class XStreamMessageSerializer implements MessageSerializer {
     }
 
     public XStreamMessageSerializer(XStream xstream) {
+        Is.notNull(xstream, "xstream must not be null");
         this.xstream = xstream;
     }
 
     public Object serialize(Object message) throws SerializationFailed {
-        if (message == null)
-            throw new IllegalArgumentException("message is null");
+        Is.notNull(message, "message must not be null");
         try {
             return xstream.toXML(message);
         } catch (XStreamException e) {
@@ -27,8 +28,7 @@ public class XStreamMessageSerializer implements MessageSerializer {
     }
 
     public Object deserialize(Object serializedMessage) throws DeserilizationFailed {
-        if (serializedMessage == null)
-            throw new IllegalArgumentException("serializedMessage is null");
+        Is.notNull(serializedMessage, "serializedMessage must not be null");
         if (!(serializedMessage instanceof String))
             throw new IllegalArgumentException("Expected serialized message to be a string. Was a " + serializedMessage.getClass());
 

@@ -21,10 +21,18 @@ public final class JdbcMessageRepository implements MessageRepository {
     }
 
     void setClock(Clock clock) {
+        Is.notNull(clock, "clock must not be null");
         this.clock = clock;
     }
 
-    public void add(final String queueId, final List<MessageConsumer<?>> consumers, final Object serializedMessage) {
+    public void add(
+            final String queueId,
+            final List<MessageConsumer<?>> consumers,
+            final Object serializedMessage
+    ) {
+        Is.hasText(queueId, "queueId must be specified");
+        Is.notEmpty(consumers, "consumers must not be empty");
+        Is.notNull(serializedMessage, "serializedMessage must not be null");
         withConnection(new ConnectionCallback() {
             public Void execute(Connection connection) throws SQLException {
                 new MessageAdder(connection, tablePrefix, clock)
@@ -34,7 +42,12 @@ public final class JdbcMessageRepository implements MessageRepository {
         });
     }
 
-    public void take(final Map<MessageConsumer<?>, Integer> maxCountByConsumer, final MessageTakenCallback callback) {
+    public void take(
+            final Map<MessageConsumer<?>, Integer> maxCountByConsumer,
+            final MessageTakenCallback callback
+    ) {
+        Is.notEmpty(maxCountByConsumer, "maxCountByConsumer must not be empty");
+        Is.notNull(callback, "callback must not be null");
         withConnection(new ConnectionCallback() {
             public Void execute(Connection connection) throws SQLException {
                 new MessageTaker(connection, tablePrefix, clock)
@@ -44,7 +57,10 @@ public final class JdbcMessageRepository implements MessageRepository {
         });
     }
 
-    public boolean update(final MessageProcessingUpdate update) {
+    public boolean update(
+            final MessageProcessingUpdate update
+    ) {
+        Is.notNull(update, "update must not be null");
         return withConnection(new ConnectionCallback<Boolean>() {
             public Boolean execute(Connection connection) throws SQLException {
                 return new MessageProcessingUpdater(connection, tablePrefix, clock)
@@ -53,12 +69,14 @@ public final class JdbcMessageRepository implements MessageRepository {
         });
     }
 
-    public void findMessageProcessing(final Collection<MessageConsumer<?>> consumers,
-                                      final MessageProcessingFilter filter,
-                                      final MessageProcessingFoundCallback callback) {
-        Is.notEmpty(consumers, "Must provide at least one consumer");
-        Is.notNull(filter, "Filter cannot be null");
-        Is.notNull(callback, "Callback cannot be null");
+    public void findMessageProcessing(
+            final Collection<MessageConsumer<?>> consumers,
+            final MessageProcessingFilter filter,
+            final MessageProcessingFoundCallback callback
+    ) {
+        Is.notEmpty(consumers, "consumers must not be empty");
+        Is.notNull(filter, "filter must not be null");
+        Is.notNull(callback, "callback must not be null");
         withConnection(new ConnectionCallback<Void>() {
             public Void execute(Connection connection) throws SQLException {
                 new MessageProcessingFinder(connection, tablePrefix, clock)
@@ -68,7 +86,12 @@ public final class JdbcMessageRepository implements MessageRepository {
         });
     }
 
-    public Map<MessageConsumer<?>, Integer> messageCountByConsumer(final Collection<MessageConsumer<?>> consumers, final MessageProcessingFilter filter) {
+    public Map<MessageConsumer<?>, Integer> messageCountByConsumer(
+            final Collection<MessageConsumer<?>> consumers,
+            final MessageProcessingFilter filter
+    ) {
+        Is.notEmpty(consumers, "consumers must not be empty");
+        Is.notNull(filter, "filter must not be null");
         return withConnection(new ConnectionCallback<Map<MessageConsumer<?>, Integer>>() {
             public Map<MessageConsumer<?>, Integer> execute(Connection connection) throws SQLException {
                 return new MessageCounter(connection, tablePrefix, clock)
@@ -78,8 +101,11 @@ public final class JdbcMessageRepository implements MessageRepository {
     }
 
     public void deleteMessageProcessing(
-            final Collection<MessageConsumer<?>> consumers, final MessageProcessingFilter filter
-    ) throws MessageRepositoryException {
+            final Collection<MessageConsumer<?>> consumers,
+            final MessageProcessingFilter filter
+    ) {
+        Is.notEmpty(consumers, "consumers must not be empty");
+        Is.notNull(filter, "filter must not be null");
         withConnection(new ConnectionCallback<Void>() {
             public Void execute(Connection connection) throws SQLException {
                 new MessageDeleter(connection, tablePrefix, clock)

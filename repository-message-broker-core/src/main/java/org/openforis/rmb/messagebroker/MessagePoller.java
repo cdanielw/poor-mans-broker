@@ -54,8 +54,9 @@ final class MessagePoller {
 
     private void takeMessages() {
         final Map<MessageConsumer<?>, Integer> maxCountByConsumer = determineMaxCountByConsumer();
-        if (!maxCountByConsumer.isEmpty())
-            monitors.onEvent(new PollingForMessagesEvent(maxCountByConsumer));
+        if (maxCountByConsumer.isEmpty())
+            return;
+        monitors.onEvent(new PollingForMessagesEvent(maxCountByConsumer));
         repository.take(maxCountByConsumer, new MessageRepository.MessageTakenCallback() {
             public void taken(MessageProcessingUpdate update, Object serializedMessage) {
                 consume(update, serializedMessage);

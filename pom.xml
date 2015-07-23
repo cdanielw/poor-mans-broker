@@ -24,7 +24,6 @@
         <module>repository-message-broker-slf4j</module>
         <module>repository-message-broker-spring</module>
         <module>repository-message-broker-xstream</module>
-        <module>repository-message-broker-examples</module>
     </modules>
 
     <dependencies>

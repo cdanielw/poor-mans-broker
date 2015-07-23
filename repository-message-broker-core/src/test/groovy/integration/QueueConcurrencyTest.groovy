@@ -9,7 +9,7 @@ class QueueConcurrencyTest extends Specification {
 
     def setup() {
         this.messagesHandledInParallel = 4
-        timeoutSecs = 5
+        timeoutSecs = 10
     }
 
     def cleanup() {

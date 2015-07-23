@@ -58,10 +58,10 @@ class TestHandler<T> implements KeepAliveMessageHandler<T> {
         try {
             conds.eventually {
                 def actual = messagesHandled.keySet()
-                def unexpected = minus(expectedSet, actual)
-                def notHandled = minus(actual, expectedSet)
+                def missing = minus(expectedSet, actual)
+                def unexpected = minus(actual, expectedSet)
+                assert missing.empty
                 assert unexpected.empty
-                assert notHandled.empty
             }
         } catch (SpockTimeoutError e) {
             e.printStackTrace()

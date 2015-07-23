@@ -16,6 +16,15 @@
         <property name="dataSource" value="#{database.dataSource}"/>
     </bean>
 
+
+    <bean id="messagePublishingService" class="org.openforis.rmb.spring.MessagePublishingService">
+        <constructor-arg ref="fullyConfiguredQueue"/>
+    </bean>
+
+    <bean id="messageCollectingHandler" class="org.openforis.rmb.spring.MessageCollectingHandler"/>
+
+
+    <!-- Full configuration -->
     <bean id="fullyConfiguredMessageBroker" class="org.openforis.rmb.spring.SpringJdbcMessageBroker">
         <constructor-arg value="#{database.dataSource}"/>
         <property name="tablePrefix" value="example_"/>
@@ -36,7 +45,7 @@
         <constructor-arg>
             <list>
                 <bean class="org.openforis.rmb.spring.SpringMessageConsumer">
-                    <constructor-arg value="A consumer"/>
+                    <constructor-arg value="A fully configured consumer"/>
                     <constructor-arg ref="messageCollectingHandler"/>
                     <property name="messagesHandledInParallel" value="1"/>
                     <property name="retries" value="5"/>
@@ -52,9 +61,23 @@
         </constructor-arg>
     </bean>
 
-    <bean id="messagePublishingService" class="org.openforis.rmb.spring.MessagePublishingService">
-        <constructor-arg ref="fullyConfiguredQueue"/>
+
+    <!-- Minimal configuration -->
+    <bean id="minimallyConfiguredMessageBroker" class="org.openforis.rmb.spring.SpringJdbcMessageBroker">
+        <constructor-arg value="#{database.dataSource}"/>
+        <property name="tablePrefix" value="example_"/>
     </bean>
 
-    <bean id="messageCollectingHandler" class="org.openforis.rmb.spring.MessageCollectingHandler"/>
+    <bean id="minimallyConfiguredQueue" class="org.openforis.rmb.spring.SpringMessageQueue">
+        <constructor-arg ref="minimallyConfiguredMessageBroker"/>
+        <constructor-arg value="A queue"/>
+        <constructor-arg>
+            <list>
+                <bean class="org.openforis.rmb.spring.SpringMessageConsumer">
+                    <constructor-arg value="A minimally configured consumer"/>
+                    <constructor-arg ref="messageCollectingHandler"/>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
 </beans>

@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS example_message_consumer;
+DROP TABLE IF EXISTS example_message_processing;
 DROP TABLE IF EXISTS example_message;
 
 CREATE TABLE example_message (

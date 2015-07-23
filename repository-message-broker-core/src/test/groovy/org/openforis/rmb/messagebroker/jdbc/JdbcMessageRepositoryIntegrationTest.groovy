@@ -32,7 +32,7 @@ class JdbcMessageRepositoryIntegrationTest extends AbstractMessageRepositoryInte
             takenCallback.notInvoked()
     }
 
-    def 'When a message is consumed, it is removed from message_consumer and message tables'() {
+    def 'When a message is consumed, it is removed from message_processing and message tables'() {
         def consumer = consumer('consumer id', 1)
         addMessage('A message', consumer)
         take((consumer): 1)
@@ -42,11 +42,11 @@ class JdbcMessageRepositoryIntegrationTest extends AbstractMessageRepositoryInte
             repository.update(update.completed(clock))
 
         then:
-            sql.firstRow('SELECT count(*) c FROM message_consumer').c == 0
+            sql.firstRow('SELECT count(*) c FROM message_processing').c == 0
             sql.firstRow('SELECT count(*) c FROM message').c == 0
     }
 
-    def 'Given a message with multiple consumer, when a message is consumed by one consumer, it is removed from message_consumer but not from message'() {
+    def 'Given a message with multiple consumer, when a message is consumed by one consumer, it is removed from message_processing but not from message'() {
         def consumer1 = consumer('consumer 1', 1)
         def consumer2 = consumer('consumer 2', 1)
         addMessage('A message', consumer1, consumer2)
@@ -58,7 +58,7 @@ class JdbcMessageRepositoryIntegrationTest extends AbstractMessageRepositoryInte
             repository.update(update.completed(clock))
 
         then:
-            sql.firstRow('SELECT count(*) c FROM message_consumer').c == 1 // consumer 2 row is left
+            sql.firstRow('SELECT count(*) c FROM message_processing').c == 1 // consumer 2 row is left
             sql.firstRow('SELECT count(*) c FROM message').c == 1
     }
 

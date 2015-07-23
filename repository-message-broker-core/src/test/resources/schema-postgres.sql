@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS message_consumer;
+DROP TABLE IF EXISTS message_processing;
 DROP TABLE IF EXISTS message;
 
 CREATE TABLE message (

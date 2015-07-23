@@ -179,7 +179,7 @@ public final class JdbcMessageRepository implements MessageRepository {
     private boolean deleteCompleted(Connection connection, MessageProcessingUpdate update) throws SQLException {
         boolean success = deleteFromMessageConsumer(connection, update);
         if (success) {
-            deleteOrphanedMessages(connection, update);
+            deleteOrphanedMessages(connection);
             connection.commit();
         }
         return success;
@@ -198,12 +198,10 @@ public final class JdbcMessageRepository implements MessageRepository {
         return rowsDeleted != 0;
     }
 
-    private void deleteOrphanedMessages(Connection connection, MessageProcessingUpdate update) throws SQLException {
+    private void deleteOrphanedMessages(Connection connection) throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
                 "DELETE FROM message\n" +
-                "WHERE id = ?\n" +
-                "AND id NOT IN (SELECT message_id FROM message_processing)");
-        ps.setString(1, update.messageId);
+                "WHERE id NOT IN (SELECT message_id FROM message_processing)");
         ps.executeUpdate();
     }
 
@@ -275,6 +273,25 @@ public final class JdbcMessageRepository implements MessageRepository {
                 rs.close();
                 ps.close();
                 return countByConsumer;
+            }
+        });
+    }
+
+    public void deleteMessageProcessing(
+            final Collection<MessageConsumer<?>> consumers, final MessageProcessingFilter filter
+    ) throws MessageRepositoryException {
+        withConnection(new ConnectionCallback<Void>() {
+            public Void execute(Connection connection) throws SQLException {
+                ConstraintBuilder constraintBuilder = new ConstraintBuilder(consumers, filter, clock);
+                PreparedStatement ps = connection.prepareStatement("" +
+                        "DELETE FROM message_processing WHERE " + constraintBuilder.whereClause());
+                constraintBuilder.bind(ps);
+                int rowsDeleted = ps.executeUpdate();
+                if (rowsDeleted > 0) {
+                    deleteOrphanedMessages(connection);
+                    connection.commit();
+                }
+                return null;
             }
         });
     }

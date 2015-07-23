@@ -357,6 +357,20 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
             processingCallback.invokedOnce('message 1')
     }
 
+    def 'Deletes messages'() {
+        def consumer = consumer('consumer id')
+        addMessage('A message', consumer)
+
+        when:
+            repository.deleteMessageProcessing([consumer], MessageProcessingFilter.builder().build())
+
+        then:
+            repository.messageCountByConsumer(
+                    [consumer],
+                    MessageProcessingFilter.builder().build()
+            ) == [(consumer): 0]
+    }
+
 
     void take(Map<MessageConsumer, Integer> maxCountbyConsumer) {
         repository.take(maxCountbyConsumer, takenCallback)

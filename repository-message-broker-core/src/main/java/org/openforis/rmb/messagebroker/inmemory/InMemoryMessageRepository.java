@@ -73,6 +73,14 @@ public final class InMemoryMessageRepository implements MessageRepository {
         return countByConsumer;
     }
 
+    public void deleteMessageProcessing(Collection<MessageConsumer<?>> consumers, MessageProcessingFilter filter) throws MessageRepositoryException {
+        for (MessageConsumer<?> consumer : consumers) {
+            ConsumerMessages consumerMessages = consumerMessagesByConsumer.get(consumer);
+            for (Message message : findMessagesForConsumer(consumer, filter))
+                consumerMessages.remove(message);
+        }
+    }
+
     private void findMessageProcessing(MessageConsumer<?> consumer,
                                        MessageProcessingFilter filter,
                                        MessageProcessingFoundCallback callback) {
@@ -158,10 +166,13 @@ public final class InMemoryMessageRepository implements MessageRepository {
 
         void update(Message message, MessageProcessingUpdate update) {
             message.setUpdate(update);
-            if (message.isCompleted()) {
-                messageById.remove(message.update.messageId);
-                messages.remove(message);
-            }
+            if (message.isCompleted())
+                remove(message);
+        }
+
+        private void remove(Message message) {
+            messageById.remove(message.update.messageId);
+            messages.remove(message);
         }
 
         void takePending(Integer maxCount, MessageTakenCallback callback) {

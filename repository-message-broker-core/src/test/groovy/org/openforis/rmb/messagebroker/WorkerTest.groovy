@@ -196,6 +196,10 @@ class WorkerTest extends Specification {
             return null
         }
 
+        void deleteMessageProcessing(Collection<MessageConsumer<?>> consumers, MessageProcessingFilter filter) throws MessageRepositoryException {
+
+        }
+
         void versionIdsChainTogether() {
             if (updates) {
                 updates.tail().inject(updates.first()) { prevUpdate, update ->

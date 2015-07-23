@@ -11,7 +11,7 @@ CREATE TABLE message (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE message_consumer (
+CREATE TABLE message_processing (
   message_id    VARCHAR(127) NOT NULL,
   consumer_id   VARCHAR(127) NOT NULL,
   version_id    VARCHAR(127) NOT NULL,

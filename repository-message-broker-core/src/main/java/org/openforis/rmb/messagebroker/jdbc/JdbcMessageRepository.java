@@ -39,7 +39,7 @@ public final class JdbcMessageRepository implements MessageRepository {
     private void insertMessageConsumers(Connection connection, String messageId, List<MessageConsumer<?>> consumers)
             throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
-                "INSERT INTO " + tablePrefix + "message_consumer(message_id, consumer_id, version_id, state, last_updated, times_out, retries)\n" +
+                "INSERT INTO " + tablePrefix + "message_processing(message_id, consumer_id, version_id, state, last_updated, times_out, retries)\n" +
                 "VALUES(?, ?, ?, ?, ?, ?, ?)");
         for (MessageConsumer<?> consumer : consumers) {
             long creationTime = clock.millis();
@@ -98,7 +98,7 @@ public final class JdbcMessageRepository implements MessageRepository {
         PreparedStatement ps = connection.prepareStatement("" +
                 "SELECT queue_id, message_id, publication_time, version_id, state, message_string, message_bytes, " +
                 "       times_out, retries, error_message \n" +
-                "FROM " + tablePrefix + "message_consumer mc\n" +
+                "FROM " + tablePrefix + "message_processing mc\n" +
                 "JOIN " + tablePrefix + "message m ON mc.message_id = m.id\n" +
                 "WHERE consumer_id = ?\n" +
                 "AND state IN ('PENDING', 'PROCESSING')\n" +
@@ -144,7 +144,7 @@ public final class JdbcMessageRepository implements MessageRepository {
             throws SQLException {
         long now = clock.millis();
         PreparedStatement ps = connection.prepareStatement("" +
-                "UPDATE " + tablePrefix + "message_consumer\n" +
+                "UPDATE " + tablePrefix + "message_processing\n" +
                 "SET state = ?, last_updated = ?, times_out = ?, version_id = ?, retries = ?, error_message = ? \n" +
                 "WHERE message_id = ? AND consumer_id = ? AND version_id = ?");
         ps.setString(1, update.toState.name());
@@ -187,7 +187,7 @@ public final class JdbcMessageRepository implements MessageRepository {
 
     private boolean deleteFromMessageConsumer(Connection connection, MessageProcessingUpdate update) throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
-                "DELETE FROM message_consumer\n" +
+                "DELETE FROM message_processing\n" +
                 "WHERE message_id = ? AND consumer_id = ? AND version_id = ?");
         ps.setString(1, update.messageId);
         ps.setString(2, update.consumer.id);
@@ -202,11 +202,10 @@ public final class JdbcMessageRepository implements MessageRepository {
         PreparedStatement ps = connection.prepareStatement("" +
                 "DELETE FROM message\n" +
                 "WHERE id = ?\n" +
-                "AND id NOT IN (SELECT message_id FROM message_consumer)");
+                "AND id NOT IN (SELECT message_id FROM message_processing)");
         ps.setString(1, update.messageId);
         ps.executeUpdate();
     }
-
 
     public void findMessageProcessing(final Collection<MessageConsumer<?>> consumers,
                                       final MessageProcessingFilter filter,
@@ -220,7 +219,7 @@ public final class JdbcMessageRepository implements MessageRepository {
                 PreparedStatement ps = connection.prepareStatement("" +
                         "SELECT consumer_id, queue_id, message_id, publication_time, times_out, state, retries, " +
                         "       error_message, version_id, message_string, message_bytes\n" +
-                        "FROM " + tablePrefix + "message_consumer mc\n" +
+                        "FROM " + tablePrefix + "message_processing mc\n" +
                         "JOIN " + tablePrefix + "message m ON mc.message_id = m.id\n" +
                         "WHERE " + constraintBuilder.whereClause() + "\n" +
                         "ORDER BY sequence_no, consumer_id");
@@ -265,7 +264,7 @@ public final class JdbcMessageRepository implements MessageRepository {
                 ConstraintBuilder constraintBuilder = new ConstraintBuilder(consumers, filter, clock);
                 PreparedStatement ps = connection.prepareStatement("" +
                         "SELECT consumer_id, count(*) message_count\n" +
-                        "FROM " + tablePrefix + "message_consumer mc\n" +
+                        "FROM " + tablePrefix + "message_processing mc\n" +
                         "JOIN " + tablePrefix + "message m ON mc.message_id = m.id\n" +
                         "WHERE " + constraintBuilder.whereClause() + "\n" +
                         "GROUP BY consumer_id");

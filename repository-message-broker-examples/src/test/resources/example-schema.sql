@@ -11,7 +11,7 @@ CREATE TABLE example_message (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE example_message_consumer (
+CREATE TABLE example_message_processing (
   message_id    VARCHAR(127) NOT NULL,
   consumer_id   VARCHAR(127) NOT NULL,
   version_id    VARCHAR(127) NOT NULL,

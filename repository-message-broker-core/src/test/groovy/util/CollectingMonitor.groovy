@@ -1,7 +1,7 @@
 package util
 
-import org.openforis.rmb.messagebroker.monitor.Event
-import org.openforis.rmb.messagebroker.monitor.Monitor
+import org.openforis.rmb.monitor.Event
+import org.openforis.rmb.monitor.Monitor
 
 import java.util.concurrent.CopyOnWriteArrayList
 

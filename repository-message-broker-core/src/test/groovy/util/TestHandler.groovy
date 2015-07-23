@@ -1,7 +1,7 @@
 package util
 
-import org.openforis.rmb.messagebroker.KeepAlive
-import org.openforis.rmb.messagebroker.KeepAliveMessageHandler
+import org.openforis.rmb.KeepAlive
+import org.openforis.rmb.KeepAliveMessageHandler
 import org.spockframework.runtime.SpockTimeoutError
 import spock.util.concurrent.PollingConditions
 

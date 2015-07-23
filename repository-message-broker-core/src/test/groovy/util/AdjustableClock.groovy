@@ -1,6 +1,6 @@
 package util
 
-import org.openforis.rmb.messagebroker.spi.Clock
+import org.openforis.rmb.spi.Clock
 
 import java.util.concurrent.TimeUnit
 

@@ -1,6 +1,5 @@
 package org.openforis.rmb
 
-import integration.QueueTestDelegate
 import spock.lang.Specification
 
 class QueueConcurrencyTest extends Specification {

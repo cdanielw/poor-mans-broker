@@ -37,7 +37,8 @@ public class DirectApiExample {
                         .messageSerializer(new XStreamMessageSerializer())
                         .monitor(new Slf4jLoggingMonitor())
                         .monitor(new MetricsMonitor(metricRegistry))
-        ).start();
+        );
+        messageBroker.start();
 
         final MessageQueue<char[]> queue = messageBroker.<char[]>queueBuilder("A queue")
                 .consumer(MessageConsumer.builder("Word Joiner", new CharacterJoiner())

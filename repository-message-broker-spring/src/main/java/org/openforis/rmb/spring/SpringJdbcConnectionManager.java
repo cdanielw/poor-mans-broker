@@ -23,6 +23,5 @@ public class SpringJdbcConnectionManager implements JdbcConnectionManager {
             DataSourceUtils.doReleaseConnection(connection, dataSource);
         } catch (SQLException ignore) {
         }
-
     }
 }

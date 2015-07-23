@@ -15,6 +15,7 @@
         <maven.compiler.target>1.6</maven.compiler.target>
         <groovy-eclipse-compiler.version>2.9.2-01</groovy-eclipse-compiler.version>
         <h2.version>1.4.187</h2.version>
+        <spock.version>1.0-groovy-2.4</spock.version>
     </properties>
 
     <modules>
@@ -31,7 +32,7 @@
         <dependency>
             <groupId>org.spockframework</groupId>
             <artifactId>spock-core</artifactId>
-            <version>1.0-groovy-2.4</version>
+            <version>${spock.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

@@ -27,13 +27,12 @@ public final class RepositoryMessageBroker implements MessageBroker {
         this.queueManager = new MessageQueueManager(this.config);
     }
 
-    public RepositoryMessageBroker start() {
+    public void start() {
         if (stopped.get())
             throw new IllegalStateException("Message broker has been stopped, and cannot be restarted");
         addShutdownHook();
         queueManager.start();
         monitors.onEvent(new MessageBrokerStartedEvent(this));
-        return this;
     }
 
     public void stop() {

@@ -1,7 +1,7 @@
 package org.openforis.rmb;
 
 public interface MessageBroker {
-    RepositoryMessageBroker start();
+    void start();
 
     void stop();
 

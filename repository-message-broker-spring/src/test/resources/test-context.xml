@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <tx:annotation-driven transaction-manager="txManager"/>
+
+    <bean id="database" class="org.openforis.rmb.spring.ExampleDatabase" destroy-method="stop"/>
+
+    <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" value="#{database.dataSource}"/>
+    </bean>
+
+    <bean id="fullyConfiguredMessageBroker" class="org.openforis.rmb.spring.SpringJdbcMessageBroker">
+        <constructor-arg value="#{database.dataSource}"/>
+        <property name="tablePrefix" value="example_"/>
+        <property name="messageSerializer">
+            <bean class="org.openforis.rmb.objectserialization.ObjectSerializationMessageSerializer"/>
+        </property>
+        <property name="monitors">
+            <list>
+                <bean class="org.openforis.rmb.spring.EventCollectingMonitor"/>
+            </list>
+        </property>
+        <property name="repositoryWatcherPollingPeriodSeconds" value="10"/>
+    </bean>
+
+    <bean id="fullyConfiguredQueue" class="org.openforis.rmb.spring.SpringMessageQueue">
+        <constructor-arg ref="fullyConfiguredMessageBroker"/>
+        <constructor-arg value="A queue"/>
+        <constructor-arg>
+            <list>
+                <bean class="org.openforis.rmb.spring.SpringMessageConsumer">
+                    <constructor-arg value="A consumer"/>
+                    <constructor-arg ref="messageCollectingHandler"/>
+                    <property name="messagesHandledInParallel" value="1"/>
+                    <property name="retries" value="5"/>
+                    <property name="throttlingStrategy">
+                        <bean class="org.openforis.rmb.spi.ThrottlingStrategy$ExponentialBackoff">
+                            <constructor-arg index="0" value="1"/>
+                            <constructor-arg index="1" value="MINUTES"/>
+                        </bean>
+                    </property>
+                    <property name="timeoutSeconds" value="30"/>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="messagePublishingService" class="org.openforis.rmb.spring.MessagePublishingService">
+        <constructor-arg ref="fullyConfiguredQueue"/>
+    </bean>
+
+    <bean id="messageCollectingHandler" class="org.openforis.rmb.spring.MessageCollectingHandler"/>
+</beans>

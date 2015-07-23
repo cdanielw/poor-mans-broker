@@ -12,7 +12,7 @@ class DefaultThrottlerTest extends Specification {
     def throttler = new Throttler.DefaultThrottler(clock)
     def timeout = 1000
     def consumer = MessageConsumer.builder('consumer id', {} as MessageHandler)
-            .retry(throttlingStrategy)
+            .retryUntilSuccess(throttlingStrategy)
             .timeout(timeout, TimeUnit.MILLISECONDS)
             .build()
     def keepAlive = Mock(KeepAlive)

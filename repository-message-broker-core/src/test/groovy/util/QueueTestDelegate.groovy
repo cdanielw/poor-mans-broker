@@ -15,12 +15,16 @@ class QueueTestDelegate {
                     NULL_TRANSACTION_SYNCHRONIZER
             )
                     .monitor(monitor)
-    ).start()
+    )
 
     int messagesHandledInParallel = 5
     int handlerDelayMillis = 0
     int randomHandlerDelayMillis = 0
     int timeoutSecs = 1
+
+    def setup() {
+        messageBroker.start()
+    }
 
     def cleanup() {
         messageBroker.stop()

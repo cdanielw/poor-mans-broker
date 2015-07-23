@@ -86,7 +86,7 @@ public final class MessageConsumer<M> {
             this.handler = handler;
             this.keepAliveHandler = keepAliveHandler;
             timeout(1, MINUTES);
-            retry(new ThrottlingStrategy.ExponentialBackoff(1, MINUTES));
+            retryUntilSuccess(new ThrottlingStrategy.ExponentialBackoff(1, MINUTES));
         }
 
         public Builder<M> timeout(int time, TimeUnit timeUnit) {
@@ -104,14 +104,14 @@ public final class MessageConsumer<M> {
         }
 
         public Builder<M> retry(int maxRetries, ThrottlingStrategy throttlingStrategy) {
-            Is.zeroOrGreater(maxRetries, "maxRetries must be zero or greater");
+            Is.greaterThenZero(maxRetries, "maxRetries must be greater than zero");
             Is.notNull(throttlingStrategy, "throttleStrategy must not be null");
             this.maxRetries = maxRetries;
             this.throttlingStrategy = throttlingStrategy;
             return this;
         }
 
-        public Builder<M> retry(ThrottlingStrategy throttlingStrategy) {
+        public Builder<M> retryUntilSuccess(ThrottlingStrategy throttlingStrategy) {
             Is.notNull(throttlingStrategy, "throttleStrategy must not be null");
             this.maxRetries = -1;
             this.throttlingStrategy = throttlingStrategy;

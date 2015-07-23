@@ -1,5 +1,6 @@
 package org.openforis.rmb.spring;
 
+import org.openforis.rmb.MessageBroker;
 import org.openforis.rmb.MessageQueue;
 import org.openforis.rmb.NotInTransaction;
 
@@ -9,11 +10,10 @@ import java.util.List;
 public final class SpringMessageQueue<T> implements MessageQueue<T> {
     private final MessageQueue<T> delegate;
 
-    public SpringMessageQueue(SpringMessageBroker springMessageBroker,
+    public SpringMessageQueue(MessageBroker messageBroker,
                               String queueId,
-                              Class<T> messageType,
                               List<SpringMessageConsumer<T>> consumers) {
-        Builder<T> builder = springMessageBroker.messageBroker.queueBuilder(queueId, messageType);
+        Builder<T> builder = messageBroker.queueBuilder(queueId);
         for (SpringMessageConsumer<T> consumer : consumers)
             builder.consumer(consumer.getDelegate());
         delegate = builder.build();

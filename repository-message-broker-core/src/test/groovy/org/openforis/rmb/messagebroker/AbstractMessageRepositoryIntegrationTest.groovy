@@ -12,7 +12,7 @@ import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.
 
 abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
     def takenCallback = new MockTakenCallback()
-    def processingCallback = new MockProcessingCallbackFound()
+    def processingCallback = new MockProcessingFoundCallback()
     def clock = new AdjustableClock()
 
     abstract MessageRepository getRepository()
@@ -422,7 +422,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
         }
     }
 
-    static class MockProcessingCallbackFound implements MessageRepository.MessageProcessingFoundCallback {
+    static class MockProcessingFoundCallback implements MessageRepository.MessageProcessingFoundCallback {
         final List<ProcessingCallbackInvocation> invocations = []
 
         void found(MessageProcessing messageProcessing, Object serializedMessage) {

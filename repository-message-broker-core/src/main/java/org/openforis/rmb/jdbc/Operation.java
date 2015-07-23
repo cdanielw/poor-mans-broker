@@ -67,8 +67,8 @@ abstract class Operation {
 
     final void deleteOrphanedMessages() throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
-                "DELETE FROM message\n" +
-                "WHERE id NOT IN (SELECT message_id FROM message_processing)");
+                "DELETE FROM " + tablePrefix + "message\n" +
+                "WHERE id NOT IN (SELECT message_id FROM " + tablePrefix + "message_processing)");
         ps.executeUpdate();
     }
 

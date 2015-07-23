@@ -30,7 +30,7 @@ final class MessageProcessingUpdater extends Operation {
 
     private boolean deleteFromMessageConsumer(MessageProcessingUpdate update) throws SQLException {
         PreparedStatement ps = connection.prepareStatement("" +
-                "DELETE FROM message_processing\n" +
+                "DELETE FROM " + tablePrefix + "message_processing\n" +
                 "WHERE message_id = ? AND consumer_id = ? AND version_id = ?");
         ps.setString(1, update.getMessageId());
         ps.setString(2, update.getConsumer().getId());

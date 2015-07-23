@@ -23,6 +23,7 @@
 
     <bean id="messageCollectingHandler" class="org.openforis.rmb.spring.MessageCollectingHandler"/>
 
+    <bean id="eventCollectingMonitor" class="org.openforis.rmb.spring.EventCollectingMonitor"/>
 
     <!-- Full configuration -->
     <bean id="fullyConfiguredMessageBroker" class="org.openforis.rmb.spring.SpringJdbcMessageBroker">
@@ -33,7 +34,7 @@
         </property>
         <property name="monitors">
             <list>
-                <bean class="org.openforis.rmb.spring.EventCollectingMonitor"/>
+                <ref bean="eventCollectingMonitor"/>
             </list>
         </property>
         <property name="repositoryWatcherPollingPeriodSeconds" value="10"/>

@@ -15,7 +15,7 @@ public final class MessageProcessingFilter {
     public final Date lastUpdatedAfter;
     public final Set<String> messageIds;
 
-    public MessageProcessingFilter(Builder builder) {
+    private MessageProcessingFilter(Builder builder) {
         this.states = builder.states;
         this.publishedBefore = builder.publishedBefore;
         this.publishedAfter = builder.publishedAfter;

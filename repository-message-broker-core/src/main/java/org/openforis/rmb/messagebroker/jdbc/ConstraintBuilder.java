@@ -36,7 +36,7 @@ class ConstraintBuilder {
         return whereClause.toString();
     }
 
-    public void updateStatement(PreparedStatement ps) throws SQLException {
+    public void bind(PreparedStatement ps) throws SQLException {
         consumers(ps);
         states(ps);
         publishedBefore(ps);

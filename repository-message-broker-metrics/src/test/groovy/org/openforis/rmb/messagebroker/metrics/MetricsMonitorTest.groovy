@@ -4,13 +4,13 @@ import com.codahale.metrics.MetricRegistry
 import org.openforis.rmb.messagebroker.MessageConsumer
 import org.openforis.rmb.messagebroker.MessageHandler
 import org.openforis.rmb.messagebroker.monitor.*
+import org.openforis.rmb.messagebroker.spi.Clock
 import org.openforis.rmb.messagebroker.spi.MessageDetails
 import org.openforis.rmb.messagebroker.spi.MessageProcessingStatus
 import org.openforis.rmb.messagebroker.spi.MessageProcessingUpdate
-import org.openforis.rmb.messagebroker.spi.Clock
 import spock.lang.Specification
 
-import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.*
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.FAILED
 
 
 class MetricsMonitorTest extends Specification {

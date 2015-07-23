@@ -169,7 +169,7 @@ class WorkerTest extends Specification {
                 .build()
     }
 
-    static class MockRepo implements MessageRepository {
+    private static class MockRepo implements MessageRepository {
         List<MessageProcessingUpdate> updates = []
 
         void add(String queueId, List<MessageConsumer<?>> consumers, Object serializedMessage) throws MessageRepositoryException {
@@ -186,17 +186,17 @@ class WorkerTest extends Specification {
             return true
         }
 
-        Map<String, Integer> messageQueueSizeByConsumerId() {
-            return Collections.EMPTY_MAP;
-        }
-
         void findMessageProcessing(Collection<MessageConsumer<?>> consumers,
                                    MessageProcessingFilter filter,
                                    MessageRepository.MessageProcessingFoundCallback callback) {
 
         }
 
-        private void versionIdsChainTogether() {
+        Map<MessageConsumer<?>, Integer> messageCountByConsumer(Collection<MessageConsumer<?>> consumers, MessageProcessingFilter filter) {
+            return null
+        }
+
+        void versionIdsChainTogether() {
             if (updates) {
                 updates.tail().inject(updates.first()) { prevUpdate, update ->
                     def toVersionId = prevUpdate.toVersionId

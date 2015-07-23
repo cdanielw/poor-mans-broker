@@ -1,63 +1,68 @@
 package org.openforis.rmb.messagebroker;
 
 import org.openforis.rmb.messagebroker.monitor.MessageQueueSizeChangedEvent;
+import org.openforis.rmb.messagebroker.spi.MessageProcessingFilter;
 import org.openforis.rmb.messagebroker.spi.MessageRepository;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.PENDING;
+import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.TIMED_OUT;
 
 class MessageQueueSizeChecker {
     private final MessageRepository repository;
     private final Monitors monitors;
-    private final Map<String, Integer> sizeByConsumerId = new ConcurrentHashMap<String, Integer>();
-    private final Map<String, MessageConsumer<?>> consumerByConsumerId = new ConcurrentHashMap<String, MessageConsumer<?>>();
-    private final Map<String, String> queueIdByConsumer = new ConcurrentHashMap<String, String>();
+    private final Map<MessageConsumer<?>, Integer> sizeByConsumer = new ConcurrentHashMap<MessageConsumer<?>, Integer>();
+    private final Map<MessageConsumer<?>, String> queueIdByConsumer = new ConcurrentHashMap<MessageConsumer<?>, String>();
+    private final MessageProcessingFilter filter = MessageProcessingFilter.builder().states(PENDING, TIMED_OUT).build();
+
+    private List<MessageConsumer<?>> consumers = new CopyOnWriteArrayList<MessageConsumer<?>>();
 
     MessageQueueSizeChecker(MessageRepository repository, Monitors monitors) {
         this.repository = repository;
         this.monitors = monitors;
     }
 
-
     void includeQueue(String queueId, List<MessageConsumer<?>> consumers) {
+        this.consumers.addAll(consumers);
         for (MessageConsumer<?> consumer : consumers) {
-            updateSize(consumer.id, -1);
-            consumerByConsumerId.put(consumer.id, consumer);
-            queueIdByConsumer.put(consumer.id, queueId);
+            updateSize(consumer, -1);
+            queueIdByConsumer.put(consumer, queueId);
         }
     }
 
     void check() {
-        Map<String, Integer> sizeByConsumerId = repository.messageQueueSizeByConsumerId();
-        for (String consumerId : this.sizeByConsumerId.keySet()) {
-            Integer newSize = newSize(consumerId, sizeByConsumerId);
-            if (hasSizeChanged(consumerId, newSize)) {
-                updateSize(consumerId, newSize);
-                notifyAboutSizeChange(consumerId);
+        Map<MessageConsumer<?>, Integer> sizeByConsumer = repository.messageCountByConsumer(consumers, filter);
+        for (MessageConsumer<?> consumer : this.sizeByConsumer.keySet()) {
+            Integer newSize = newSize(consumer, sizeByConsumer);
+            if (hasSizeChanged(consumer, newSize)) {
+                updateSize(consumer, newSize);
+                notifyAboutSizeChange(consumer);
             }
         }
     }
 
-    private boolean hasSizeChanged(String consumerId, Integer newSize) {
-        return !previousSize(consumerId).equals(newSize);
+    private boolean hasSizeChanged(MessageConsumer<?> consumer, Integer newSize) {
+        return !previousSize(consumer).equals(newSize);
     }
 
-    private Integer previousSize(String consumerId) {return this.sizeByConsumerId.get(consumerId);}
+    private Integer previousSize(MessageConsumer<?> consumer) {return this.sizeByConsumer.get(consumer);}
 
-    private int newSize(String consumerId, Map<String, Integer> sizeByConsumerId) {
-        Integer newSize = sizeByConsumerId.get(consumerId);
+    private int newSize(MessageConsumer<?> consumer, Map<MessageConsumer<?>, Integer> sizeByConsumer) {
+        Integer newSize = sizeByConsumer.get(consumer);
         return newSize == null ? 0 : newSize;
     }
 
-    private void notifyAboutSizeChange(String consumerId) {
-        String queueId = queueIdByConsumer.get(consumerId);
-        MessageConsumer<?> consumer = consumerByConsumerId.get(consumerId);
-        Integer size = previousSize(consumerId);
+    private void notifyAboutSizeChange(MessageConsumer<?> consumer) {
+        String queueId = queueIdByConsumer.get(consumer);
+        Integer size = previousSize(consumer);
         monitors.onEvent(new MessageQueueSizeChangedEvent(queueId, consumer, size));
     }
 
-    private Integer updateSize(String consumerId, Integer size) {
-        return this.sizeByConsumerId.put(consumerId, size);
+    private Integer updateSize(MessageConsumer<?> consumer, Integer size) {
+        return this.sizeByConsumer.put(consumer, size);
     }
 }

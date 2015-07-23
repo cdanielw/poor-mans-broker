@@ -2,6 +2,7 @@ package org.openforis.rmb.messagebroker
 
 import org.openforis.rmb.messagebroker.monitor.MessageQueueSizeChangedEvent
 import org.openforis.rmb.messagebroker.monitor.Monitor
+import org.openforis.rmb.messagebroker.spi.MessageProcessingFilter
 import org.openforis.rmb.messagebroker.spi.MessageRepository
 import spock.lang.Specification
 
@@ -12,7 +13,7 @@ class MessageQueueSizeCheckerTest extends Specification {
     def watcher = new MessageQueueSizeChecker(messageRepository, monitors)
 
     def 'Checking without any sizes does not notify monitor'() {
-        messageRepository.messageQueueSizeByConsumerId() >> [:]
+        repositoryReturns([:])
 
         when:
             watcher.check()
@@ -25,7 +26,7 @@ class MessageQueueSizeCheckerTest extends Specification {
         MessageQueueSizeChangedEvent event = null
         def consumer = consumer('consumer id')
         watcher.includeQueue('queue id', [consumer])
-        messageRepository.messageQueueSizeByConsumerId() >> [:]
+        repositoryReturns([:])
 
         when:
             watcher.check()
@@ -40,7 +41,7 @@ class MessageQueueSizeCheckerTest extends Specification {
     def 'Given a queue with two messages, when checking, monitor is notified'() {
         def consumer = consumer('consumer id')
         watcher.includeQueue('queue id', [consumer])
-        messageRepository.messageQueueSizeByConsumerId() >> ['consumer id': 2]
+        repositoryReturns((consumer): 2)
         MessageQueueSizeChangedEvent event = null
 
         when:
@@ -57,7 +58,7 @@ class MessageQueueSizeCheckerTest extends Specification {
         def consumer1 = consumer('consumer 1')
         def consumer2 = consumer('consumer 2')
         watcher.includeQueue('queue id', [consumer1, consumer2])
-        messageRepository.messageQueueSizeByConsumerId() >> ['consumer 1': 1, 'consumer 2': 2]
+        repositoryReturns((consumer1): 1, (consumer2): 2)
         def events = [] as List<MessageQueueSizeChangedEvent>
 
         when:
@@ -67,13 +68,13 @@ class MessageQueueSizeCheckerTest extends Specification {
             2 * monitor.onEvent({ events << it } as MessageQueueSizeChangedEvent)
             events.size() == 2
 
-            events[0].consumer == consumer1
-            events[0].queueId == 'queue id'
-            events[0].size == 1
+            def event1 = events.find { it.consumer == consumer1 }
+            event1.queueId == 'queue id'
+            event1.size == 1
 
-            events[1].consumer == consumer2
-            events[1].queueId == 'queue id'
-            events[1].size == 2
+            def event2 = events.find { it.consumer == consumer2 }
+            event2.queueId == 'queue id'
+            event2.size == 2
     }
 
     def 'Given two queues with a consumer each with one and two messages, when checking, monitor is notified for each consumer'() {
@@ -81,7 +82,7 @@ class MessageQueueSizeCheckerTest extends Specification {
         def consumer2 = consumer('consumer 2')
         watcher.includeQueue('queue 1', [consumer1])
         watcher.includeQueue('queue 2', [consumer2])
-        messageRepository.messageQueueSizeByConsumerId() >> ['consumer 1': 1, 'consumer 2': 2]
+        repositoryReturns((consumer1): 1, (consumer2): 2)
         def events = [] as List<MessageQueueSizeChangedEvent>
 
         when:
@@ -91,13 +92,17 @@ class MessageQueueSizeCheckerTest extends Specification {
             2 * monitor.onEvent({ events << it } as MessageQueueSizeChangedEvent)
             events.size() == 2
 
-            events[0].consumer == consumer1
-            events[0].queueId == 'queue 1'
-            events[0].size == 1
+            def event1 = events.find { it.consumer == consumer1 }
+            event1.queueId == 'queue 1'
+            event1.size == 1
 
-            events[1].consumer == consumer2
-            events[1].queueId == 'queue 2'
-            events[1].size == 2
+            def event2 = events.find { it.consumer == consumer2 }
+            event2.queueId == 'queue 2'
+            event2.size == 2
+    }
+
+    void repositoryReturns(Map<MessageConsumer, Integer> counts) {
+        messageRepository.messageCountByConsumer(_ as List, _ as MessageProcessingFilter) >> counts
     }
 
     private MessageConsumer consumer(String consumerId) {

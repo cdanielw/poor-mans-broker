@@ -47,14 +47,13 @@ public final class InMemoryMessageRepository implements MessageRepository {
         }
     }
 
-    public Map<String, Integer> messageQueueSizeByConsumerId() {
-        Map<String, Integer> sizeByConsumerId = new HashMap<String, Integer>();
-        for (Map.Entry<MessageConsumer<?>, ConsumerMessages> entry : consumerMessagesByConsumer.entrySet()) {
-            MessageConsumer<?> consumer = entry.getKey();
-            ConsumerMessages messages = entry.getValue();
-            sizeByConsumerId.put(consumer.id, messages.queueSize());
+    public boolean update(MessageProcessingUpdate update) throws MessageRepositoryException {
+        synchronized (lock) {
+            ConsumerMessages messages = consumerMessages(update.consumer);
+            Message message = messages.find(update.messageId);
+            messages.update(message, update);
+            return true;
         }
-        return sizeByConsumerId;
     }
 
     public void findMessageProcessing(Collection<MessageConsumer<?>> consumers,
@@ -66,14 +65,18 @@ public final class InMemoryMessageRepository implements MessageRepository {
         }
     }
 
+    public Map<MessageConsumer<?>, Integer> messageCountByConsumer(Collection<MessageConsumer<?>> consumers,
+                                                                   MessageProcessingFilter filter) {
+        Map<MessageConsumer<?>, Integer> countByConsumer = new HashMap<MessageConsumer<?>, Integer>();
+        for (MessageConsumer<?> consumer : consumers)
+            countByConsumer.put(consumer, findMessagesForConsumer(consumer, filter).size());
+        return countByConsumer;
+    }
+
     private void findMessageProcessing(MessageConsumer<?> consumer,
                                        MessageProcessingFilter filter,
                                        MessageProcessingFoundCallback callback) {
-        ConsumerMessages consumerMessages = consumerMessagesByConsumer.get(consumer);
-        List<Message> messages = new ArrayList<Message>();
-        for (Message message : consumerMessages.messages)
-            if (include(message, filter))
-                messages.add(message);
+        List<Message> messages = findMessagesForConsumer(consumer, filter);
         for (Message message : messages) {
             MessageProcessingUpdate update = message.update;
             callback.found(MessageProcessing.create(
@@ -82,6 +85,17 @@ public final class InMemoryMessageRepository implements MessageRepository {
                     new MessageProcessingStatus(update.toState, update.retries, update.errorMessage, now(), update.toVersionId)
             ), message.serializedMessage);
         }
+    }
+
+    private List<Message> findMessagesForConsumer(MessageConsumer<?> consumer, MessageProcessingFilter filter) {
+        ConsumerMessages consumerMessages = consumerMessagesByConsumer.get(consumer);
+        if (consumerMessages == null)
+            return Collections.emptyList();
+        List<Message> messages = new ArrayList<Message>();
+        for (Message message : consumerMessages.messages)
+            if (include(message, filter))
+                messages.add(message);
+        return messages;
     }
 
     @SuppressWarnings("RedundantIfStatement")
@@ -123,14 +137,6 @@ public final class InMemoryMessageRepository implements MessageRepository {
         return messages;
     }
 
-    public boolean update(MessageProcessingUpdate update) throws MessageRepositoryException {
-        synchronized (lock) {
-            ConsumerMessages messages = consumerMessages(update.consumer);
-            Message message = messages.find(update.messageId);
-            messages.update(message, update);
-            return true;
-        }
-    }
 
     private Date now() {
         return new Date(clock.millis());
@@ -158,7 +164,7 @@ public final class InMemoryMessageRepository implements MessageRepository {
             }
         }
 
-        public void takePending(Integer maxCount, MessageTakenCallback callback) {
+        void takePending(Integer maxCount, MessageTakenCallback callback) {
             int i = 0;
             for (Message message : messages) {
                 if (i >= maxCount) return;
@@ -173,19 +179,6 @@ public final class InMemoryMessageRepository implements MessageRepository {
                     callback.taken(message.update, message.serializedMessage);
                 i++;
             }
-        }
-
-        int queueSize() {
-            int timedOutCount = 0;
-            int i = 0;
-            for (Message message : messages) {
-                if (message.isPending()) // When a message is pending means the rest if the messages are too
-                    return messages.size() - i + timedOutCount;
-                if (message.timedOut())
-                    timedOutCount++;
-                i++;
-            }
-            return timedOutCount;
         }
     }
 

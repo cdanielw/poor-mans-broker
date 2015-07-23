@@ -13,14 +13,14 @@ public interface MessageRepository {
 
     boolean update(MessageProcessingUpdate update) throws MessageRepositoryException;
 
-    // TODO: Delete this, and use generic count
-    Map<String, Integer> messageQueueSizeByConsumerId();
+    void findMessageProcessing(Collection<MessageConsumer<?>> consumers,
+                               MessageProcessingFilter filter,
+                               MessageProcessingFoundCallback callback);
 
-    void findMessageProcessing(Collection<MessageConsumer<?>> consumers, MessageProcessingFilter filter, MessageProcessingFoundCallback callback);
+    Map<MessageConsumer<?>, Integer> messageCountByConsumer(Collection<MessageConsumer<?>> consumers,
+                                                            MessageProcessingFilter filter);
 //
-//    Map<String, Integer> countByConsumerId(MessageProcessingFilter filter);
-//
-//    void deleteMessageProcessing(MessageProcessingFilter filter);
+//    void deleteMessageProcessing(Collection<MessageConsumer<?>> consumers, MessageProcessingFilter filter);
 
 
     interface MessageTakenCallback {

@@ -207,26 +207,6 @@ public final class JdbcMessageRepository implements MessageRepository {
         ps.executeUpdate();
     }
 
-    public Map<String, Integer> messageQueueSizeByConsumerId() {
-        return withConnection(new ConnectionCallback<Map<String, Integer>>() {
-            public Map<String, Integer> execute(Connection connection) throws SQLException {
-                PreparedStatement ps = connection.prepareStatement("" +
-                        "SELECT consumer_id, count(*) queue_size\n" +
-                        "FROM " + tablePrefix + "MESSAGE_CONSUMER mc\n" +
-                        "WHERE (state = 'PENDING'\n" +
-                        "OR (state = 'PROCESSING' AND times_out < ?))\n" +
-                        "GROUP BY consumer_id");
-                ps.setTimestamp(1, new Timestamp(clock.millis()));
-                ResultSet rs = ps.executeQuery();
-                Map<String, Integer> sizeByConsumerId = new HashMap<String, Integer>();
-                while (rs.next())
-                    sizeByConsumerId.put(rs.getString("consumer_id"), rs.getInt("queue_size"));
-                rs.close();
-                ps.close();
-                return sizeByConsumerId;
-            }
-        });
-    }
 
     public void findMessageProcessing(final Collection<MessageConsumer<?>> consumers,
                                       final MessageProcessingFilter filter,
@@ -238,16 +218,17 @@ public final class JdbcMessageRepository implements MessageRepository {
             public Void execute(Connection connection) throws SQLException {
                 ConstraintBuilder constraintBuilder = new ConstraintBuilder(consumers, filter, clock);
                 PreparedStatement ps = connection.prepareStatement("" +
-                        "SELECT consumer_id, queue_id, message_id, publication_time, times_out, state, retries, error_message, version_id, message_string, message_bytes\n" +
+                        "SELECT consumer_id, queue_id, message_id, publication_time, times_out, state, retries, " +
+                        "       error_message, version_id, message_string, message_bytes\n" +
                         "FROM " + tablePrefix + "message_consumer mc\n" +
                         "JOIN " + tablePrefix + "message m ON mc.message_id = m.id\n" +
                         "WHERE " + constraintBuilder.whereClause() + "\n" +
                         "ORDER BY sequence_no, consumer_id");
 
-                constraintBuilder.updateStatement(ps);
+                constraintBuilder.bind(ps);
 
                 ResultSet rs = ps.executeQuery();
-                Map<String, MessageConsumer<?>> consumerById = byId(consumers);
+                Map<String, MessageConsumer<?>> consumerById = consumersById(consumers);
 
                 while (rs.next()) {
                     String consumerId = rs.getString("consumer_id");
@@ -274,6 +255,31 @@ public final class JdbcMessageRepository implements MessageRepository {
         });
     }
 
+    public Map<MessageConsumer<?>, Integer> messageCountByConsumer(final Collection<MessageConsumer<?>> consumers, final MessageProcessingFilter filter) {
+        return withConnection(new ConnectionCallback<Map<MessageConsumer<?>, Integer>>() {
+            public Map<MessageConsumer<?>, Integer> execute(Connection connection) throws SQLException {
+                Map<MessageConsumer<?>, Integer> countByConsumer = new HashMap<MessageConsumer<?>, Integer>();
+                for (MessageConsumer<?> consumer : consumers)
+                    countByConsumer.put(consumer, 0);
+                Map<String, MessageConsumer<?>> consumerById = consumersById(consumers);
+                ConstraintBuilder constraintBuilder = new ConstraintBuilder(consumers, filter, clock);
+                PreparedStatement ps = connection.prepareStatement("" +
+                        "SELECT consumer_id, count(*) message_count\n" +
+                        "FROM " + tablePrefix + "message_consumer mc\n" +
+                        "JOIN " + tablePrefix + "message m ON mc.message_id = m.id\n" +
+                        "WHERE " + constraintBuilder.whereClause() + "\n" +
+                        "GROUP BY consumer_id");
+                constraintBuilder.bind(ps);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next())
+                    countByConsumer.put(consumerById.get(rs.getString("consumer_id")), rs.getInt("message_count"));
+                rs.close();
+                ps.close();
+                return countByConsumer;
+            }
+        });
+    }
+
     private Date toDate(Timestamp timestamp) {
         return new Date(timestamp.getTime());
     }
@@ -282,7 +288,7 @@ public final class JdbcMessageRepository implements MessageRepository {
         return new Date(clock.millis());
     }
 
-    private Map<String, MessageConsumer<?>> byId(Collection<MessageConsumer<?>> consumers) {
+    private Map<String, MessageConsumer<?>> consumersById(Collection<MessageConsumer<?>> consumers) {
         Map<String, MessageConsumer<?>> consumerById = new HashMap<String, MessageConsumer<?>>();
         for (MessageConsumer<?> consumer : consumers)
             consumerById.put(consumer.id, consumer);

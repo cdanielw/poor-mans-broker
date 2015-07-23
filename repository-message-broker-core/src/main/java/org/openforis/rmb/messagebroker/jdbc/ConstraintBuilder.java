@@ -54,11 +54,11 @@ class ConstraintBuilder {
 
     private void consumers(PreparedStatement ps) throws SQLException {
         for (MessageConsumer<?> consumer : consumers)
-            ps.setString(nextIndex(), consumer.id);
+            ps.setString(nextIndex(), consumer.getId());
     }
 
     private void states() {
-        if (filter.states.isEmpty())
+        if (filter.getStates().isEmpty())
             return;
         whereClause.append("\nAND (");
         List<String> statesWithoutTimedOut = statesWithoutTimedOut();
@@ -73,7 +73,7 @@ class ConstraintBuilder {
     }
 
     private void states(PreparedStatement ps) throws SQLException {
-        if (filter.states.isEmpty())
+        if (filter.getStates().isEmpty())
             return;
         for (String state : statesWithoutTimedOut())
             ps.setString(nextIndex(), state);
@@ -82,75 +82,75 @@ class ConstraintBuilder {
     }
 
     private void publishedBefore() {
-        if (filter.publishedBefore == null)
+        if (filter.getPublishedBefore() == null)
             return;
         whereClause.append("\nAND publication_time < ?");
     }
 
     private void publishedBefore(PreparedStatement ps) throws SQLException {
-        if (filter.publishedBefore == null)
+        if (filter.getPublishedBefore() == null)
             return;
-        ps.setTimestamp(nextIndex(), new Timestamp(filter.publishedBefore.getTime()));
+        ps.setTimestamp(nextIndex(), new Timestamp(filter.getPublishedBefore().getTime()));
     }
 
     private void publishedAfter() {
-        if (filter.publishedAfter == null)
+        if (filter.getPublishedAfter() == null)
             return;
         whereClause.append("\nAND publication_time > ?");
     }
 
     private void publishedAfter(PreparedStatement ps) throws SQLException {
-        if (filter.publishedAfter == null)
+        if (filter.getPublishedAfter() == null)
             return;
-        ps.setTimestamp(nextIndex(), new Timestamp(filter.publishedAfter.getTime()));
+        ps.setTimestamp(nextIndex(), new Timestamp(filter.getPublishedAfter().getTime()));
     }
 
     private void lastUpdatedBefore() {
-        if (filter.lastUpdatedBefore == null)
+        if (filter.getLastUpdatedBefore() == null)
             return;
         whereClause.append("\nAND last_updated < ?");
     }
 
 
     private void lastUpdatedBefore(PreparedStatement ps) throws SQLException {
-        if (filter.lastUpdatedBefore == null)
+        if (filter.getLastUpdatedBefore() == null)
             return;
-        ps.setTimestamp(nextIndex(), new Timestamp(filter.lastUpdatedBefore.getTime()));
+        ps.setTimestamp(nextIndex(), new Timestamp(filter.getLastUpdatedBefore().getTime()));
     }
 
     private void lastUpdatedAfter() {
-        if (filter.lastUpdatedAfter == null)
+        if (filter.getLastUpdatedAfter() == null)
             return;
         whereClause.append("\nAND last_updated > ?");
     }
 
     private void lastUpdatedAfter(PreparedStatement ps) throws SQLException {
-        if (filter.lastUpdatedAfter == null)
+        if (filter.getLastUpdatedAfter() == null)
             return;
-        ps.setTimestamp(nextIndex(), new Timestamp(filter.lastUpdatedAfter.getTime()));
+        ps.setTimestamp(nextIndex(), new Timestamp(filter.getLastUpdatedAfter().getTime()));
     }
 
     private void messageIds() {
-        if (filter.messageIds.isEmpty())
+        if (filter.getMessageIds().isEmpty())
             return;
-        whereClause.append("\nAND message_id in (").append(questionMarks(filter.messageIds.size())).append(')');
+        whereClause.append("\nAND message_id in (").append(questionMarks(filter.getMessageIds().size())).append(')');
 
     }
 
     private void messageIds(PreparedStatement ps) throws SQLException {
-        if (filter.messageIds.isEmpty())
+        if (filter.getMessageIds().isEmpty())
             return;
-        for (String messageId : filter.messageIds)
+        for (String messageId : filter.getMessageIds())
             ps.setString(nextIndex(), messageId);
     }
 
     private boolean includeTimedOut() {
-        return filter.states.size() != statesWithoutTimedOut().size();
+        return filter.getStates().size() != statesWithoutTimedOut().size();
     }
 
     private List<String> statesWithoutTimedOut() {
         List<String> result = new ArrayList<String>();
-        for (State state : filter.states)
+        for (State state : filter.getStates())
             if (state != State.TIMED_OUT)
                 result.add(state.name());
         return result;

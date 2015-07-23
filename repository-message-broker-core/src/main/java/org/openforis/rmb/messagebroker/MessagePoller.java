@@ -64,7 +64,7 @@ final class MessagePoller {
     }
 
     private <T> void consume(final MessageProcessingUpdate<T> update, final Object serializedMessage) {
-        incrementCurrentlyProcessingMessageCount(update.consumer);
+        incrementCurrentlyProcessingMessageCount(update.getConsumer());
 
         workerExecutor.execute(new Runnable() {
             @SuppressWarnings("unchecked")
@@ -76,7 +76,7 @@ final class MessagePoller {
                 } catch (Worker.MessageUpdateConflict e) {
                     monitors.onEvent(new MessageUpdateConflictEvent(update, message));
                 } finally {
-                    decrementCurrentlyProcessingMessageCount(update.consumer);
+                    decrementCurrentlyProcessingMessageCount(update.getConsumer());
                     poll();
                 }
             }

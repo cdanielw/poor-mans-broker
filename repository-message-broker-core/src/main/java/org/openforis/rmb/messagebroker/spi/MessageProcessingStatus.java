@@ -5,11 +5,11 @@ import org.openforis.rmb.messagebroker.util.Is;
 import java.util.Date;
 
 public final class MessageProcessingStatus {
-    public final State state;
-    public final int retries;
-    public final String errorMessage;
-    public final Date lastUpdated;
-    public final String versionId;
+    final State state;
+    final int retries;
+    final String errorMessage;
+    final Date lastUpdated;
+    final String versionId;
 
     public MessageProcessingStatus(State state, int retries, String errorMessage, Date lastUpdated, String versionId) {
         this.state = state;

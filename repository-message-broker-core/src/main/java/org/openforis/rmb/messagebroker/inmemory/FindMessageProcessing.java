@@ -18,9 +18,10 @@ final class FindMessageProcessing extends FilteringOperation<Void> {
         for (Message message : messages) {
             MessageProcessingUpdate update = message.update;
             callback.found(MessageProcessing.create(
-                    new MessageDetails(update.queueId, update.messageId, update.publicationTime),
+                    new MessageDetails(update.getQueueId(), update.getMessageId(), update.getPublicationTime()),
                     consumerMessages.consumer,
-                    new MessageProcessingStatus(update.toState, update.retries, update.errorMessage, now(), update.toVersionId)
+                    new MessageProcessingStatus(update.getToState(), update.getRetries(), update.getErrorMessage(),
+                            now(), update.getToVersionId())
             ), message.serializedMessage);
         }
         return null;

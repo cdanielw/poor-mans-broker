@@ -32,7 +32,7 @@ final class MessageTaker extends Operation {
                 "WHERE consumer_id = ?\n" +
                 "AND state IN ('PENDING', 'PROCESSING')\n" +
                 "ORDER BY sequence_no");
-        ps.setString(1, consumer.id);
+        ps.setString(1, consumer.getId());
         ps.setMaxRows(maxCount);
         ResultSet rs = ps.executeQuery();
         while (rs.next())

@@ -39,7 +39,7 @@ public final class InMemoryMessageRepository implements MessageRepository {
     public boolean update(
             MessageProcessingUpdate update
     ) throws MessageRepositoryException {
-        return database.write(update.consumer, new UpdateMessageProcessing(clock, update));
+        return database.write(update.getConsumer(), new UpdateMessageProcessing(clock, update));
     }
 
     public void findMessageProcessing(

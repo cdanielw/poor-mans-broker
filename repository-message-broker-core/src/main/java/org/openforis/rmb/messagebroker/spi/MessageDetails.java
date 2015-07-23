@@ -5,9 +5,9 @@ import org.openforis.rmb.messagebroker.util.Is;
 import java.util.Date;
 
 public final class MessageDetails {
-    public final String queueId;
-    public final String messageId;
-    public final Date publicationTime;
+    final String queueId;
+    final String messageId;
+    final Date publicationTime;
 
     public MessageDetails(String queueId, String messageId, Date publicationTime) {
         this.queueId = queueId;

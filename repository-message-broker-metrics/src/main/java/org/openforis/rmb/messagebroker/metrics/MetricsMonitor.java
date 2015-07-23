@@ -52,7 +52,7 @@ public class MetricsMonitor implements Monitor<Event> {
     private void messageQueueCreated(MessageQueueCreatedEvent event) {
         metrics.counter("queueCount").inc();
         for (MessageConsumer<?> consumer : event.consumers) {
-            messageHandlingTimesByConsumerId.put(consumer.id, new ConcurrentHashMap<String, Long>());
+            messageHandlingTimesByConsumerId.put(consumer.getId(), new ConcurrentHashMap<String, Long>());
             metrics.register(QueueSizeGauge.getName(event.queueId, consumer), new QueueSizeGauge());
         }
     }
@@ -63,60 +63,60 @@ public class MetricsMonitor implements Monitor<Event> {
     }
 
     private void consumingNewMessage(ConsumingNewMessageEvent event) {
-        long timeFromPublicationTime = clock.millis() - event.update.publicationTime.getTime();
-        metrics.histogram(name(event.update.queueId, event.update.consumer.id, "timesFromPublicationToTaken"))
+        long timeFromPublicationTime = clock.millis() - event.update.getPublicationTime().getTime();
+        metrics.histogram(name(event.update.getQueueId(), event.update.getConsumer().getId(), "timesFromPublicationToTaken"))
                 .update(timeFromPublicationTime);
-        metrics.counter(name(event.update.queueId, event.update.consumer.id, "takenCount")).inc();
-        metrics.meter(name(event.update.queueId, event.update.consumer.id, "takenMeter")).mark();
+        metrics.counter(name(event.update.getQueueId(), event.update.getConsumer().getId(), "takenCount")).inc();
+        metrics.meter(name(event.update.getQueueId(), event.update.getConsumer().getId(), "takenMeter")).mark();
         recordMessage(event.update);
     }
 
     private void consumingTimedOutMessage(ConsumingTimedOutMessageEvent event) {
-        metrics.counter(name(event.update.queueId, event.update.consumer.id, "takenCount")).inc();
-        metrics.meter(name(event.update.queueId, event.update.consumer.id, "takenMeter")).mark();
-        metrics.counter(name(event.update.queueId, event.update.consumer.id, "timedOutTakenCount")).inc();
-        metrics.meter(name(event.update.queueId, event.update.consumer.id, "timedOutTakenMeter")).mark();
+        metrics.counter(name(event.update.getQueueId(), event.update.getConsumer().getId(), "takenCount")).inc();
+        metrics.meter(name(event.update.getQueueId(), event.update.getConsumer().getId(), "takenMeter")).mark();
+        metrics.counter(name(event.update.getQueueId(), event.update.getConsumer().getId(), "timedOutTakenCount")).inc();
+        metrics.meter(name(event.update.getQueueId(), event.update.getConsumer().getId(), "timedOutTakenMeter")).mark();
         recordMessage(event.update);
     }
 
     private void throttlingMessageRetry(ThrottlingMessageRetryEvent event) {
         long handlingTime = clock.millis() - handlingStartTime(event.update);
-        metrics.histogram(name(event.update.queueId, event.update.consumer.id, "failingHandlingTimes")).update(handlingTime);
-        metrics.histogram(name(event.update.queueId, event.update.consumer.id, "failingHandlingTimes["
+        metrics.histogram(name(event.update.getQueueId(), event.update.getConsumer().getId(), "failingHandlingTimes")).update(handlingTime);
+        metrics.histogram(name(event.update.getQueueId(), event.update.getConsumer().getId(), "failingHandlingTimes["
                 + event.message.getClass().getName() + "]")).update(handlingTime);
     }
 
     private void retryingMessageConsumption(RetryingMessageConsumptionEvent event) {
-        metrics.counter(name(event.update.queueId, event.update.consumer.id, "retryCount")).inc();
-        metrics.meter(name(event.update.queueId, event.update.consumer.id, "retryMeter")).mark();
+        metrics.counter(name(event.update.getQueueId(), event.update.getConsumer().getId(), "retryCount")).inc();
+        metrics.meter(name(event.update.getQueueId(), event.update.getConsumer().getId(), "retryMeter")).mark();
     }
 
     private void messageConsumed(MessageConsumedEvent event) {
-        long timeFromPublicationTime = clock.millis() - event.update.publicationTime.getTime();
+        long timeFromPublicationTime = clock.millis() - event.update.getPublicationTime().getTime();
         long handlingTime = clock.millis() - handlingStartTime(event.update);
-        metrics.histogram(name(event.update.queueId, event.update.consumer.id, "timesFromPublicationToCompletion"))
+        metrics.histogram(name(event.update.getQueueId(), event.update.getConsumer().getId(), "timesFromPublicationToCompletion"))
                 .update(timeFromPublicationTime);
-        metrics.histogram(name(event.update.queueId, event.update.consumer.id, "handlingTimes")).update(handlingTime);
-        metrics.histogram(name(event.update.queueId, event.update.consumer.id, "handlingTimes["
+        metrics.histogram(name(event.update.getQueueId(), event.update.getConsumer().getId(), "handlingTimes")).update(handlingTime);
+        metrics.histogram(name(event.update.getQueueId(), event.update.getConsumer().getId(), "handlingTimes["
                 + event.message.getClass().getName() + "]")).update(handlingTime);
-        metrics.counter(name(event.update.queueId, event.update.consumer.id, "takenCount")).dec();
-        metrics.counter(name(event.update.queueId, event.update.consumer.id, "completedCount")).inc();
-        metrics.meter(name(event.update.queueId, event.update.consumer.id, "completedMeter")).mark();
+        metrics.counter(name(event.update.getQueueId(), event.update.getConsumer().getId(), "takenCount")).dec();
+        metrics.counter(name(event.update.getQueueId(), event.update.getConsumer().getId(), "completedCount")).inc();
+        metrics.meter(name(event.update.getQueueId(), event.update.getConsumer().getId(), "completedMeter")).mark();
         removeMessage(event.update);
     }
 
     private void messageConsumptionFailed(MessageConsumptionFailedEvent event) {
-        long timeFromPublicationTime = clock.millis() - event.update.publicationTime.getTime();
+        long timeFromPublicationTime = clock.millis() - event.update.getPublicationTime().getTime();
         long handlingTime = clock.millis() - handlingStartTime(event.update);
-        metrics.histogram(name(event.update.queueId, event.update.consumer.id, "timesFromPublicationToFailure"))
+        metrics.histogram(name(event.update.getQueueId(), event.update.getConsumer().getId(), "timesFromPublicationToFailure"))
                 .update(timeFromPublicationTime);
-        metrics.histogram(name(event.update.queueId, event.update.consumer.id, "failingHandlingTimes"))
+        metrics.histogram(name(event.update.getQueueId(), event.update.getConsumer().getId(), "failingHandlingTimes"))
                 .update(handlingTime);
-        metrics.histogram(name(event.update.queueId, event.update.consumer.id, "failingHandlingTimes["
+        metrics.histogram(name(event.update.getQueueId(), event.update.getConsumer().getId(), "failingHandlingTimes["
                 + event.message.getClass().getName() + "]")).update(handlingTime);
-        metrics.counter(name(event.update.queueId, event.update.consumer.id, "takenCount")).dec();
-        metrics.counter(name(event.update.queueId, event.update.consumer.id, "failedCount")).inc();
-        metrics.meter(name(event.update.queueId, event.update.consumer.id, "failedMeter")).mark();
+        metrics.counter(name(event.update.getQueueId(), event.update.getConsumer().getId(), "takenCount")).dec();
+        metrics.counter(name(event.update.getQueueId(), event.update.getConsumer().getId(), "failedCount")).inc();
+        metrics.meter(name(event.update.getQueueId(), event.update.getConsumer().getId(), "failedMeter")).mark();
         removeMessage(event.update);
     }
 
@@ -129,18 +129,18 @@ public class MetricsMonitor implements Monitor<Event> {
     }
 
     private void recordMessage(MessageProcessingUpdate update) {
-        Map<String, Long> messages = messageHandlingTimesByConsumerId.get(update.consumer.id);
-        messages.put(update.messageId, clock.millis());
+        Map<String, Long> messages = messageHandlingTimesByConsumerId.get(update.getConsumer().getId());
+        messages.put(update.getMessageId(), clock.millis());
     }
 
     private void removeMessage(MessageProcessingUpdate update) {
-        Map<String, Long> messages = messageHandlingTimesByConsumerId.get(update.consumer.id);
-        messages.remove(update.messageId);
+        Map<String, Long> messages = messageHandlingTimesByConsumerId.get(update.getConsumer().getId());
+        messages.remove(update.getMessageId());
     }
 
     private long handlingStartTime(MessageProcessingUpdate update) {
-        Map<String, Long> messages = messageHandlingTimesByConsumerId.get(update.consumer.id);
-        return messages.get(update.messageId);
+        Map<String, Long> messages = messageHandlingTimesByConsumerId.get(update.getConsumer().getId());
+        return messages.get(update.getMessageId());
     }
 
     private static class QueueSizeGauge implements Gauge<Integer> {
@@ -155,7 +155,7 @@ public class MetricsMonitor implements Monitor<Event> {
         }
 
         static String getName(String queueId, MessageConsumer consumer) {
-            return name(queueId, consumer.id, "queueSize");
+            return name(queueId, consumer.getId(), "queueSize");
         }
     }
 }

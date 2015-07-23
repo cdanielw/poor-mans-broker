@@ -31,21 +31,21 @@ public abstract class FilteringOperation<T> extends InMemoryDatabase.Operation<T
     @SuppressWarnings("RedundantIfStatement")
     private boolean include(Message message) {
         MessageProcessingUpdate update = message.update;
-        if (!filter.states.isEmpty()) {
-            boolean notMatchingState = !filter.states.contains(update.toState);
-            boolean notMatchingTimedOut = !filter.states.contains(TIMED_OUT) || !message.timedOut();
+        if (!filter.getStates().isEmpty()) {
+            boolean notMatchingState = !filter.getStates().contains(update.getToState());
+            boolean notMatchingTimedOut = !filter.getStates().contains(TIMED_OUT) || !message.timedOut();
             if (notMatchingState && notMatchingTimedOut)
                 return false;
         }
-        if (filter.publishedBefore != null && !update.publicationTime.before(filter.publishedBefore))
+        if (filter.getPublishedBefore() != null && !update.getPublicationTime().before(filter.getPublishedBefore()))
             return false;
-        if (filter.publishedAfter != null && !update.publicationTime.after(filter.publishedAfter))
+        if (filter.getPublishedAfter() != null && !update.getPublicationTime().after(filter.getPublishedAfter()))
             return false;
-        if (filter.lastUpdatedBefore != null && !update.updateTime.before(filter.lastUpdatedBefore))
+        if (filter.getLastUpdatedBefore() != null && !update.getUpdateTime().before(filter.getLastUpdatedBefore()))
             return false;
-        if (filter.lastUpdatedAfter != null && !update.updateTime.after(filter.lastUpdatedAfter))
+        if (filter.getLastUpdatedAfter() != null && !update.getUpdateTime().after(filter.getLastUpdatedAfter()))
             return false;
-        if (!filter.messageIds.isEmpty() && !filter.messageIds.contains(message.update.messageId))
+        if (!filter.getMessageIds().isEmpty() && !filter.getMessageIds().contains(message.update.getMessageId()))
             return false;
         return true;
     }

@@ -9,15 +9,15 @@ import java.util.UUID;
 import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.PROCESSING;
 
 public final class MessageProcessing<T> {
-    public final String queueId;
-    public final String messageId;
-    public final Date publicationTime;
-    public final MessageConsumer<T> consumer;
-    public final MessageProcessingStatus.State state;
-    public final int retries;
-    public final String errorMessage;
-    public final Date lastUpdated;
-    public final String versionId;
+    final String queueId;
+    final String messageId;
+    final Date publicationTime;
+    final MessageConsumer<T> consumer;
+    final MessageProcessingStatus.State state;
+    final int retries;
+    final String errorMessage;
+    final Date lastUpdated;
+    final String versionId;
 
     private MessageProcessing(MessageDetails messageDetails,
                               MessageConsumer<T> consumer,

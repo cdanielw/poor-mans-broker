@@ -20,17 +20,17 @@ final class Message {
     Message(Clock clock, MessageProcessingUpdate update, Object serializedMessage) {
         this.clock = clock;
         this.update = update;
-        long timeoutMillis = update.consumer.timeUnit.toMillis(update.consumer.timeout);
-        this.timesOut = new Date(update.publicationTime.getTime() + timeoutMillis);
+        long timeoutMillis = update.getConsumer().getTimeUnit().toMillis(update.getConsumer().getTimeout());
+        this.timesOut = new Date(update.getPublicationTime().getTime() + timeoutMillis);
         this.serializedMessage = serializedMessage;
     }
 
     void take() {
-        MessageProcessingStatus.State fromState = timedOut() ? TIMED_OUT : update.toState;
+        MessageProcessingStatus.State fromState = timedOut() ? TIMED_OUT : update.getToState();
         setUpdate(MessageProcessingUpdate.create(
-                new MessageDetails(update.queueId, update.messageId, update.publicationTime), update.consumer,
-                new MessageProcessingStatus(fromState, update.retries, update.errorMessage, now(), update.toVersionId),
-                new MessageProcessingStatus(PROCESSING, update.retries, update.errorMessage, now(), randomUuid())
+                new MessageDetails(update.getQueueId(), update.getMessageId(), update.getPublicationTime()), update.getConsumer(),
+                new MessageProcessingStatus(fromState, update.getRetries(), update.getErrorMessage(), now(), update.getToVersionId()),
+                new MessageProcessingStatus(PROCESSING, update.getRetries(), update.getErrorMessage(), now(), randomUuid())
         ));
     }
 
@@ -39,15 +39,15 @@ final class Message {
     }
 
     boolean isPending() {
-        return update.toState == PENDING;
+        return update.getToState() == PENDING;
     }
 
     boolean timedOut() {
-        return update.toState == PROCESSING && timesOut.before(now());
+        return update.getToState() == PROCESSING && timesOut.before(now());
     }
 
     boolean isCompleted() {
-        return update.toState == COMPLETED;
+        return update.getToState() == COMPLETED;
     }
 
     private Date now() {

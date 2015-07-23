@@ -28,7 +28,7 @@ final class Worker<T> {
         this.monitors = monitors;
         this.update = update;
         this.message = message;
-        consumer = update.consumer;
+        consumer = update.getConsumer();
         keepAlive = createKeepAlive();
     }
 
@@ -48,11 +48,11 @@ final class Worker<T> {
     }
 
     private synchronized boolean notReachedMaxRetries() {
-        return update.retries <= consumer.maxRetries;
+        return update.getRetries() <= consumer.maxRetries;
     }
 
     private synchronized void notifyOnWorkerStart() {
-        boolean timedOutMessage = update.fromState == MessageProcessingStatus.State.TIMED_OUT;
+        boolean timedOutMessage = update.getFromState() == MessageProcessingStatus.State.TIMED_OUT;
         if (timedOutMessage)
             monitors.onEvent(new ConsumingTimedOutMessageEvent(update, message));
         else
@@ -80,7 +80,7 @@ final class Worker<T> {
     private synchronized void retry(Exception e) throws InterruptedException {
         updateRepo(update.retry(clock, e.getMessage()));
         monitors.onEvent(new ThrottlingMessageRetryEvent(update, message, e));
-        throttler.throttle(update.retries, consumer, keepAlive);
+        throttler.throttle(update.getRetries(), consumer, keepAlive);
         monitors.onEvent(new RetryingMessageConsumptionEvent(update, message, e));
     }
 

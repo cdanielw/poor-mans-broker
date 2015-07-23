@@ -8,12 +8,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 public final class MessageProcessingFilter {
-    public final Set<State> states;
-    public final Date publishedBefore;
-    public final Date publishedAfter;
-    public final Date lastUpdatedBefore;
-    public final Date lastUpdatedAfter;
-    public final Set<String> messageIds;
+    private final Set<State> states;
+    private final Date publishedBefore;
+    private final Date publishedAfter;
+    private final Date lastUpdatedBefore;
+    private final Date lastUpdatedAfter;
+    private final Set<String> messageIds;
 
     private MessageProcessingFilter(Builder builder) {
         this.states = builder.states;
@@ -26,6 +26,30 @@ public final class MessageProcessingFilter {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public Set<State> getStates() {
+        return states;
+    }
+
+    public Date getPublishedBefore() {
+        return publishedBefore;
+    }
+
+    public Date getPublishedAfter() {
+        return publishedAfter;
+    }
+
+    public Date getLastUpdatedBefore() {
+        return lastUpdatedBefore;
+    }
+
+    public Date getLastUpdatedAfter() {
+        return lastUpdatedAfter;
+    }
+
+    public Set<String> getMessageIds() {
+        return messageIds;
     }
 
     public static class Builder {

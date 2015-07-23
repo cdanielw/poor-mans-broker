@@ -17,18 +17,18 @@ class ConsumerMessages {
 
     void add(Message message) {
         messages.add(message);
-        messageById.put(message.update.messageId, message);
+        messageById.put(message.update.getMessageId(), message);
     }
 
     void apply(MessageProcessingUpdate update) {
-        Message message = messageById.get(update.messageId);
+        Message message = messageById.get(update.getMessageId());
         message.setUpdate(update);
         if (message.isCompleted())
             remove(message);
     }
 
     void remove(Message message) {
-        messageById.remove(message.update.messageId);
+        messageById.remove(message.update.getMessageId());
         messages.remove(message);
     }
 

@@ -8,12 +8,12 @@ import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 public final class MessageConsumer<M> {
-    public final String id;
-    public final int timeout;
-    public final TimeUnit timeUnit;
-    public final int messagesHandledInParallel;
-    public final int maxRetries;
-    public final ThrottlingStrategy throttlingStrategy;
+    final String id;
+    final int timeout;
+    final TimeUnit timeUnit;
+    final int messagesHandledInParallel;
+    final int maxRetries;
+    final ThrottlingStrategy throttlingStrategy;
     private final MessageHandler<M> handler;
     private final KeepAliveMessageHandler<M> keepAliveHandler;
 
@@ -47,6 +47,26 @@ public final class MessageConsumer<M> {
 
     public static <M> Builder<M> builder(String consumerId, KeepAliveMessageHandler<M> handler) {
         return new Builder<M>(consumerId, null, handler);
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public int getTimeout() {
+        return timeout;
+    }
+
+    public TimeUnit getTimeUnit() {
+        return timeUnit;
+    }
+
+    public int getMaxRetries() {
+        return maxRetries;
+    }
+
+    public ThrottlingStrategy getThrottlingStrategy() {
+        return throttlingStrategy;
     }
 
     public static final class Builder<M> {

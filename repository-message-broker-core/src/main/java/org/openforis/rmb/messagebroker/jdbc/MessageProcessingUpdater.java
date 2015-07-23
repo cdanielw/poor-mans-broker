@@ -15,7 +15,7 @@ final class MessageProcessingUpdater extends Operation {
     }
 
     Boolean update(MessageProcessingUpdate update) throws SQLException {
-        return update.toState == COMPLETED
+        return update.getToState() == COMPLETED
                 ? deleteCompleted(update)
                 : updateMessageProcessing(update);
     }
@@ -32,12 +32,12 @@ final class MessageProcessingUpdater extends Operation {
         PreparedStatement ps = connection.prepareStatement("" +
                 "DELETE FROM message_processing\n" +
                 "WHERE message_id = ? AND consumer_id = ? AND version_id = ?");
-        ps.setString(1, update.messageId);
-        ps.setString(2, update.consumer.id);
-        ps.setString(3, update.fromVersionId);
+        ps.setString(1, update.getMessageId());
+        ps.setString(2, update.getConsumer().getId());
+        ps.setString(3, update.getFromVersionId());
         int rowsDeleted = ps.executeUpdate();
         if (rowsDeleted > 1)
-            throw new IllegalStateException("More than one row with message_id " + update.messageId);
+            throw new IllegalStateException("More than one row with message_id " + update.getMessageId());
         return rowsDeleted != 0;
     }
 }

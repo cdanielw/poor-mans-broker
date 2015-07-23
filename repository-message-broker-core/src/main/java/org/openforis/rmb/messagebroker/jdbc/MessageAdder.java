@@ -28,7 +28,7 @@ final class MessageAdder extends Operation {
         for (MessageConsumer<?> consumer : consumers) {
             long creationTime = clock.millis();
             ps.setString(1, messageId);
-            ps.setString(2, consumer.id);
+            ps.setString(2, consumer.getId());
             ps.setString(3, UUID.randomUUID().toString());
             ps.setString(4, PENDING.name());
             ps.setTimestamp(5, new Timestamp(creationTime));

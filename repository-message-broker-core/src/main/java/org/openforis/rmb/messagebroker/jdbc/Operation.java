@@ -22,7 +22,7 @@ abstract class Operation {
     }
 
     final long timesOut(MessageConsumer<?> consumer, long now) {
-        return now + consumer.timeUnit.toMillis(consumer.timeout);
+        return now + consumer.getTimeUnit().toMillis(consumer.getTimeout());
     }
 
     final Object serializedMessage(ResultSet rs) throws SQLException {
@@ -47,19 +47,19 @@ abstract class Operation {
                 "UPDATE " + tablePrefix + "message_processing\n" +
                 "SET state = ?, last_updated = ?, times_out = ?, version_id = ?, retries = ?, error_message = ? \n" +
                 "WHERE message_id = ? AND consumer_id = ? AND version_id = ?");
-        ps.setString(1, update.toState.name());
+        ps.setString(1, update.getToState().name());
         ps.setTimestamp(2, new Timestamp(now));
-        ps.setTimestamp(3, new Timestamp(timesOut(update.consumer, now)));
-        ps.setString(4, update.toVersionId);
-        ps.setInt(5, update.retries);
-        ps.setString(6, update.errorMessage);
-        ps.setString(7, update.messageId);
-        ps.setString(8, update.consumer.id);
-        ps.setString(9, update.fromVersionId);
+        ps.setTimestamp(3, new Timestamp(timesOut(update.getConsumer(), now)));
+        ps.setString(4, update.getToVersionId());
+        ps.setInt(5, update.getRetries());
+        ps.setString(6, update.getErrorMessage());
+        ps.setString(7, update.getMessageId());
+        ps.setString(8, update.getConsumer().getId());
+        ps.setString(9, update.getFromVersionId());
 
         int rowsUpdated = ps.executeUpdate();
         if (rowsUpdated > 1)
-            throw new IllegalStateException("More than one row with message_id " + update.messageId);
+            throw new IllegalStateException("More than one row with message_id " + update.getMessageId());
         connection.commit();
         return rowsUpdated != 0;
     }
@@ -75,7 +75,7 @@ abstract class Operation {
     final Map<String, MessageConsumer<?>> consumersById(Collection<MessageConsumer<?>> consumers) {
         Map<String, MessageConsumer<?>> consumerById = new HashMap<String, MessageConsumer<?>>();
         for (MessageConsumer<?> consumer : consumers)
-            consumerById.put(consumer.id, consumer);
+            consumerById.put(consumer.getId(), consumer);
         return consumerById;
     }
 }

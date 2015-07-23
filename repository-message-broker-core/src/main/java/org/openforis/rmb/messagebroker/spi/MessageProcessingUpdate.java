@@ -9,17 +9,17 @@ import java.util.UUID;
 import static org.openforis.rmb.messagebroker.spi.MessageProcessingStatus.State.*;
 
 public final class MessageProcessingUpdate<T> {
-    public final String queueId;
-    public final String messageId;
-    public final Date publicationTime;
-    public final MessageConsumer<T> consumer;
-    public final MessageProcessingStatus.State fromState;
-    public final MessageProcessingStatus.State toState;
-    public final int retries;
-    public final String errorMessage;
-    public final Date updateTime;
-    public final String fromVersionId;
-    public final String toVersionId;
+    final String queueId;
+    final String messageId;
+    final Date publicationTime;
+    final MessageConsumer<T> consumer;
+    final MessageProcessingStatus.State fromState;
+    final MessageProcessingStatus.State toState;
+    final int retries;
+    final String errorMessage;
+    final Date updateTime;
+    final String fromVersionId;
+    final String toVersionId;
 
     private MessageProcessingUpdate(MessageDetails messageDetails,
                                     MessageConsumer<T> consumer,
@@ -83,6 +83,50 @@ public final class MessageProcessingUpdate<T> {
                 toStatus(),
                 new MessageProcessingStatus(FAILED, retries, errorMessage, now(clock), randomUuid())
         );
+    }
+
+    public String getQueueId() {
+        return queueId;
+    }
+
+    public String getMessageId() {
+        return messageId;
+    }
+
+    public Date getPublicationTime() {
+        return publicationTime;
+    }
+
+    public MessageConsumer<T> getConsumer() {
+        return consumer;
+    }
+
+    public MessageProcessingStatus.State getFromState() {
+        return fromState;
+    }
+
+    public MessageProcessingStatus.State getToState() {
+        return toState;
+    }
+
+    public int getRetries() {
+        return retries;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public Date getUpdateTime() {
+        return updateTime;
+    }
+
+    public String getFromVersionId() {
+        return fromVersionId;
+    }
+
+    public String getToVersionId() {
+        return toVersionId;
     }
 
     public String toString() {

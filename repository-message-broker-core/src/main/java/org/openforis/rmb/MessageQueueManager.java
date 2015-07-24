@@ -1,5 +1,6 @@
 package org.openforis.rmb;
 
+import org.openforis.rmb.RepositoryMessageBroker.Config;
 import org.openforis.rmb.monitor.MessagePublishedEvent;
 import org.openforis.rmb.monitor.MessageQueueCreatedEvent;
 import org.openforis.rmb.spi.MessageRepository;
@@ -24,7 +25,7 @@ final class MessageQueueManager {
 
     private final MessageRepositoryWatcher repositoryWatcher;
 
-    public MessageQueueManager(MessageBrokerConfig config) {
+    public MessageQueueManager(Config config) {
         this.repository = config.messageRepository;
         this.transactionSynchronizer = config.transactionSynchronizer;
         this.messagePoller = new MessagePoller(repository, config.messageSerializer, config.monitors);

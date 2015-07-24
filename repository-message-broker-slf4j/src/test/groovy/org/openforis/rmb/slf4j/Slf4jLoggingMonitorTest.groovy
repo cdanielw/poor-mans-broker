@@ -1,6 +1,5 @@
 package org.openforis.rmb.slf4j
 
-import org.openforis.rmb.MessageBrokerConfig
 import org.openforis.rmb.MessageConsumer
 import org.openforis.rmb.MessageHandler
 import org.openforis.rmb.RepositoryMessageBroker
@@ -17,9 +16,9 @@ import static org.openforis.rmb.spi.TransactionSynchronizer.NULL_TRANSACTION_SYN
 import static uk.org.lidalia.slf4jext.Level.*
 
 class Slf4jLoggingMonitorTest extends Specification {
-    static messageBroker = new RepositoryMessageBroker(
-            MessageBrokerConfig.builder(new InMemoryMessageRepository(), NULL_TRANSACTION_SYNCHRONIZER)
-    )
+    static messageBroker = RepositoryMessageBroker
+            .builder(new InMemoryMessageRepository(), NULL_TRANSACTION_SYNCHRONIZER)
+            .build()
     static consumer = MessageConsumer.builder('consumer id', {} as MessageHandler).build()
 
     def monitor = new Slf4jLoggingMonitor()

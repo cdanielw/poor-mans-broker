@@ -1,5 +1,6 @@
 package org.openforis.rmb;
 
+import org.openforis.rmb.RepositoryMessageBroker.Config;
 import org.openforis.rmb.monitor.PollingForMessageQueueSizeChangesFailedEvent;
 import org.openforis.rmb.monitor.PollingForTimedOutMessagesFailedEvent;
 
@@ -18,7 +19,7 @@ class MessageRepositoryWatcher {
             NamedThreadFactory.singleThreadFactory("rmb.MessageRepositoryWatcher")
     );
 
-    MessageRepositoryWatcher(MessagePoller messagePoller, MessageBrokerConfig config) {
+    MessageRepositoryWatcher(MessagePoller messagePoller, Config config) {
         this.messagePoller = messagePoller;
         this.monitors = config.monitors;
         this.queueSizeChecker = new MessageQueueSizeChecker(config.messageRepository, monitors);

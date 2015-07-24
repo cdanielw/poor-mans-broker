@@ -1,7 +1,6 @@
 package org.openforis.rmb.spring;
 
 import org.openforis.rmb.MessageBroker;
-import org.openforis.rmb.MessageBrokerConfig;
 import org.openforis.rmb.MessageQueue;
 import org.openforis.rmb.RepositoryMessageBroker;
 import org.openforis.rmb.jdbc.JdbcMessageRepository;
@@ -32,7 +31,7 @@ public class SpringJdbcMessageBroker implements MessageBroker, InitializingBean,
     }
 
     public void afterPropertiesSet() throws Exception {
-        MessageBrokerConfig.Builder builder = MessageBrokerConfig.builder(
+        RepositoryMessageBroker.Builder builder = RepositoryMessageBroker.builder(
                 new JdbcMessageRepository(
                         new SpringJdbcConnectionManager(dataSource),
                         tablePrefix
@@ -48,7 +47,7 @@ public class SpringJdbcMessageBroker implements MessageBroker, InitializingBean,
         if (repositoryWatcherPollingPeriodSeconds != null)
             builder.repositoryWatcherPollingSchedule(repositoryWatcherPollingPeriodSeconds, SECONDS);
 
-        messageBroker = new RepositoryMessageBroker(builder.build());
+        messageBroker = builder.build();
     }
 
     public void setTablePrefix(String tablePrefix) {

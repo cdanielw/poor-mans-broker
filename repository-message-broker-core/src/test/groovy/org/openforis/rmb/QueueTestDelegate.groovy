@@ -10,13 +10,10 @@ import static org.openforis.rmb.spi.TransactionSynchronizer.NULL_TRANSACTION_SYN
 
 class QueueTestDelegate {
     CollectingMonitor monitor = new CollectingMonitor()
-    MessageBroker messageBroker = new RepositoryMessageBroker(
-            MessageBrokerConfig.builder(
-                    new InMemoryMessageRepository(),
-                    NULL_TRANSACTION_SYNCHRONIZER
-            )
-                    .monitor(monitor)
-    )
+    MessageBroker messageBroker = RepositoryMessageBroker
+            .builder(new InMemoryMessageRepository(), NULL_TRANSACTION_SYNCHRONIZER)
+            .monitor(monitor)
+            .build()
 
     int messagesHandledInParallel = 5
     int handlerDelayMillis = 0

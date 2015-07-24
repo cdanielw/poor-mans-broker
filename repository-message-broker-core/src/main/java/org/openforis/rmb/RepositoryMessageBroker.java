@@ -51,7 +51,7 @@ public final class RepositoryMessageBroker implements MessageBroker {
     }
 
     /**
-     * Stops the message broker. This is a noop if the broker never been started or already been stopped.
+     * Stops the message broker. This is a no-op if the broker never been started or already been stopped.
      */
     public void stop() {
         if (started.get() && stopped.compareAndSet(false, true)) {
@@ -64,8 +64,8 @@ public final class RepositoryMessageBroker implements MessageBroker {
      * Provides a builder for creating {@link MessageQueue}s.
      *
      * @param queueId     the id of the queue to build
-     * @param messageType the type to be published to the queue
-     * @param <M>         the type to be published to the queue
+     * @param messageType the type of messages to be published to the queue
+     * @param <M>         the type of messages to be published to the queue
      * @return the queue builder
      */
     public <M> MessageQueue.Builder<M> queueBuilder(String queueId, Class<M> messageType) {
@@ -78,7 +78,7 @@ public final class RepositoryMessageBroker implements MessageBroker {
      * Provides a builder for creating {@link MessageQueue}s.
      *
      * @param queueId the id of the queue to build
-     * @param <M>     the type to be published to the queue
+     * @param <M>     the type of messages to be published to the queue
      * @return the queue builder
      */
     public <M> MessageQueue.Builder<M> queueBuilder(String queueId) {
@@ -121,8 +121,10 @@ public final class RepositoryMessageBroker implements MessageBroker {
     /**
      * Builds {@link RepositoryMessageBroker} instances. Instances of this class are created through
      * {@link RepositoryMessageBroker#builder(MessageRepository, TransactionSynchronizer)}.
+     * <p>
      * Configure the {@link RepositoryMessageBroker} to build through the chainable builder methods, then finally call
      * {@link #build()}.
+     * </p>
      * <p>
      * If building the message broker without configuring the builder, the following configuration is used:
      * </p>

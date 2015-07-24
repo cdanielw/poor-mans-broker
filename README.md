@@ -13,6 +13,7 @@ and an external message queue, it keeps the message queue in the repository wher
 start with. That way, messages can be put in the queue using local transactions.
 It provides the same benefits with no extra infrastructure.
 
+
 Lightweight and extensible
 --------------------------
 The core module has no dependencies outside of JDK 6, not even a logging framework.
@@ -39,12 +40,10 @@ Spring's transaction manager, and provides helper classes to make it easy to con
 Examples
 --------
 ```java
-    RepositoryMessageBroker messageBroker = new RepositoryMessageBroker(        // (1)
-            MessageBrokerConfig.builder(
-                    new JdbcMessageRepository(connectionManager, "example_"),   // (2)
-                    transactionSynchronizer                                     // (3)
-            )
-    );
+    RepositoryMessageBroker messageBroker = RepositoryMessageBroker.builder(    // (1)
+            new JdbcMessageRepository(connectionManager, "example_"),           // (2)
+            transactionSynchronizer)                                            // (3)
+            .build();
 
     MessageQueue<Date> queue = messageBroker.<Date>queueBuilder("A test queue") // (4)
             .consumer(MessageConsumer.builder("A consumer",
@@ -52,10 +51,30 @@ Examples
             .build();
 
     messageBroker.start();
-    queue.publish(new Date(0));                                                  // (6)
-    queue.publish(new Date(100));
+
+    withTransaction(() -> {                                                     // (6)
+        doSomeTransactionalWork();
+        queue.publish(new Date(0));                                             // (7)
+        queue.publish(new Date(100));
+    });
+
     messageBroker.stop();
 ```
 
-1. The message broker is responsible for creating message queues.
-2.
+1. The message broker is responsible for creating message queues, and keeps an eye on it's message queues,
+picking up abandoned messages, monitor queue sizes etc.
+2. The MessageRepository is working with the underlying repository.
+The `JdbcMessageRepository` need a `ConnectionManager` implementation, to get and resource JDBC connections.
+An implementation using Spring's `DataSourceUtils` is provided. A table prefix can also be specified here.
+3. A `TransactionSynchronizer` implementation also needs to be specified. It is responsible for checking
+if a transaction is active, and allows listeners to be notified when current transaction commits.
+Just as with the connection manager, an implementation using Spring's `TransactionSynchronizationManager` is provided.
+4. A `MessageQueue` is the object where messages are published. `MessageConsumer`s are registered at the time
+the queue is built.
+5. A `MessageConsumer` specifies a `MessageHandler`, which will receive published messages. In addition to
+`MessageHandler`s, there are `KeepAliveMessageHandler`s, which provides a way for the handler to
+notify the message broker it's still alive, and prevents it from timing out.
+6. Messages must be published within a transaction.
+7. Example of how messages are published. The message is written to the database in the same transaction
+as the transactional work is being done. Once the transaction commits, the message broker will query
+the database for messages to process, and forwards the message to the message handler.

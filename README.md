@@ -78,3 +78,38 @@ notify the message broker it's still alive, and prevents it from timing out.
 7. Example of how messages are published. The message is written to the database in the same transaction
 as the transactional work is being done. Once the transaction commits, the message broker will query
 the database for messages to process, and forwards the message to the message handler.
+
+
+Maven dependencies
+------------------
+```xml
+    <dependency>
+        <groupId>org.openforis.rmb</groupId>
+        <artifactId>repository-message-broker-core</artifactId>
+        <version>${repository-message-broker.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.openforis.rmb</groupId>
+        <artifactId>repository-message-broker-metrics</artifactId>
+        <version>${repository-message-broker.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.openforis.rmb</groupId>
+        <artifactId>repository-message-broker-slf4j</artifactId>
+        <version>${repository-message-broker.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.openforis.rmb</groupId>
+        <artifactId>repository-message-broker-spring</artifactId>
+        <version>${repository-message-broker.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.openforis.rmb</groupId>
+        <artifactId>repository-message-broker-xstream</artifactId>
+        <version>${repository-message-broker.version}</version>
+    </dependency>
+```

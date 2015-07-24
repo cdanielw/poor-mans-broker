@@ -19,8 +19,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * A {@link MessageBroker} backed by a repository. It is responsible for the creation and management
  * of {@link MessageQueue}s.
- * <p/>
+ * <p>
  * Instances of this class are created through a builder: {@link #builder(MessageRepository, TransactionSynchronizer)}.
+ * </p>
  */
 public final class RepositoryMessageBroker implements MessageBroker {
     private final Monitors monitors;

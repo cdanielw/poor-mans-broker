@@ -48,7 +48,7 @@ final class Worker<T> {
     }
 
     private synchronized boolean notReachedMaxRetries() {
-        return update.getRetries() <= consumer.maxRetries;
+        return consumer.maxRetries >= 0 && update.getRetries() < consumer.maxRetries;
     }
 
     private synchronized void notifyOnWorkerStart() {

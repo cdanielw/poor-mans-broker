@@ -16,6 +16,73 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+
+// @formatter:off
+/**
+ * A {@link MessageBroker} implementation pre-configured to integrate with Spring's transactions and JDBC support.
+ * It also expose configuration as setter, to simplify XML configuration.
+
+<h2>Minimal Spring XML example</h2>
+<blockquote><pre><code>
+    &lt;bean id="minimallyConfiguredMessageBroker" class="org.openforis.rmb.spring.SpringJdbcMessageBroker"&gt;
+        &lt;constructor-arg ref="dataSource"/&gt;
+        &lt;property name="tablePrefix" value="example_"/&gt;
+    &lt;/bean&gt;
+
+    &lt;bean id="minimallyConfiguredQueue" class="org.openforis.rmb.spring.SpringMessageQueue"&gt;
+        &lt;constructor-arg ref="minimallyConfiguredMessageBroker"/&gt;
+        &lt;constructor-arg value="A queue"/&gt;
+        &lt;constructor-arg&gt;
+            &lt;list&gt;
+                &lt;bean class="org.openforis.rmb.spring.SpringMessageConsumer"&gt;
+                    &lt;constructor-arg value="A minimally configured consumer"/&gt;
+                    &lt;constructor-arg ref="someMessageHandler"/&gt;
+                &lt;/bean&gt;
+            &lt;/list&gt;
+        &lt;/constructor-arg&gt;
+    &lt;/bean&gt;
+</code></pre></blockquote>
+
+<h2>Fully configured Spring XML example</h2>
+<blockquote><pre><code>
+    &lt;bean id="fullyConfiguredMessageBroker" class="org.openforis.rmb.spring.SpringJdbcMessageBroker"&gt;
+        &lt;constructor-arg ref="dataSource"/&gt;
+        &lt;property name="tablePrefix" value="example_"/&gt;
+        &lt;property name="messageSerializer"&gt;
+            &lt;bean class="org.openforis.rmb.objectserialization.ObjectSerializationMessageSerializer"/&gt;
+        &lt;/property&gt;
+        &lt;property name="monitors"&gt;
+            &lt;list&gt;
+                &lt;ref bean="eventCollectingMonitor"/&gt;
+            &lt;/list&gt;
+        &lt;/property&gt;
+        &lt;property name="repositoryWatcherPollingPeriodSeconds" value="10"/&gt;
+    &lt;/bean&gt;
+
+    &lt;bean id="fullyConfiguredQueue" class="org.openforis.rmb.spring.SpringMessageQueue"&gt;
+        &lt;constructor-arg ref="fullyConfiguredMessageBroker"/&gt;
+        &lt;constructor-arg value="A queue"/&gt;
+        &lt;constructor-arg&gt;
+            &lt;list&gt;
+                &lt;bean class="org.openforis.rmb.spring.SpringMessageConsumer"&gt;
+                    &lt;constructor-arg value="A fully configured consumer"/&gt;
+                    &lt;constructor-arg ref="someMessageHandler"/&gt;
+                    &lt;property name="messagesHandledInParallel" value="1"/&gt;
+                    &lt;property name="retries" value="5"/&gt;
+                    &lt;property name="throttlingStrategy"&gt;
+                        &lt;bean class="org.openforis.rmb.spi.ThrottlingStrategy$ExponentialBackoff"&gt;
+                            &lt;constructor-arg value="1"/&gt;
+                            &lt;constructor-arg value="MINUTES"/&gt;
+                        &lt;/bean&gt;
+                    &lt;/property&gt;
+                    &lt;property name="timeoutSeconds" value="30"/&gt;
+                &lt;/bean&gt;
+            &lt;/list&gt;
+        &lt;/constructor-arg&gt;
+    &lt;/bean&gt;
+</code></pre></blockquote>
+ */
+// @formatter:on
 public final class SpringJdbcMessageBroker implements MessageBroker, InitializingBean, SmartLifecycle {
     private final AtomicBoolean running = new AtomicBoolean();
     private final DataSource dataSource;

@@ -52,8 +52,8 @@
                     <property name="retries" value="5"/>
                     <property name="throttlingStrategy">
                         <bean class="org.openforis.rmb.spi.ThrottlingStrategy$ExponentialBackoff">
-                            <constructor-arg index="0" value="1"/>
-                            <constructor-arg index="1" value="MINUTES"/>
+                            <constructor-arg value="1"/>
+                            <constructor-arg value="MINUTES"/>
                         </bean>
                     </property>
                     <property name="timeoutSeconds" value="30"/>

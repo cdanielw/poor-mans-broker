@@ -16,13 +16,40 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+// @formatter:off
 /**
  * A {@link MessageBroker} backed by a repository. It is responsible for the creation and management
  * of {@link MessageQueue}s.
  * <p>
  * Instances of this class are created through a builder: {@link #builder(MessageRepository, TransactionSynchronizer)}.
  * </p>
+ * <strong>Usage example:</strong>
+ * <pre>
+ * {@code
+
+    RepositoryMessageBroker messageBroker = RepositoryMessageBroker.builder(
+        new JdbcMessageRepository(connectionManager, "example_"),
+        transactionSynchronizer)
+        .build();
+
+    MessageQueue<Date> queue = messageBroker.<Date>queueBuilder("A test queue")
+        .consumer(MessageConsumer.builder("A consumer",
+                (date) -> System.out.println("Got a date: " + date)))
+        .build();
+
+    messageBroker.start();
+
+    withTransaction(() -> {
+        doSomeTransactionalWork();
+        queue.publish(new Date(0));
+        queue.publish(new Date(100));
+    });
+
+    messageBroker.stop();
+ * }
+ * </pre>
  */
+// @formatter:on
 public final class RepositoryMessageBroker implements MessageBroker {
     private final Monitors monitors;
     private final MessageQueueManager queueManager;

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Repository Message Broker</title>
+</head>
+<body>
+<h1>Repository Message Broker</h1>
+<p>When doing some transactional work with a repository, such as a relational database,
+often some external resource must be updated or notified at the same time.
+Examples of this would be to update a Lucene index, send an email, and make an HTTP POST, when storing a record in a database.
+
+<p>A typical solution of this is to use a distributed transaction to submit the work to be done into a message queue.
+The queue would then guarantee that the work is completed.
+This requires a lot of infrastructure, to understand, test, and maintain.
+
+<p>Repository Message Broker takes a similar approach, but instead of using distributed transactions
+and an external message queue, it keeps the message queue in the repository where the transactional work is done to
+start with. That way, messages can be put in the queue using local transactions.
+It provides the same benefits with no extra infrastructure.
+
+<h2>Lightweight and extensible</h2>
+<p>The core module has no dependencies outside of JDK 6, not even a logging framework.
+Dependencies to third-party libraries have been separated into their own modules.
+
+<p>The library have been designed to be extensible, and allows monitors to be registered,
+to get notified of what is happening. Two monitors are provided, in separate monitors.
+
+<ul>
+<li><code>repository-message-broker-slf4j</code> provides logging through <code>org.openforis.rmb.slf4j.Slf4jLoggingMonitor</code>
+<li><code>repository-message-broker-metrics</code> provides metrics to a Dropwizard's Metrics MetricRegistry through
+<code>org.openforis.rmb.metrics.MetricsMonitor</code>
+</ul>
+
+<p>Support for storing messages using a JDBC DataSource is included in the core module,
+as well as an in-memory repository for testing.
+
+<p>By default, Java object serialization is used when storing messages in the repository.
+An XStream message serializer, <code>org.openforis.rmb.xstream.XStreamMessageSerializer</code>,
+is provided by <code>repository-message-broker-xstream,</code>
+which is preferable to object serialization in many cases.
+
+<p>To make it easy for Springframework users, <code>repository-message-broker-spring</code> provides integration with
+Spring's transaction manager, and provides helper classes to make it easy to configure queues using Spring.
+
+<h2>Programmatic Example</h2>
+<blockquote><pre><code>
+    RepositoryMessageBroker messageBroker = RepositoryMessageBroker.builder(                // (1)
+        new JdbcMessageRepository(connectionManager, "example_"),                           // (2)
+        transactionSynchronizer)                                                            // (3)
+        .build();
+
+    MessageQueue&lt;Date> queue = messageBroker.&lt;Date>queueBuilder("A test queue")       // (4)
+        .consumer(MessageConsumer.builder("A consumer",
+                (date) -> System.out.println("Got a date: " + date)))                       // (5)
+        .build();
+
+    messageBroker.start();
+
+    withTransaction(() -> {                                                                 // (6)
+        doSomeTransactionalWork();
+        queue.publish(new Date(0));                                                         // (7)
+        queue.publish(new Date(100));
+    });
+
+    messageBroker.stop();
+</code></pre></blockquote>
+
+<ol>
+<li>The message broker is responsible for creating message queues, and keeps an eye on it's message queues,
+picking up abandoned messages, monitor queue sizes etc.</li>
+<li>The MessageRepository is working with the underlying repository.
+The `JdbcMessageRepository` need a `ConnectionManager` implementation, to get and resource JDBC connections.
+An implementation using Spring's `DataSourceUtils` is provided. A table prefix can also be specified here.</li>
+<li>A `TransactionSynchronizer` implementation also needs to be specified. It is responsible for checking
+if a transaction is active, and allows listeners to be notified when current transaction commits.
+Just as with the connection manager, an implementation using Spring's `TransactionSynchronizationManager` is provided.</li>
+<li>A `MessageQueue` is the object where messages are published. `MessageConsumer`s are registered at the time
+the queue is built.</li>
+<li>A `MessageConsumer` specifies a `MessageHandler`, which will receive published messages. In addition to
+`MessageHandler`s, there are `KeepAliveMessageHandler`s, which provides a way for the handler to
+notify the message broker it's still alive, and prevents it from timing out.</li>
+<li>Messages must be published within a transaction.</li>
+<li>Example of how messages are published. The message is written to the database in the same transaction
+as the transactional work is being done. Once the transaction commits, the message broker will query
+the database for messages to process, and forwards the message to the message handler.</li>
+</ol>
+
+<h2>Minimal Spring XML example</h2>
+<blockquote><pre><code>
+    &lt;bean id="minimallyConfiguredMessageBroker" class="org.openforis.rmb.spring.SpringJdbcMessageBroker"&gt;
+        &lt;constructor-arg ref="dataSource"/&gt;
+        &lt;property name="tablePrefix" value="example_"/&gt;
+    &lt;/bean&gt;
+
+    &lt;bean id="minimallyConfiguredQueue" class="org.openforis.rmb.spring.SpringMessageQueue"&gt;
+        &lt;constructor-arg ref="minimallyConfiguredMessageBroker"/&gt;
+        &lt;constructor-arg value="A queue"/&gt;
+        &lt;constructor-arg&gt;
+            &lt;list&gt;
+                &lt;bean class="org.openforis.rmb.spring.SpringMessageConsumer"&gt;
+                    &lt;constructor-arg value="A minimally configured consumer"/&gt;
+                    &lt;constructor-arg ref="someMessageHandler"/&gt;
+                &lt;/bean&gt;
+            &lt;/list&gt;
+        &lt;/constructor-arg&gt;
+    &lt;/bean&gt;    
+</code></pre></blockquote>
+
+<h2>Fully configured Spring XML example</h2>
+<blockquote><pre><code>
+    &lt;bean id="fullyConfiguredMessageBroker" class="org.openforis.rmb.spring.SpringJdbcMessageBroker"&gt;
+        &lt;constructor-arg ref="dataSource"/&gt;
+        &lt;property name="tablePrefix" value="example_"/&gt;
+        &lt;property name="messageSerializer"&gt;
+            &lt;bean class="org.openforis.rmb.objectserialization.ObjectSerializationMessageSerializer"/&gt;
+        &lt;/property&gt;
+        &lt;property name="monitors"&gt;
+            &lt;list&gt;
+                &lt;ref bean="eventCollectingMonitor"/&gt;
+            &lt;/list&gt;
+        &lt;/property&gt;
+        &lt;property name="repositoryWatcherPollingPeriodSeconds" value="10"/&gt;
+    &lt;/bean&gt;
+
+    &lt;bean id="fullyConfiguredQueue" class="org.openforis.rmb.spring.SpringMessageQueue"&gt;
+        &lt;constructor-arg ref="fullyConfiguredMessageBroker"/&gt;
+        &lt;constructor-arg value="A queue"/&gt;
+        &lt;constructor-arg&gt;
+            &lt;list&gt;
+                &lt;bean class="org.openforis.rmb.spring.SpringMessageConsumer"&gt;
+                    &lt;constructor-arg value="A fully configured consumer"/&gt;
+                    &lt;constructor-arg ref="someMessageHandler"/&gt;
+                    &lt;property name="messagesHandledInParallel" value="1"/&gt;
+                    &lt;property name="retries" value="5"/&gt;
+                    &lt;property name="throttlingStrategy"&gt;
+                        &lt;bean class="org.openforis.rmb.spi.ThrottlingStrategy$ExponentialBackoff"&gt;
+                            &lt;constructor-arg value="1"/&gt;
+                            &lt;constructor-arg value="MINUTES"/&gt;
+                        &lt;/bean&gt;
+                    &lt;/property&gt;
+                    &lt;property name="timeoutSeconds" value="30"/&gt;
+                &lt;/bean&gt;
+            &lt;/list&gt;
+        &lt;/constructor-arg&gt;
+    &lt;/bean&gt;
+</code></pre></blockquote>
+    
+<h2>Maven dependencies</h2>
+
+<blockquote><pre><code>
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.openforis.rmb&lt;/groupId&gt;
+        &lt;artifactId&gt;repository-message-broker-core&lt;/artifactId&gt;
+        &lt;version&gt;${repository-message-broker.version}&lt;/version&gt;
+    &lt;/dependency&gt;
+
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.openforis.rmb&lt;/groupId&gt;
+        &lt;artifactId&gt;repository-message-broker-metrics&lt;/artifactId&gt;
+        &lt;version&gt;${repository-message-broker.version}&lt;/version&gt;
+    &lt;/dependency&gt;
+
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.openforis.rmb&lt;/groupId&gt;
+        &lt;artifactId&gt;repository-message-broker-slf4j&lt;/artifactId&gt;
+        &lt;version&gt;${repository-message-broker.version}&lt;/version&gt;
+    &lt;/dependency&gt;
+
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.openforis.rmb&lt;/groupId&gt;
+        &lt;artifactId&gt;repository-message-broker-spring&lt;/artifactId&gt;
+        &lt;version&gt;${repository-message-broker.version}&lt;/version&gt;
+    &lt;/dependency&gt;
+
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.openforis.rmb&lt;/groupId&gt;
+        &lt;artifactId&gt;repository-message-broker-xstream&lt;/artifactId&gt;
+        &lt;version&gt;${repository-message-broker.version}&lt;/version&gt;
+    &lt;/dependency&gt;
+</code></pre></blockquote>
+</body>
+</html>

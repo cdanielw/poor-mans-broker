@@ -1,6 +1,7 @@
 package org.openforis.rmb;
 
 
+import org.openforis.rmb.spi.TransactionSynchronizer;
 import org.openforis.rmb.util.Is;
 
 import java.util.ArrayList;
@@ -10,9 +11,11 @@ import java.util.List;
  * Publishes messages to a backing repository. Messages can only be published in a transaction,
  * and an exception is thrown if it's not.
  * <p>
- * Once a message's been published and the transaction commits, the message will be delivered to an available consumer,
+ * Once a message's been published and the transaction commits, the message will be delivered to available consumers,
  * if any.
  * </p>
+ * Instances of this class are created through a builder: {@link RepositoryMessageBroker#queueBuilder(String)} or
+ * {@link RepositoryMessageBroker#queueBuilder(String, Class)}.
  *
  * @param <M> the type of messages to be published to the queue
  */
@@ -24,7 +27,7 @@ public interface MessageQueue<M> {
      * Once the message's been published and the transaction commits,
      * the message will be delivered to any available consumer.
      * </p>
-     * The, on the {@link RepositoryMessageBroker} configured, {@link org.openforis.rmb.spi.TransactionSynchronizer}
+     * The, on the {@link RepositoryMessageBroker} configured, {@link TransactionSynchronizer}
      * is used to determine if message is published in a transaction or not, and notifies when the transaction commits.
      *
      * @param message the message to publish
@@ -32,12 +35,13 @@ public interface MessageQueue<M> {
     void publish(M message);
 
     /**
-     * Builsd {@link MessageQueue} instances. Instances of this class are created though
+     * Builds {@link MessageQueue} instances. Register consumers the {@link MessageQueue} by calling
+     * {@link #consumer(MessageConsumer.Builder)} or
+     * {@link #consumer(MessageConsumer)}, then finally call {@link #build()}.
+     * <p>
+     * Instances of this class are created though
      * {@link RepositoryMessageBroker#queueBuilder(String)} or
      * {@link RepositoryMessageBroker#queueBuilder(String, Class)}.
-     * <p>
-     * Register consumers the {@link MessageQueue} by calling {@link #consumer(MessageConsumer.Builder)} or
-     * {@link #consumer(MessageConsumer)}, then finally call {@link #build()}.
      * </p>
      *
      * @param <M> the type of messages to be published to the queue
@@ -100,7 +104,7 @@ public interface MessageQueue<M> {
             return queue;
         }
 
-        private static class Default<M> implements org.openforis.rmb.MessageQueue<M> {
+        private static class Default<M> implements MessageQueue<M> {
             private final String id;
             private final MessageQueueManager queueManager;
 

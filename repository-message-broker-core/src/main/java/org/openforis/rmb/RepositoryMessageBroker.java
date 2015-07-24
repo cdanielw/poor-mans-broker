@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * A {@link MessageBroker} backed by a repository. It is responsible for the creation and management
  * of {@link MessageQueue}s.
  * <p/>
- * Instances are created through a builder: {@link #builder(MessageRepository, TransactionSynchronizer)}.
+ * Instances of this class are created through a builder: {@link #builder(MessageRepository, TransactionSynchronizer)}.
  */
 public final class RepositoryMessageBroker implements MessageBroker {
     private final Monitors monitors;
@@ -63,8 +63,8 @@ public final class RepositoryMessageBroker implements MessageBroker {
     /**
      * Provides a builder for creating {@link MessageQueue}s.
      *
-     * @param queueId     the id of the queue to build
-     * @param messageType the type of messages to be published to the queue
+     * @param queueId     the id of the queue to build. Must not be null and must be unique within the message broker.
+     * @param messageType the type of messages to be published to the queue. Must not be null.
      * @param <M>         the type of messages to be published to the queue
      * @return the queue builder
      */
@@ -77,7 +77,7 @@ public final class RepositoryMessageBroker implements MessageBroker {
     /**
      * Provides a builder for creating {@link MessageQueue}s.
      *
-     * @param queueId the id of the queue to build
+     * @param queueId the id of the queue to build. Must not be null and must be unique within the message broker.
      * @param <M>     the type of messages to be published to the queue
      * @return the queue builder
      */
@@ -119,20 +119,20 @@ public final class RepositoryMessageBroker implements MessageBroker {
     }
 
     /**
-     * Builds {@link RepositoryMessageBroker} instances. Instances of this class are created through
-     * {@link RepositoryMessageBroker#builder(MessageRepository, TransactionSynchronizer)}.
-     * <p>
-     * Configure the {@link RepositoryMessageBroker} to build through the chainable builder methods, then finally call
-     * {@link #build()}.
-     * </p>
+     * Builds {@link RepositoryMessageBroker} instances. Configure the {@link RepositoryMessageBroker} to build
+     * through the chainable builder methods, then finally call {@link #build()}.
      * <p>
      * If building the message broker without configuring the builder, the following configuration is used:
      * </p>
      * <ul>
-     * <li>messageSerializer: {@link ObjectSerializationMessageSerializer}
-     * <li>repositoryWatcherPollingSchedule: 30 seconds
-     * <li>monitor: None are registered.
+     * <li>{@code messageSerializer(new ObjectSerializationMessageSerializer());}
+     * <li>{@code repositoryWatcherPollingSchedule(30, SECONDS);}
+     * <li>No registered monitors.
      * </ul>
+     * <p>
+     * Instances of this class are created through
+     * {@link RepositoryMessageBroker#builder(MessageRepository, TransactionSynchronizer)}.
+     * </p>
      */
     public static final class Builder {
         private final MessageRepository messageRepository;
@@ -148,7 +148,7 @@ public final class RepositoryMessageBroker implements MessageBroker {
         }
 
         /**
-         * The {@link MessageSerializer} to use when serializing messages for storage in the repository and
+         * Specify the {@link MessageSerializer} to use when serializing messages for storage in the repository and
          * deserializing when reading them from the repository.
          * <p>
          * If not specified, an {@link ObjectSerializationMessageSerializer} instance is used.

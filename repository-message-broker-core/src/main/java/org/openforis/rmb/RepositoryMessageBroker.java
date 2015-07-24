@@ -203,11 +203,11 @@ public final class RepositoryMessageBroker implements MessageBroker {
         }
 
         /**
-         * Builds the {@link RepositoryMessageBroker}, based on how the builder's been configured.
+         * Builds the {@link MessageBroker}, based on how the builder's been configured.
          *
          * @return the message broker instance
          */
-        public RepositoryMessageBroker build() {
+        public MessageBroker build() {
             return new RepositoryMessageBroker(
                     new Config(
                             messageRepository,

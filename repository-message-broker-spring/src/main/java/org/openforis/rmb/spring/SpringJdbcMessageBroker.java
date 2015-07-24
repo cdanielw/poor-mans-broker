@@ -19,7 +19,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public final class SpringJdbcMessageBroker implements MessageBroker, InitializingBean, SmartLifecycle {
     private final AtomicBoolean running = new AtomicBoolean();
     private final DataSource dataSource;
-    private RepositoryMessageBroker messageBroker;
+    private MessageBroker messageBroker;
 
     private String tablePrefix = "";
     private MessageSerializer messageSerializer;

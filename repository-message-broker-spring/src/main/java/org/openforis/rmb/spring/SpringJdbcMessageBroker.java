@@ -8,7 +8,7 @@ import org.openforis.rmb.monitor.Event;
 import org.openforis.rmb.monitor.Monitor;
 import org.openforis.rmb.spi.MessageSerializer;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.context.Lifecycle;
+import org.springframework.context.SmartLifecycle;
 
 import javax.sql.DataSource;
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-public class SpringJdbcMessageBroker implements MessageBroker, InitializingBean, Lifecycle {
+public final class SpringJdbcMessageBroker implements MessageBroker, InitializingBean, SmartLifecycle {
     private final AtomicBoolean running = new AtomicBoolean();
     private final DataSource dataSource;
     private RepositoryMessageBroker messageBroker;
@@ -78,6 +78,19 @@ public class SpringJdbcMessageBroker implements MessageBroker, InitializingBean,
 
     public boolean isRunning() {
         return running.get();
+    }
+
+    public boolean isAutoStartup() {
+        return true;
+    }
+
+    public void stop(Runnable callback) {
+        stop();
+        callback.run();
+    }
+
+    public int getPhase() {
+        return 0;
     }
 
     public <M> MessageQueue.Builder<M> queueBuilder(String queueId, Class<M> messageType) {

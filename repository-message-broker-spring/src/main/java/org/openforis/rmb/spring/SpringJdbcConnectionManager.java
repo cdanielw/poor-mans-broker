@@ -7,7 +7,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public class SpringJdbcConnectionManager implements JdbcConnectionManager {
+public final class SpringJdbcConnectionManager implements JdbcConnectionManager {
     private final DataSource dataSource;
 
     public SpringJdbcConnectionManager(DataSource dataSource) {

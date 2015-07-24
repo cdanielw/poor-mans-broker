@@ -20,7 +20,7 @@ class QueueTestDelegate {
     int randomHandlerDelayMillis = 0
     int timeoutSecs = 1
 
-    def setup() {
+    def setUp() throws Exception {
         messageBroker.start()
     }
 

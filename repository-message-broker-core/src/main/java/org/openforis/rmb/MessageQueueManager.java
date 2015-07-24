@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 final class MessageQueueManager {
     private final MessageRepository repository;
@@ -19,11 +20,11 @@ final class MessageQueueManager {
     private final MessagePoller messagePoller;
     private final MessageSerializer messageSerializer;
     private final Monitors monitors;
+    private final MessageRepositoryWatcher repositoryWatcher;
 
     private final Map<String, List<MessageConsumer<?>>> consumersByQueueId = new ConcurrentHashMap<String, List<MessageConsumer<?>>>();
     private final Set<String> consumerIds = new HashSet<String>(); // For asserting global consumer id uniqueness
-
-    private final MessageRepositoryWatcher repositoryWatcher;
+    private final AtomicBoolean started = new AtomicBoolean();
 
     public MessageQueueManager(Config config) {
         this.repository = config.messageRepository;
@@ -35,6 +36,8 @@ final class MessageQueueManager {
     }
 
     <M> void publish(String queueId, M message) {
+        if (!started.get())
+            throw new IllegalStateException("MessageBroker has not been started");
         assertInTransaction();
         List<MessageConsumer<?>> consumers = consumersByQueueId.get(queueId);
         repository.add(queueId, consumers, messageSerializer.serialize(message));
@@ -51,6 +54,7 @@ final class MessageQueueManager {
     }
 
     void start() {
+        started.set(true);
         repositoryWatcher.start();
     }
 

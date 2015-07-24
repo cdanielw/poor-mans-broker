@@ -3,6 +3,7 @@ package org.openforis.rmb
 import spock.lang.Specification
 
 class QueueConcurrencyTest extends Specification {
+    @SuppressWarnings("GroovyUnusedDeclaration")
     @Delegate QueueTestDelegate queueTestDelegate = new QueueTestDelegate()
 
     def messages = 1..1000
@@ -10,10 +11,7 @@ class QueueConcurrencyTest extends Specification {
     def setup() {
         this.messagesHandledInParallel = 4
         timeoutSecs = 10
-    }
-
-    def cleanup() {
-        queueTestDelegate.cleanup()
+        queueTestDelegate.setUp()
     }
 
     def 'Message handler get a published message'() {

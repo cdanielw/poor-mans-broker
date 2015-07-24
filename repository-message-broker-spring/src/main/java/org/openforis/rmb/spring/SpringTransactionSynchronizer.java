@@ -8,7 +8,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.sql.DataSource;
 
-public class SpringTransactionSynchronizer implements TransactionSynchronizer {
+public final class SpringTransactionSynchronizer implements TransactionSynchronizer {
     private final DataSource dataSource;
 
     public SpringTransactionSynchronizer(DataSource dataSource) {

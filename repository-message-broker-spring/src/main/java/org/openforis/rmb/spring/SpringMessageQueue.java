@@ -2,7 +2,6 @@ package org.openforis.rmb.spring;
 
 import org.openforis.rmb.MessageBroker;
 import org.openforis.rmb.MessageQueue;
-import org.openforis.rmb.NotInTransaction;
 
 import java.util.List;
 
@@ -19,7 +18,7 @@ public final class SpringMessageQueue<T> implements MessageQueue<T> {
         delegate = builder.build();
     }
 
-    public void publish(T message) throws NotInTransaction {
+    public void publish(T message) {
         delegate.publish(message);
     }
 }

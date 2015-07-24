@@ -38,7 +38,7 @@ final class MessageQueueManager {
     <M> void publish(String queueId, M message) {
         if (!started.get())
             throw new IllegalStateException("MessageBroker has not been started");
-        assertInTransaction();
+        assertInTransaction(queueId, message);
         List<MessageConsumer<?>> consumers = consumersByQueueId.get(queueId);
         repository.add(queueId, consumers, messageSerializer.serialize(message));
         monitors.onEvent(new MessagePublishedEvent(queueId, message));
@@ -71,9 +71,10 @@ final class MessageQueueManager {
         });
     }
 
-    private void assertInTransaction() {
+    private void assertInTransaction(String queueId, Object message) {
         if (!transactionSynchronizer.isInTransaction())
-            throw new NotInTransaction();
+            throw new IllegalStateException("Trying to publish a message outside of a transaction. " +
+                    "Queue: " + queueId + ", message: " + message);
     }
 
     private void assertConsumerUniqueness(List<MessageConsumer<?>> consumers) {

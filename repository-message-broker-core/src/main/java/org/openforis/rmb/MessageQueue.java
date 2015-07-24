@@ -28,9 +28,8 @@ public interface MessageQueue<M> {
      * is used to determine if message is published in a transaction or not, and notifies when the transaction commits.
      *
      * @param message the message to publish
-     * @throws NotInTransaction if not called from within a transaction
      */
-    void publish(M message) throws NotInTransaction;
+    void publish(M message);
 
     /**
      * Builsd {@link MessageQueue} instances. Instances of this class are created though

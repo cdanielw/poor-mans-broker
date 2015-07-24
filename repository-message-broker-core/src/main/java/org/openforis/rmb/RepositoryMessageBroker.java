@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class RepositoryMessageBroker implements MessageBroker {
     private final Monitors monitors;
     private final MessageQueueManager queueManager;
+    private final AtomicBoolean started = new AtomicBoolean(false);
     private final AtomicBoolean stopped = new AtomicBoolean(false);
 
     private RepositoryMessageBroker(Config config) {
@@ -32,7 +33,16 @@ public final class RepositoryMessageBroker implements MessageBroker {
         this.queueManager = new MessageQueueManager(config);
     }
 
+    /**
+     * Starts the message broker. This method must be invoked before publishing any message to a queue.
+     * This will fail if the broker already is started or has been stopped.
+     * <p>
+     * In addition to starting the broker, a shutdown hook will also be registered.
+     * </p>
+     */
     public void start() {
+        if (!started.compareAndSet(false, true))
+            throw new IllegalStateException("Message broker has already been started");
         if (stopped.get())
             throw new IllegalStateException("Message broker has been stopped, and cannot be restarted");
         addShutdownHook();
@@ -40,19 +50,37 @@ public final class RepositoryMessageBroker implements MessageBroker {
         monitors.onEvent(new MessageBrokerStartedEvent(this));
     }
 
+    /**
+     * Stops the message broker. This is a noop if the broker never been started or already been stopped.
+     */
     public void stop() {
-        if (stopped.compareAndSet(false, true)) {
+        if (started.get() && stopped.compareAndSet(false, true)) {
             queueManager.stop();
             monitors.onEvent(new MessageBrokerStoppedEvent(this));
         }
     }
 
+    /**
+     * Provides a builder for creating {@link MessageQueue}s.
+     *
+     * @param queueId     the id of the queue to build
+     * @param messageType the type to be published to the queue
+     * @param <M>         the type to be published to the queue
+     * @return the queue builder
+     */
     public <M> MessageQueue.Builder<M> queueBuilder(String queueId, Class<M> messageType) {
         Is.hasText(queueId, "queueId must be specified");
         Is.notNull(messageType, "messageType must not be null");
         return new MessageQueue.Builder<M>(queueId, queueManager);
     }
 
+    /**
+     * Provides a builder for creating {@link MessageQueue}s.
+     *
+     * @param queueId the id of the queue to build
+     * @param <M>     the type to be published to the queue
+     * @return the queue builder
+     */
     public <M> MessageQueue.Builder<M> queueBuilder(String queueId) {
         Is.hasText(queueId, "queueId must be specified");
         return new MessageQueue.Builder<M>(queueId, queueManager);

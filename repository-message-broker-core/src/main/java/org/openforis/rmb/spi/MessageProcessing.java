@@ -8,6 +8,18 @@ import java.util.UUID;
 
 import static org.openforis.rmb.spi.MessageProcessingStatus.State.PROCESSING;
 
+/**
+ * Describes the processing of a message by a consumer.
+ * <p>
+ * Instances of this class is created through
+ * {@link #create(MessageDetails, MessageConsumer, MessageProcessingStatus)}.
+ * </p>
+ * <p>
+ * This class is immutable.
+ * </p>
+ *
+ * @param <T> the type of the message being processed
+ */
 public final class MessageProcessing<T> {
     final String queueId;
     final String messageId;
@@ -36,6 +48,12 @@ public final class MessageProcessing<T> {
         this.versionId = status.versionId;
     }
 
+    /**
+     * Takes the message for processing.
+     * * @param clock the clock used to calculate current time
+     *
+     * @return a {@link MessageProcessingUpdate} representing the update
+     */
     public MessageProcessingUpdate<T> take(Clock clock) {
         return MessageProcessingUpdate.create(messageDetails(), consumer, status(),
                 new MessageProcessingStatus(PROCESSING, retries, errorMessage, now(clock), randomUuid()));
@@ -70,6 +88,15 @@ public final class MessageProcessing<T> {
                 '}';
     }
 
+    /**
+     * Creates an instance.
+     *
+     * @param messageDetails the details about the message
+     * @param consumer       the consumer to process/processing the message
+     * @param status         the current status of the processing
+     * @param <T>            the type of the message
+     * @return the new instance
+     */
     public static <T> MessageProcessing<T> create(MessageDetails messageDetails,
                                                   MessageConsumer<T> consumer,
                                                   MessageProcessingStatus status) {

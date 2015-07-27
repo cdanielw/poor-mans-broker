@@ -4,6 +4,9 @@ import org.openforis.rmb.util.Is;
 
 import java.util.Date;
 
+/**
+ * Represents the current status of a message to be/being processed by a consumer.
+ */
 public final class MessageProcessingStatus {
     final State state;
     final int retries;
@@ -11,6 +14,15 @@ public final class MessageProcessingStatus {
     final Date lastUpdated;
     final String versionId;
 
+    /**
+     * Creates an instance.
+     *
+     * @param state        the state of the processing
+     * @param retries      the number of times the consumer retried the processing
+     * @param errorMessage the last error message from a failed processing attempt
+     * @param lastUpdated  the last time the status changed
+     * @param versionId    the current version of the processing
+     */
     public MessageProcessingStatus(State state, int retries, String errorMessage, Date lastUpdated, String versionId) {
         Is.notNull(state, "state must not be null");
         Is.zeroOrGreater(retries, "retries must be zero or greater");
@@ -40,6 +52,9 @@ public final class MessageProcessingStatus {
         Is.notNull(versionId, "versionId must not be null");
     }
 
+    /**
+     * Represents the state of a message to be/being processed by a consumer.
+     */
     public enum State {
         PENDING, PROCESSING, TIMED_OUT, COMPLETED, FAILED
     }

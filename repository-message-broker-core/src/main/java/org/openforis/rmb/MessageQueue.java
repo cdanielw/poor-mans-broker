@@ -14,8 +14,15 @@ import java.util.List;
  * Once a message's been published and the transaction commits, the message will be delivered to available consumers,
  * if any.
  * </p>
- * Instances of this class are created through a builder: {@link RepositoryMessageBroker#queueBuilder(String)} or
- * {@link RepositoryMessageBroker#queueBuilder(String, Class)}.
+ * <p>
+ * An effort to prevent duplicate messages is made, but it cannot be guaranteed.
+ * Therefore it's strongly suggested to make message handlers idempotent idempotent.
+ * Message ordering is guaranteed by the provided JDBC backed message repository.
+ * </p>
+ * <p>
+ * Instances of this class are created through a builder: {@link MessageBroker#queueBuilder(String)} or
+ * {@link MessageBroker#queueBuilder(String, Class)}.
+ * </p>
  *
  * @param <M> the type of messages to be published to the queue
  */

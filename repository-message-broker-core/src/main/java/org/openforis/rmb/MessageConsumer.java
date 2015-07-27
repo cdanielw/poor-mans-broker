@@ -12,8 +12,9 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
  * A consumer of published messages. It specifies:
+ * </p>
  * <ul>
- * <li>an id, which must be unique within the message broker</li>
+ * <li>an id, which must be unique within the message broker.
  * <li>a timeout, after which the message broker considers the message abandoned.
  * <li>the number of messages to be handled in parallel. Whether this is something that can be guaranteed at
  * in a cluster depends on {@link MessageRepository} implementation -
@@ -24,7 +25,13 @@ import static java.util.concurrent.TimeUnit.MINUTES;
  * A simple one {@link MessageHandler} and {@link KeepAliveMessageHandler}, for long running handlers,
  * which allows keep-alive to be sent to the message broker, resetting the timeout.
  * </ul>
+ * <p>
+ * An effort to prevent duplicate messages is made, but it cannot be guaranteed.
+ * Therefore it's strongly suggested to make message handlers idempotent idempotent.
+ * </p>
+ * <p>
  * Instances of this class are created through a builder: {@link #builder(String, MessageHandler)} or
+ * </p>
  * {@link #builder(String, KeepAliveMessageHandler)}.
  *
  * @param <M> the type of messages to consume

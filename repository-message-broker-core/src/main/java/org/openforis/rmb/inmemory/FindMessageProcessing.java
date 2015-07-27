@@ -26,5 +26,4 @@ final class FindMessageProcessing extends FilteringOperation<Void> {
         }
         return null;
     }
-
 }

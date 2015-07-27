@@ -10,6 +10,52 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+// @formatter:off
+/**
+ * A {@link MessageRepository} backed by a JDBC.
+ * <p>
+ * It guarantees at-least-once delivery of messages, in order. The number of messages to be handled in parallel by a
+ * consumer is also guaranteed, event for clustered deployments.
+ * </p>
+ * <p>
+ * JDBC connections are provided through an implementation of {@link JdbcConnectionManager}. This is required
+ * to ensure that messages can be published within a larger transaction. The Spring module provides an implementation
+ * returning the JDBC connections from the current transaction.
+ * </p>
+ * <p>
+ * A table prefix needs to be specified. The prefix will be prepended to all table names.
+ * </p>
+ * <strong>Schema for PostgreSQL, with 'example_' as table prefix:</strong>
+ * <pre>
+ * {@code
+
+        CREATE TABLE example_message (
+          id               VARCHAR(127) NOT NULL,
+          sequence_no      SERIAL,
+          publication_time TIMESTAMP    NOT NULL,
+          queue_id         VARCHAR(127) NOT NULL,
+          message_string   TEXT,
+          message_bytes    BYTEA,
+          PRIMARY KEY (id)
+        );
+
+        CREATE TABLE example_message_processing (
+          message_id    VARCHAR(127) NOT NULL,
+          consumer_id   VARCHAR(127) NOT NULL,
+          version_id    VARCHAR(127) NOT NULL,
+          state         VARCHAR(32)  NOT NULL,
+          last_updated  TIMESTAMP    NOT NULL,
+          times_out     TIMESTAMP    NOT NULL,
+          retries       INTEGER      NOT NULL,
+          error_message TEXT,
+          PRIMARY KEY (message_id, consumer_id),
+          FOREIGN KEY (message_id) REFERENCES example_message (id)
+        );
+ * }
+ * </pre>
+ *
+ */
+// @formatter:on
 public final class JdbcMessageRepository implements MessageRepository {
     private final JdbcConnectionManager connectionManager;
     private final String tablePrefix;

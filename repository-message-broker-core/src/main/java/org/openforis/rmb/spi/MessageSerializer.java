@@ -1,11 +1,26 @@
 package org.openforis.rmb.spi;
 
+/**
+ * Responsible for serializing/deserializing messages. Implementation should either serialize to String or byte[].
+ */
 public interface MessageSerializer {
+    /**
+     * Serialize message to a String or byte[].
+     *
+     * @param message the message to serialize
+     * @return the serialized message
+     */
     Object serialize(Object message) throws SerializationFailed;
 
+    /**
+     * Deserialize message from a String or byte[].
+     *
+     * @param serializedMessage the serialized message
+     * @return the deserialized message
+     */
     Object deserialize(Object serializedMessage) throws DeserilizationFailed;
 
-    class SerializationFailed extends RuntimeException {
+    final class SerializationFailed extends RuntimeException {
         public SerializationFailed(String errorMessage) {
             super(errorMessage);
         }
@@ -19,7 +34,7 @@ public interface MessageSerializer {
         }
     }
 
-    class DeserilizationFailed extends RuntimeException {
+    final class DeserilizationFailed extends RuntimeException {
         public DeserilizationFailed(String errorMessage) {
             super(errorMessage);
         }

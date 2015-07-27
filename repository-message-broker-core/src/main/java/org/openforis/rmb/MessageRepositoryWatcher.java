@@ -1,8 +1,6 @@
 package org.openforis.rmb;
 
 import org.openforis.rmb.RepositoryMessageBroker.Config;
-import org.openforis.rmb.monitor.PollingForMessageQueueSizeChangesFailedEvent;
-import org.openforis.rmb.monitor.PollingForTimedOutMessagesFailedEvent;
 
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -42,19 +40,11 @@ class MessageRepositoryWatcher {
     }
 
     private void pollForQueueSizeUpdates() {
-        try {
-            queueSizeChecker.check();
-        } catch (Exception e) {
-            monitors.onEvent(new PollingForMessageQueueSizeChangesFailedEvent(e));
-        }
+        queueSizeChecker.check();
     }
 
     private void pollForTimedOutMessages() {
-        try {
-            messagePoller.poll();
-        } catch (Exception e) {
-            monitors.onEvent(new PollingForTimedOutMessagesFailedEvent(e));
-        }
+        messagePoller.poll();
     }
 
     void stop() {

@@ -2,10 +2,8 @@ package org.openforis.rmb;
 
 import org.openforis.rmb.monitor.MessageUpdateConflictEvent;
 import org.openforis.rmb.monitor.PollingForMessagesEvent;
-import org.openforis.rmb.spi.Clock;
-import org.openforis.rmb.spi.MessageProcessingUpdate;
-import org.openforis.rmb.spi.MessageRepository;
-import org.openforis.rmb.spi.MessageSerializer;
+import org.openforis.rmb.monitor.TakingMessagesFailedEvent;
+import org.openforis.rmb.spi.*;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -56,12 +54,16 @@ final class MessagePoller {
         final Map<MessageConsumer<?>, Integer> maxCountByConsumer = determineMaxCountByConsumer();
         if (maxCountByConsumer.isEmpty())
             return;
-        monitors.onEvent(new PollingForMessagesEvent(maxCountByConsumer));
-        repository.take(maxCountByConsumer, new MessageRepository.MessageTakenCallback() {
-            public void taken(MessageProcessingUpdate update, Object serializedMessage) {
-                consume(update, serializedMessage);
-            }
-        });
+        try {
+            monitors.onEvent(new PollingForMessagesEvent(maxCountByConsumer));
+            repository.take(maxCountByConsumer, new MessageRepository.MessageTakenCallback() {
+                public void taken(MessageProcessingUpdate update, Object serializedMessage) {
+                    consume(update, serializedMessage);
+                }
+            });
+        } catch (Exception e) {
+            monitors.onEvent(new TakingMessagesFailedEvent(maxCountByConsumer, e));
+        }
     }
 
     private <T> void consume(final MessageProcessingUpdate<T> update, final Object serializedMessage) {

@@ -1,5 +1,6 @@
 package org.openforis.rmb;
 
+import org.openforis.rmb.monitor.CheckingForMessageQueueSizeChangesFailedEvent;
 import org.openforis.rmb.monitor.MessageQueueSizeChangedEvent;
 import org.openforis.rmb.spi.MessageProcessingFilter;
 import org.openforis.rmb.spi.MessageRepository;
@@ -35,13 +36,19 @@ class MessageQueueSizeChecker {
     }
 
     void check() {
-        Map<MessageConsumer<?>, Integer> sizeByConsumer = repository.messageCountByConsumer(consumers, filter);
-        for (MessageConsumer<?> consumer : this.sizeByConsumer.keySet()) {
-            Integer newSize = newSize(consumer, sizeByConsumer);
-            if (hasSizeChanged(consumer, newSize)) {
-                updateSize(consumer, newSize);
-                notifyAboutSizeChange(consumer);
+        if (consumers.isEmpty())
+            return;
+        try {
+            Map<MessageConsumer<?>, Integer> sizeByConsumer = repository.messageCountByConsumer(consumers, filter);
+            for (MessageConsumer<?> consumer : this.sizeByConsumer.keySet()) {
+                Integer newSize = newSize(consumer, sizeByConsumer);
+                if (hasSizeChanged(consumer, newSize)) {
+                    updateSize(consumer, newSize);
+                    notifyAboutSizeChange(consumer);
+                }
             }
+        } catch (Exception e) {
+            monitors.onEvent(new CheckingForMessageQueueSizeChangesFailedEvent(consumers, e));
         }
     }
 

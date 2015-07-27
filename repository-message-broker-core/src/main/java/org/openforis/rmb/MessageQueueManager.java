@@ -23,6 +23,7 @@ final class MessageQueueManager {
     private final MessageRepositoryWatcher repositoryWatcher;
 
     private final Map<String, List<MessageConsumer<?>>> consumersByQueueId = new ConcurrentHashMap<String, List<MessageConsumer<?>>>();
+    private final Set<String> queueIds = new HashSet<String>(); // For asserting global queue id uniqueness
     private final Set<String> consumerIds = new HashSet<String>(); // For asserting global consumer id uniqueness
     private final AtomicBoolean started = new AtomicBoolean();
 
@@ -46,6 +47,7 @@ final class MessageQueueManager {
     }
 
     void registerQueue(String queueId, List<MessageConsumer<?>> consumers) {
+        assertQueueIdUniqueness(queueId);
         assertConsumerUniqueness(consumers);
         repositoryWatcher.includeQueue(queueId, consumers);
         consumersByQueueId.put(queueId, consumers);
@@ -75,6 +77,11 @@ final class MessageQueueManager {
         if (!transactionSynchronizer.isInTransaction())
             throw new IllegalStateException("Trying to publish a message outside of a transaction. " +
                     "Queue: " + queueId + ", message: " + message);
+    }
+
+    private void assertQueueIdUniqueness(String queueId) {
+        if (!queueIds.add(queueId))
+            throw new IllegalArgumentException("Duplicate queue id: " + queueId);
     }
 
     private void assertConsumerUniqueness(List<MessageConsumer<?>> consumers) {

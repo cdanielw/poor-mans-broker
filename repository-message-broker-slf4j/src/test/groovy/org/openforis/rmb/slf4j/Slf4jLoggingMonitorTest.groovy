@@ -70,11 +70,11 @@ class Slf4jLoggingMonitorTest extends Specification {
     }
 
     Event getPollingForTimedOutMessagesFailedEvent() {
-        new PollingForTimedOutMessagesFailedEvent(new RuntimeException())
+        new TakingMessagesFailedEvent([(consumer): 1], new RuntimeException())
     }
 
     Event getPollingForMessageQueueSizeChangesFailedEvent() {
-        new PollingForMessageQueueSizeChangesFailedEvent(new RuntimeException())
+        new CheckingForMessageQueueSizeChangesFailedEvent([consumer], new RuntimeException())
     }
 
     Event getMessagePublishedEvent() {

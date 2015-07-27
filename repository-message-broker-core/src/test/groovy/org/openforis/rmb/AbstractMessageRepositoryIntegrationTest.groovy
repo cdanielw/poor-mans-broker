@@ -280,8 +280,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
         clock.time = 101
         addMessage('Message published after', consumer)
 
-
-        when:
+        when: 'published before'
             repository.findMessageProcessing([consumer],
                     MessageProcessingFilter.builder()
                             .publishedBefore(new Date(100))
@@ -289,10 +288,10 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
                     processingCallback)
         then:
             processingCallback.invokedOnce('Message published before')
-
             processingCallback.reset()
 
-        when:
+
+        when: 'published after'
             repository.findMessageProcessing([consumer],
                     MessageProcessingFilter.builder()
                             .publishedAfter(new Date(100))
@@ -300,6 +299,17 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
                     processingCallback)
         then:
             processingCallback.invokedOnce('Message published after')
+            processingCallback.reset()
+
+
+        when: 'published between'
+            repository.findMessageProcessing([consumer],
+                    MessageProcessingFilter.builder()
+                            .publishedBetween(new Date(99), new Date(101))
+                            .build(),
+                    processingCallback)
+        then:
+            processingCallback.invokedOnce('Message published on')
     }
 
     def 'Finding messages filters on last updated'() {
@@ -319,7 +329,7 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
         clock.time = 101
         take((consumer): 3)
 
-        when:
+        when: 'updated before'
             repository.findMessageProcessing([consumer],
                     MessageProcessingFilter.builder()
                             .lastUpdatedBefore(new Date(100))
@@ -327,10 +337,10 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
                     processingCallback)
         then:
             processingCallback.invokedOnce('Message updated before')
-
             processingCallback.reset()
 
-        when:
+
+        when: 'updated after'
             repository.findMessageProcessing([consumer],
                     MessageProcessingFilter.builder()
                             .lastUpdatedAfter(new Date(100))
@@ -338,6 +348,17 @@ abstract class AbstractMessageRepositoryIntegrationTest extends Specification {
                     processingCallback)
         then:
             processingCallback.invokedOnce('Message updated after')
+            processingCallback.reset()
+
+
+        when: 'updated between'
+            repository.findMessageProcessing([consumer],
+                    MessageProcessingFilter.builder()
+                            .lastUpdatedBetween(new Date(99), new Date(101))
+                            .build(),
+                    processingCallback)
+        then:
+            processingCallback.invokedOnce('Message updated on')
     }
 
     def 'Finding messages by id'() {

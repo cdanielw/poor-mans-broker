@@ -1,11 +1,14 @@
 package org.openforis.rmb
 
+import org.openforis.rmb.inmemory.InMemoryMessageRepository
 import org.openforis.rmb.monitor.MessageConsumptionFailedEvent
 import org.openforis.rmb.monitor.RetryingMessageConsumptionEvent
+import org.openforis.rmb.spi.TransactionSynchronizer
 import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
 
 import static org.openforis.rmb.spi.ThrottlingStrategy.NO_THROTTLING
+import static org.openforis.rmb.spi.TransactionSynchronizer.NULL_TRANSACTION_SYNCHRONIZER
 
 class MessageBrokerSystemTest extends Specification {
     @SuppressWarnings("GroovyUnusedDeclaration")
@@ -53,6 +56,87 @@ class MessageBrokerSystemTest extends Specification {
             retriesMade() == 1
     }
 
+    def 'Publishing a message without starting the message broker fails'() {
+        def messageBroker = RepositoryMessageBroker
+                .builder(new InMemoryMessageRepository(), NULL_TRANSACTION_SYNCHRONIZER)
+                .build()
+        def queue = messageBroker.queueBuilder('a queue')
+                .consumer(MessageConsumer.builder('a consumer', {} as MessageHandler).build())
+                .build()
+
+        when:
+            queue.publish('a message')
+
+        then:
+            thrown IllegalStateException
+    }
+
+    def 'Publishing a message without a transaction fails'() {
+        def transactionSynchronizer = Mock(TransactionSynchronizer)
+        def messageBroker = RepositoryMessageBroker
+                .builder(new InMemoryMessageRepository(), transactionSynchronizer)
+                .build()
+        messageBroker.start()
+        def queue = messageBroker.queueBuilder('a queue')
+                .consumer(MessageConsumer.builder('a consumer', {} as MessageHandler))
+                .build()
+
+
+        transactionSynchronizer.inTransaction >> false
+
+        when:
+            queue.publish('a message')
+        then:
+            thrown IllegalStateException
+    }
+
+    def 'Registring a duplicate queue id fails'() {
+        messageBroker.queueBuilder('duplicate id')
+                .consumer(MessageConsumer.builder('consumer 1', {} as MessageHandler))
+                .build()
+
+        when:
+            messageBroker.queueBuilder('duplicate id')
+                    .consumer(MessageConsumer.builder('consumer 2', {} as MessageHandler))
+                    .build()
+        then:
+            thrown IllegalArgumentException
+    }
+
+    def 'Registring a duplicate consumer id fails'() {
+        when:
+            messageBroker.queueBuilder('queue id')
+                    .consumer(MessageConsumer.builder('duplicate id', {} as MessageHandler))
+                    .consumer(MessageConsumer.builder('duplicate id', {} as MessageHandler))
+                    .build()
+        then:
+            thrown IllegalArgumentException
+    }
+
+    def 'Creating a queue without a consumer fails'() {
+        when:
+            messageBroker.queueBuilder('queue id')
+                    .build()
+        then:
+            thrown IllegalArgumentException
+    }
+
+    def 'Starting an already started broker fails'() {
+        when:
+            messageBroker.start()
+        then:
+            thrown IllegalStateException
+    }
+
+    def 'Starting a stopped broker fails'() {
+        messageBroker.stop()
+
+        when:
+            messageBroker.start()
+        then:
+            thrown IllegalStateException
+    }
+
     private void consumptionFailed() {
         new PollingConditions().eventually {
             monitor.events.find { it.class == MessageConsumptionFailedEvent }
@@ -62,5 +146,4 @@ class MessageBrokerSystemTest extends Specification {
     private Number retriesMade() {
         monitor.events.count { it.class == RetryingMessageConsumptionEvent }
     }
-
 }

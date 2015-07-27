@@ -36,9 +36,7 @@ public final class ObjectSerializationMessageSerializer implements MessageSerial
         try {
             objectInputStream = new ObjectInputStream(new ByteArrayInputStream(bytes));
             return objectInputStream.readObject();
-        } catch (IOException e) {
-            throw new DeserilizationFailed(e);
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
             throw new DeserilizationFailed(e);
         } finally {
             close(objectInputStream);

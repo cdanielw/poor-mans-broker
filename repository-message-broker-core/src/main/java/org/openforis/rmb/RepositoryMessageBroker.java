@@ -23,6 +23,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>
  * Instances of this class are created through a builder: {@link #builder(MessageRepository, TransactionSynchronizer)}.
  * </p>
+ * <p>
+ * This class is immutable.
+ * </p>
  * <strong>Usage example:</strong>
  * <pre>
  * {@code

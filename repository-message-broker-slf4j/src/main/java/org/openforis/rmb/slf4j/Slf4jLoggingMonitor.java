@@ -34,7 +34,7 @@ public final class Slf4jLoggingMonitor implements Monitor<Event> {
         add(CheckingForMessageQueueSizeChangesFailedEvent.class, new LoggingMonitor<CheckingForMessageQueueSizeChangesFailedEvent>() {
             public void onEvent(CheckingForMessageQueueSizeChangesFailedEvent event, Logger log) {
                 log.error("Checking for message queue size changes failed. {}",
-                        event.consumers, event.exception);
+                        event.exception);
             }
         });
         add(TakingMessagesFailedEvent.class, new LoggingMonitor<TakingMessagesFailedEvent>() {

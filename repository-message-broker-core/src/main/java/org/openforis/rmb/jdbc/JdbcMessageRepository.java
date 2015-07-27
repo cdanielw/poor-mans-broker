@@ -25,6 +25,9 @@ import java.util.Map;
  * <p>
  * A table prefix needs to be specified. The prefix will be prepended to all table names.
  * </p>
+ * <p>
+ * This class is immutable.
+ * </p>
  * <strong>Schema for PostgreSQL, with 'example_' as table prefix:</strong>
  * <pre>
  * {@code

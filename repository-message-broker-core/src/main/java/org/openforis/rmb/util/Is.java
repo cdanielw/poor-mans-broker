@@ -3,6 +3,9 @@ package org.openforis.rmb.util;
 import java.util.Collection;
 import java.util.Map;
 
+/**
+ * Utility for asserting preconditions.
+ */
 public final class Is {
     private Is() { }
 
@@ -28,11 +31,6 @@ public final class Is {
 
     public static void zeroOrGreater(int i, String message) {
         if (i < 0)
-            throw new IllegalArgumentException(message + ". Value: '" + i + "'");
-    }
-
-    public static void lessThanEqual(int i, int lessThanValue, String message) {
-        if (i > lessThanValue)
             throw new IllegalArgumentException(message + ". Value: '" + i + "'");
     }
 

@@ -12,6 +12,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A {@link MessageRepository} kept in-memory. Use this for testing only.
+ * It does not support transactions.
+ */
 public final class InMemoryMessageRepository implements MessageRepository {
     private Clock clock = new Clock.SystemClock();
     private InMemoryDatabase database = new InMemoryDatabase();

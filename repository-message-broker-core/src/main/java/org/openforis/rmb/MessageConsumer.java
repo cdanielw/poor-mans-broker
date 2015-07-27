@@ -33,6 +33,9 @@ import static java.util.concurrent.TimeUnit.MINUTES;
  * Instances of this class are created through a builder: {@link #builder(String, MessageHandler)} or
  * </p>
  * {@link #builder(String, KeepAliveMessageHandler)}.
+ * <p>
+ * This class is immutable.
+ * </p>
  *
  * @param <M> the type of messages to consume
  */

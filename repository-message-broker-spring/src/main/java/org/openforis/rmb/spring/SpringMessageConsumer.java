@@ -13,7 +13,7 @@ public final class SpringMessageConsumer<M> implements InitializingBean {
     private final MessageConsumer.Builder<M> builder;
     private MessageConsumer<M> consumer;
 
-    private int messagesHandledInParallel = 1;
+    private Integer messagesHandledInParallel;
     private Integer retries;
     private ThrottlingStrategy throttlingStrategy;
     private Integer timeoutSeconds;
@@ -40,9 +40,11 @@ public final class SpringMessageConsumer<M> implements InitializingBean {
     }
 
     public void afterPropertiesSet() throws Exception {
-        if (messagesHandledInParallel < 1)
-            throw new IllegalArgumentException("A consumer must have a messagesHandledInParallel of at least one");
-        builder.messagesHandledInParallel(messagesHandledInParallel);
+        if (messagesHandledInParallel != null) {
+            if (messagesHandledInParallel < 1)
+                throw new IllegalArgumentException("A consumer must have a messagesHandledInParallel of at least one");
+            builder.messagesHandledInParallel(messagesHandledInParallel);
+        }
 
         if (throttlingStrategy == null && retries != null && retries > 0)
             builder.retry(retries, new ThrottlingStrategy.ExponentialBackoff(1, TimeUnit.MINUTES));

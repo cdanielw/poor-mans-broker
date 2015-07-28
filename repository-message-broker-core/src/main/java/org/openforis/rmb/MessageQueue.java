@@ -111,7 +111,7 @@ public interface MessageQueue<M> {
             return queue;
         }
 
-        private static class Default<M> implements MessageQueue<M> {
+        private static final class Default<M> implements MessageQueue<M> {
             private final String id;
             private final MessageQueueManager queueManager;
 

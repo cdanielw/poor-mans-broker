@@ -42,7 +42,7 @@ class InMemoryDatabase {
         return consumerMessagesByConsumer.get(consumer);
     }
 
-    static abstract class Operation<T> {
+    abstract static class Operation<T> {
         final Clock clock;
 
         public Operation(Clock clock) {

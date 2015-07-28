@@ -19,15 +19,15 @@ import static org.openforis.rmb.spi.MessageProcessingStatus.State.*;
  * This class is immutable.
  * </p>
  *
- * @param <T> the type of the message
+ * @param <M> the type of the message
  */
-public final class MessageProcessingUpdate<T> {
+public final class MessageProcessingUpdate<M> {
     final String queueId;
     final String messageId;
     final Date publicationTime;
-    final MessageConsumer<T> consumer;
-    final MessageProcessingStatus.State fromState;
-    final MessageProcessingStatus.State toState;
+    final MessageConsumer<M> consumer;
+    final State fromState;
+    final State toState;
     final int retries;
     final String errorMessage;
     final Date updateTime;
@@ -35,7 +35,7 @@ public final class MessageProcessingUpdate<T> {
     final String toVersionId;
 
     private MessageProcessingUpdate(MessageDetails messageDetails,
-                                    MessageConsumer<T> consumer,
+                                    MessageConsumer<M> consumer,
                                     MessageProcessingStatus fromStatus,
                                     MessageProcessingStatus toStatus) {
         Is.notNull(messageDetails, "messageDetails must not be null");
@@ -62,14 +62,14 @@ public final class MessageProcessingUpdate<T> {
      * @param consumer       the consumer to process/processing the message
      * @param fromStatus     the previous status of the processing
      * @param toStatus       the new status of the processing
-     * @param <T>            the type of the message
+     * @param <M>            the type of the message
      * @return the new instance
      */
-    public static <T> MessageProcessingUpdate<T> create(MessageDetails messageDetails,
-                                                        MessageConsumer<T> consumer,
+    public static <M> MessageProcessingUpdate<M> create(MessageDetails messageDetails,
+                                                        MessageConsumer<M> consumer,
                                                         MessageProcessingStatus fromStatus,
                                                         MessageProcessingStatus toStatus) {
-        return new MessageProcessingUpdate<T>(messageDetails, consumer, fromStatus, toStatus);
+        return new MessageProcessingUpdate<M>(messageDetails, consumer, fromStatus, toStatus);
     }
 
     /**
@@ -78,9 +78,9 @@ public final class MessageProcessingUpdate<T> {
      * @param clock the clock used to calculate current time
      * @return an instance representing the update
      */
-    public MessageProcessingUpdate<T> processing(Clock clock) {
+    public MessageProcessingUpdate<M> processing(Clock clock) {
         Is.notNull(clock, "clock must not be null");
-        return new MessageProcessingUpdate<T>(
+        return new MessageProcessingUpdate<M>(
                 messageDetails(),
                 consumer,
                 toStatus(),
@@ -95,9 +95,9 @@ public final class MessageProcessingUpdate<T> {
      * @param clock the clock used to calculate current time
      * @return an instance representing the update
      */
-    public MessageProcessingUpdate<T> completed(Clock clock) {
+    public MessageProcessingUpdate<M> completed(Clock clock) {
         Is.notNull(clock, "clock must not be null");
-        return new MessageProcessingUpdate<T>(
+        return new MessageProcessingUpdate<M>(
                 messageDetails(),
                 consumer,
                 toStatus(),
@@ -113,9 +113,9 @@ public final class MessageProcessingUpdate<T> {
      * @param errorMessage the message of the error triggering the retry
      * @return an instance representing the update
      */
-    public MessageProcessingUpdate<T> retry(Clock clock, String errorMessage) {
+    public MessageProcessingUpdate<M> retry(Clock clock, String errorMessage) {
         Is.notNull(clock, "clock must not be null");
-        return new MessageProcessingUpdate<T>(
+        return new MessageProcessingUpdate<M>(
                 messageDetails(),
                 consumer,
                 toStatus(),
@@ -130,9 +130,9 @@ public final class MessageProcessingUpdate<T> {
      * @param errorMessage the message of the error causing the failure
      * @return an instance representing the update
      */
-    public MessageProcessingUpdate<T> failed(Clock clock, String errorMessage) {
+    public MessageProcessingUpdate<M> failed(Clock clock, String errorMessage) {
         Is.notNull(clock, "clock must not be null");
-        return new MessageProcessingUpdate<T>(
+        return new MessageProcessingUpdate<M>(
                 messageDetails(),
                 consumer,
                 toStatus(),
@@ -172,7 +172,7 @@ public final class MessageProcessingUpdate<T> {
      *
      * @return the consumer
      */
-    public MessageConsumer<T> getConsumer() {
+    public MessageConsumer<M> getConsumer() {
         return consumer;
     }
 
@@ -181,7 +181,7 @@ public final class MessageProcessingUpdate<T> {
      *
      * @return the previous state
      */
-    public MessageProcessingStatus.State getFromState() {
+    public State getFromState() {
         return fromState;
     }
 
@@ -190,7 +190,7 @@ public final class MessageProcessingUpdate<T> {
      *
      * @return the new state
      */
-    public MessageProcessingStatus.State getToState() {
+    public State getToState() {
         return toState;
     }
 

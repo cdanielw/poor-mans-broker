@@ -104,7 +104,7 @@ public final class MessageProcessingFilter {
      * Instances are created though {@link #builder()}.
      * </p>
      */
-    public static class Builder {
+    public static final class Builder {
         private Set<State> states = new HashSet<State>();
         private Date publishedBefore;
         private Date publishedAfter;

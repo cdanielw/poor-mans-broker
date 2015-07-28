@@ -14,8 +14,7 @@ class ExecutorTerminator {
         try {
             if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
                 executor.shutdownNow();
-                if (!executor.awaitTermination(1, TimeUnit.SECONDS))
-                    System.err.println("Pool did not terminate");
+                executor.awaitTermination(1, TimeUnit.SECONDS);
             }
         } catch (InterruptedException ie) {
             executor.shutdownNow();

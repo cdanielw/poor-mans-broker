@@ -12,7 +12,6 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
  * A consumer of published messages. It specifies:
- * </p>
  * <ul>
  * <li>an id, which must be unique within the message broker.
  * <li>a timeout, after which the message broker considers the message abandoned.

@@ -9,24 +9,24 @@ import org.springframework.beans.factory.InitializingBean;
 
 import java.util.concurrent.TimeUnit;
 
-public final class SpringMessageConsumer<T> implements InitializingBean {
-    private final MessageConsumer.Builder<T> builder;
-    private MessageConsumer<T> consumer;
+public final class SpringMessageConsumer<M> implements InitializingBean {
+    private final MessageConsumer.Builder<M> builder;
+    private MessageConsumer<M> consumer;
 
     private int messagesHandledInParallel = 1;
     private Integer retries;
     private ThrottlingStrategy throttlingStrategy;
     private Integer timeoutSeconds;
 
-    public SpringMessageConsumer(String consumerId, MessageHandler<T> messageHandler) {
+    public SpringMessageConsumer(String consumerId, MessageHandler<M> messageHandler) {
         this(consumerId, messageHandler, null);
     }
 
-    public SpringMessageConsumer(String consumerId, KeepAliveMessageHandler<T> keepAliveMessageHandler) {
+    public SpringMessageConsumer(String consumerId, KeepAliveMessageHandler<M> keepAliveMessageHandler) {
         this(consumerId, null, keepAliveMessageHandler);
     }
 
-    private SpringMessageConsumer(String consumerId, MessageHandler<T> messageHandler, KeepAliveMessageHandler<T> keepAliveMessageHandler) {
+    private SpringMessageConsumer(String consumerId, MessageHandler<M> messageHandler, KeepAliveMessageHandler<M> keepAliveMessageHandler) {
         Is.hasText(consumerId, "consumerId must be specified");
         if (messageHandler == null && keepAliveMessageHandler == null)
             throw new IllegalArgumentException("messageHandler must not be null");
@@ -35,7 +35,7 @@ public final class SpringMessageConsumer<T> implements InitializingBean {
                 : MessageConsumer.builder(consumerId, messageHandler);
     }
 
-    MessageConsumer<T> getDelegate() {
+    MessageConsumer<M> getDelegate() {
         return consumer;
     }
 

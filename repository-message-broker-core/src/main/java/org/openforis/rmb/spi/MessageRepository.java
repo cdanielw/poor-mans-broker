@@ -26,7 +26,6 @@ public interface MessageRepository {
      *
      * @param maxCountByConsumer the max number of messages to take, by consumer
      * @param callback           to be invoked when taking a message
-     * @throws MessageRepositoryException
      */
     void take(
             Map<MessageConsumer<?>, Integer> maxCountByConsumer, MessageTakenCallback callback
@@ -48,7 +47,6 @@ public interface MessageRepository {
      * @param consumers the consumers to search message processing for
      * @param filter    specification which message processing to include/exclude
      * @param callback  to be invoked when a message processing is found
-     * @throws MessageRepositoryException
      */
     void findMessageProcessing(
             Collection<MessageConsumer<?>> consumers,

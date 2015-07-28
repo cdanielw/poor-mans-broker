@@ -56,7 +56,9 @@ class MessageQueueSizeChecker {
         return !previousSize(consumer).equals(newSize);
     }
 
-    private Integer previousSize(MessageConsumer<?> consumer) {return this.sizeByConsumer.get(consumer);}
+    private Integer previousSize(MessageConsumer<?> consumer) {
+        return this.sizeByConsumer.get(consumer);
+    }
 
     private int newSize(MessageConsumer<?> consumer, Map<MessageConsumer<?>, Integer> sizeByConsumer) {
         Integer newSize = sizeByConsumer.get(consumer);

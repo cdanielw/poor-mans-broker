@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 // @formatter:off
 /**
  * A {@link MessageBroker} backed by a repository. It is responsible for the creation and management
@@ -145,12 +147,13 @@ public final class RepositoryMessageBroker implements MessageBroker {
         private final TransactionSynchronizer transactionSynchronizer;
         private MessageSerializer messageSerializer = new ObjectSerializationMessageSerializer();
         private final List<Monitor<Event>> monitors = new ArrayList<Monitor<Event>>();
-        private long repositoryWatcherPollingPeriod = 30;
-        private TimeUnit repositoryWatcherPollingTimeUnit = TimeUnit.SECONDS;
+        private long repositoryWatcherPollingPeriod;
+        private TimeUnit repositoryWatcherPollingTimeUnit;
 
         private Builder(MessageRepository messageRepository, TransactionSynchronizer transactionSynchronizer) {
             this.messageRepository = messageRepository;
             this.transactionSynchronizer = transactionSynchronizer;
+            repositoryWatcherPollingSchedule(30, SECONDS);
         }
 
         /**

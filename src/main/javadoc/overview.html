@@ -4,6 +4,7 @@
     <title>Repository Message Broker</title>
 </head>
 <body>
+<!--@formatter:off-->
 <h1>Repository Message Broker</h1>
 <p>When doing some transactional work with a repository, such as a relational database,
 often some external resource must be updated or notified at the same time.
@@ -103,7 +104,7 @@ the database for messages to process, and forwards the message to the message ha
                 &lt;/bean&gt;
             &lt;/list&gt;
         &lt;/constructor-arg&gt;
-    &lt;/bean&gt;    
+    &lt;/bean&gt;
 </code></pre></blockquote>
 
 <h2>Fully configured Spring XML example</h2>
@@ -144,7 +145,38 @@ the database for messages to process, and forwards the message to the message ha
         &lt;/constructor-arg&gt;
     &lt;/bean&gt;
 </code></pre></blockquote>
-    
+
+
+<h2>JDBC Schema</h2>
+<p>
+    If the {@code JdbcMessageRepository} is used, the following two tables are needed. In this example,
+    the database is PostgreSQL, and the tablePrefix is set to "example_".
+</p>
+<blockquote><pre><code>
+    CREATE TABLE example_message (
+    id               VARCHAR(127) NOT NULL,
+    sequence_no      SERIAL,
+    publication_time TIMESTAMP    NOT NULL,
+    queue_id         VARCHAR(127) NOT NULL,
+    message_string   TEXT,
+    message_bytes    BYTEA,
+    PRIMARY KEY (id)
+    );
+
+    CREATE TABLE example_message_processing (
+    message_id    VARCHAR(127) NOT NULL,
+    consumer_id   VARCHAR(127) NOT NULL,
+    version_id    VARCHAR(127) NOT NULL,
+    state         VARCHAR(32)  NOT NULL,
+    last_updated  TIMESTAMP    NOT NULL,
+    times_out     TIMESTAMP    NOT NULL,
+    retries       INTEGER      NOT NULL,
+    error_message TEXT,
+    PRIMARY KEY (message_id, consumer_id),
+    FOREIGN KEY (message_id) REFERENCES example_message (id)
+    );
+</code></pre></blockquote>
+
 <h2>Maven dependencies</h2>
 
 <blockquote><pre><code>
@@ -178,5 +210,6 @@ the database for messages to process, and forwards the message to the message ha
         &lt;version&gt;${repository-message-broker.version}&lt;/version&gt;
     &lt;/dependency&gt;
 </code></pre></blockquote>
+<!--@formatter:on-->
 </body>
 </html>

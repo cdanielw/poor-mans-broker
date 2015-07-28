@@ -3,7 +3,10 @@ package org.openforis.rmb;
 import org.openforis.rmb.monitor.MessageUpdateConflictEvent;
 import org.openforis.rmb.monitor.PollingForMessagesEvent;
 import org.openforis.rmb.monitor.TakingMessagesFailedEvent;
-import org.openforis.rmb.spi.*;
+import org.openforis.rmb.spi.Clock;
+import org.openforis.rmb.spi.MessageProcessingUpdate;
+import org.openforis.rmb.spi.MessageRepository;
+import org.openforis.rmb.spi.MessageSerializer;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -66,16 +69,17 @@ final class MessagePoller {
         }
     }
 
-    private <T> void consume(final MessageProcessingUpdate<T> update, final Object serializedMessage) {
+    private <M> void consume(final MessageProcessingUpdate<M> update, final Object serializedMessage) {
         incrementCurrentlyProcessingMessageCount(update.getConsumer());
 
         workerExecutor.execute(new Runnable() {
             @SuppressWarnings("unchecked")
             public void run() {
-                T message = (T) messageSerializer.deserialize(serializedMessage);
+                M message = (M) messageSerializer.deserialize(serializedMessage);
                 try {
-                    new Worker<T>(repository, throttler, monitors, update, message).consume();
+                    new Worker<M>(repository, throttler, monitors, update, message).consume();
                 } catch (InterruptedException ignore) {
+                    Thread.currentThread().interrupt();
                 } catch (Worker.MessageUpdateConflict e) {
                     monitors.onEvent(new MessageUpdateConflictEvent(update, message));
                 } finally {

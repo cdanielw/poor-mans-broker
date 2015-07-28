@@ -18,13 +18,13 @@ import static org.openforis.rmb.spi.MessageProcessingStatus.State.PROCESSING;
  * This class is immutable.
  * </p>
  *
- * @param <T> the type of the message being processed
+ * @param <M> the type of the message being processed
  */
-public final class MessageProcessing<T> {
+public final class MessageProcessing<M> {
     final String queueId;
     final String messageId;
     final Date publicationTime;
-    final MessageConsumer<T> consumer;
+    final MessageConsumer<M> consumer;
     final MessageProcessingStatus.State state;
     final int retries;
     final String errorMessage;
@@ -32,7 +32,7 @@ public final class MessageProcessing<T> {
     final String versionId;
 
     private MessageProcessing(MessageDetails messageDetails,
-                              MessageConsumer<T> consumer,
+                              MessageConsumer<M> consumer,
                               MessageProcessingStatus status) {
         Is.notNull(messageDetails, "messageDetails must not be null");
         Is.notNull(consumer, "consumer must not be null");
@@ -50,11 +50,11 @@ public final class MessageProcessing<T> {
 
     /**
      * Takes the message for processing.
-     * * @param clock the clock used to calculate current time
      *
+     * @param clock the clock used to calculate current time
      * @return a {@link MessageProcessingUpdate} representing the update
      */
-    public MessageProcessingUpdate<T> take(Clock clock) {
+    public MessageProcessingUpdate<M> take(Clock clock) {
         return MessageProcessingUpdate.create(messageDetails(), consumer, status(),
                 new MessageProcessingStatus(PROCESSING, retries, errorMessage, now(clock), randomUuid()));
     }
@@ -94,12 +94,12 @@ public final class MessageProcessing<T> {
      * @param messageDetails the details about the message
      * @param consumer       the consumer to process/processing the message
      * @param status         the current status of the processing
-     * @param <T>            the type of the message
+     * @param <M>            the type of the message
      * @return the new instance
      */
-    public static <T> MessageProcessing<T> create(MessageDetails messageDetails,
-                                                  MessageConsumer<T> consumer,
+    public static <M> MessageProcessing<M> create(MessageDetails messageDetails,
+                                                  MessageConsumer<M> consumer,
                                                   MessageProcessingStatus status) {
-        return new MessageProcessing<T>(messageDetails, consumer, status);
+        return new MessageProcessing<M>(messageDetails, consumer, status);
     }
 }

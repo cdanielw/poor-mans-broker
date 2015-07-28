@@ -7,22 +7,22 @@ import org.openforis.rmb.spi.MessageProcessingUpdate;
 import org.openforis.rmb.spi.MessageRepository;
 
 @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-final class Worker<T> {
+final class Worker<M> {
     private final MessageRepository repository;
     private final Throttler throttler;
     private final Monitors monitors;
-    private final T message;
-    private final MessageConsumer<T> consumer;
+    private final M message;
+    private final MessageConsumer<M> consumer;
     private final KeepAlive keepAlive;
     private final Clock clock = new Clock.SystemClock();
 
-    private MessageProcessingUpdate<T> update;
+    private MessageProcessingUpdate<M> update;
 
     public Worker(MessageRepository repository,
                   Throttler throttler,
                   Monitors monitors,
-                  MessageProcessingUpdate<T> update,
-                  T message) {
+                  MessageProcessingUpdate<M> update,
+                  M message) {
         this.repository = repository;
         this.throttler = throttler;
         this.monitors = monitors;
@@ -94,7 +94,7 @@ final class Worker<T> {
         monitors.onEvent(new MessageConsumedEvent(update, message));
     }
 
-    private void updateRepo(MessageProcessingUpdate<T> update) {
+    private void updateRepo(MessageProcessingUpdate<M> update) {
         if (!repository.update(update))
             throw new MessageUpdateConflict(update);
         this.update = update;

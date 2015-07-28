@@ -48,6 +48,7 @@ public final class ObjectSerializationMessageSerializer implements MessageSerial
             if (closeable != null)
                 closeable.close();
         } catch (IOException ignore) {
+
         }
     }
 }

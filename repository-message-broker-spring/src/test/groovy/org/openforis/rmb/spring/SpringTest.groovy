@@ -18,15 +18,15 @@ class SpringTest extends Specification {
 
         then:
             new PollingConditions().eventually {
+                def eventTypes = monitor.events.collect { it.class }
+                assert eventTypes.containsAll([
+                        MessageQueueCreatedEvent,
+                        MessagePublishedEvent,
+                        PollingForMessagesEvent,
+                        ConsumingNewMessageEvent,
+                        MessageConsumedEvent
+                ])
                 assert handler.messages == ['A message']
             }
-            def eventTypes = monitor.events.collect { it.class }
-            eventTypes.containsAll([
-                    MessageQueueCreatedEvent,
-                    MessagePublishedEvent,
-                    PollingForMessagesEvent,
-                    ConsumingNewMessageEvent,
-                    MessageConsumedEvent
-            ])
     }
 }

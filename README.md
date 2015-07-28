@@ -80,6 +80,36 @@ as the transactional work is being done. Once the transaction commits, the messa
 the database for messages to process, and forwards the message to the message handler.
 
 
+JDBC Schema
+-----------
+If the JdbcMessageRepository is used, the following two tables are needed. In this example,
+the database is PostgreSQL, and the tablePrefix is set to "example_"..
+
+```sql
+    CREATE TABLE example_message (
+    id               VARCHAR(127) NOT NULL,
+    sequence_no      SERIAL,
+    publication_time TIMESTAMP    NOT NULL,
+    queue_id         VARCHAR(127) NOT NULL,
+    message_string   TEXT,
+    message_bytes    BYTEA,
+    PRIMARY KEY (id)
+    );
+
+    CREATE TABLE example_message_processing (
+    message_id    VARCHAR(127) NOT NULL,
+    consumer_id   VARCHAR(127) NOT NULL,
+    version_id    VARCHAR(127) NOT NULL,
+    state         VARCHAR(32)  NOT NULL,
+    last_updated  TIMESTAMP    NOT NULL,
+    times_out     TIMESTAMP    NOT NULL,
+    retries       INTEGER      NOT NULL,
+    error_message TEXT,
+    PRIMARY KEY (message_id, consumer_id),
+    FOREIGN KEY (message_id) REFERENCES example_message (id)
+    );
+```
+
 Maven dependencies
 ------------------
 ```xml

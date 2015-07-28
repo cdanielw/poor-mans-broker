@@ -35,9 +35,12 @@ final class MessageTaker extends Operation {
         ps.setString(1, consumer.getId());
         ps.setMaxRows(maxCount);
         ResultSet rs = ps.executeQuery();
-        while (rs.next())
+        int rowNo = 0; // Keep manual track of the number of rows, in case JDBC driver doesn't honor setMaxRows().
+        while (rs.next() && rowNo < maxCount) {
             if (canTakeMessage(rs))
                 takeMessage(rs, consumer, callback);
+            rowNo++;
+        }
         rs.close();
         ps.close();
     }

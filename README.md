@@ -20,7 +20,7 @@ The core module has no dependencies outside of JDK 6, not even a logging framewo
 Dependencies to third-party libraries have been separated into their own modules.
 
 The library have been designed to be extensible, and allows monitors to be registered,
-to get notified of what is happening. Two monitors are provided, in separate monitors.
+to get notified of what is happening. Two monitors are provided, in separate modules.
 
 * `repository-message-broker-slf4j` provides logging through `org.openforis.rmb.slf4j.Slf4jLoggingMonitor`
 * `repository-message-broker-metrics` provides metrics to a Dropwizard's Metrics MetricRegistry through

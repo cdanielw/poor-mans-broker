@@ -95,8 +95,7 @@ use this, or a similar logging monitor. If not, the library will not output any 
 7. Registers a monitor capturing metrics about the message broker, using Dropwizard's Metrics.
  You probably would want to configure the `MetricRegistry` before passing it to the monitor though.
 8. `build()` must be called at the end, to create the actual message broker instance.
-9. A `MessageQueue` is the object where messages are published. `MessageConsumer`s are registered at the time
-the queue is built.
+9. A `MessageQueue` is the object where messages are published.
 10. A message queue must have at least one `MessageConsumer`. The consumer must have a, within the message broker,
  unique id.
 11. A consumer contains a `MessageHandler`, which will receive the messages published to the queue.

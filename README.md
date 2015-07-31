@@ -44,7 +44,7 @@ Usage example
             new JdbcMessageRepository(connectionManager, "example_"),           // (2)
             transactionSynchronizer)                                            // (3)
             .monitor(new Slf4jLoggingMonitor())                                 // (4)
-            .monitor(new MetricsMonitor(new MetricRegistry()))                  // (5)
+            .monitor(new MetricsMonitor(metricRegistry))                        // (5)
             .build();
 
     MessageQueue<Date> queue = messageBroker.<Date>queueBuilder("A test queue") // (6)

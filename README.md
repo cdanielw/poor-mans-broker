@@ -112,7 +112,7 @@ use this, or a similar logging monitor. If not, the library will not output any 
   * `neverRetry()` - the message processing is marked as failed, without any retries.
 13. Specifies the maximum number of messages the consumer is allowed to handle in parallel. Depending on
  `MessageRepository`, this might even be enforced in a clustered environment.
-14. The amount of time the message handler get to complete it's processing, or call the keep-alive, before
+14. The amount of time the message handler get to complete its processing, or call the keep-alive, before
  the message is considered abandoned. The default timeout is 1 minute.
 15. Finally, `build()` must be called, to create the message queue instance.
 

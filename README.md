@@ -115,19 +115,19 @@ Spring XML examples
 *Minimal:*
 
 ```xml
-    <bean id="minimallyConfiguredMessageBroker" class="org.openforis.rmb.spring.SpringJdbcMessageBroker">
+    <bean id="messageBroker" class="org.openforis.rmb.spring.SpringJdbcMessageBroker">
         <constructor-arg value="#{database.dataSource}"/>
         <property name="tablePrefix" value="example_"/>
     </bean>
 
-    <bean id="minimallyConfiguredQueue" class="org.openforis.rmb.spring.SpringMessageQueue">
-        <constructor-arg ref="minimallyConfiguredMessageBroker"/>
-        <constructor-arg value="A queue"/>
+    <bean id="messageQueue" class="org.openforis.rmb.spring.SpringMessageQueue">
+        <constructor-arg ref="messageBroker"/>
+        <constructor-arg value="My queue id"/>
         <constructor-arg>
             <list>
                 <bean class="org.openforis.rmb.spring.SpringMessageConsumer">
-                    <constructor-arg value="A minimally configured consumer"/>
-                    <constructor-arg ref="messageCollectingHandler"/>
+                    <constructor-arg value="My consumer id"/>
+                    <constructor-arg ref="messageHandler"/>
                 </bean>
             </list>
         </constructor-arg>
@@ -136,7 +136,7 @@ Spring XML examples
 
 *Fully configured:*
 ```xml
-    <bean id="fullyConfiguredMessageBroker" class="org.openforis.rmb.spring.SpringJdbcMessageBroker">
+    <bean id="messageBroker" class="org.openforis.rmb.spring.SpringJdbcMessageBroker">
         <constructor-arg value="#{database.dataSource}"/>
         <property name="tablePrefix" value="example_"/>
         <property name="messageSerializer">
@@ -150,14 +150,14 @@ Spring XML examples
         <property name="repositoryWatcherPollingPeriodSeconds" value="10"/>
     </bean>
 
-    <bean id="fullyConfiguredQueue" class="org.openforis.rmb.spring.SpringMessageQueue">
-        <constructor-arg ref="fullyConfiguredMessageBroker"/>
-        <constructor-arg value="A queue"/>
+    <bean id="messageQueue" class="org.openforis.rmb.spring.SpringMessageQueue">
+        <constructor-arg ref="messageBroker"/>
+        <constructor-arg value="My queue id"/>
         <constructor-arg>
             <list>
                 <bean class="org.openforis.rmb.spring.SpringMessageConsumer">
-                    <constructor-arg value="A fully configured consumer"/>
-                    <constructor-arg ref="messageCollectingHandler"/>
+                    <constructor-arg value="My consumer id"/>
+                    <constructor-arg ref="messageHandler"/>
                     <property name="messagesHandledInParallel" value="1"/>
                     <property name="retries" value="5"/>
                     <property name="throttlingStrategy">

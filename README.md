@@ -40,21 +40,23 @@ Spring's transaction manager, and provides helper classes to make it easy to con
 Usage example
 -------------
 ```java
-    RepositoryMessageBroker messageBroker = RepositoryMessageBroker.builder(    // (1)
+    MessageBroker messageBroker = RepositoryMessageBroker.builder(              // (1)
             new JdbcMessageRepository(connectionManager, "example_"),           // (2)
             transactionSynchronizer)                                            // (3)
+            .monitor(new Slf4jLoggingMonitor())                                 // (4)
+            .monitor(new MetricsMonitor(new MetricRegistry()))                  // (5)
             .build();
 
-    MessageQueue<Date> queue = messageBroker.<Date>queueBuilder("A test queue") // (4)
+    MessageQueue<Date> queue = messageBroker.<Date>queueBuilder("A test queue") // (6)
             .consumer(MessageConsumer.builder("A consumer",
-                    (date) -> System.out.println("Got a date: " + date)))       // (5)
+                    (date) -> System.out.println("Got a date: " + date)))       // (7)
             .build();
 
     messageBroker.start();
 
-    withTransaction(() -> {                                                     // (6)
+    withTransaction(() -> {                                                     // (8)
         doSomeTransactionalWork();
-        queue.publish(new Date(0));                                             // (7)
+        queue.publish(new Date(0));                                             // (9)
         queue.publish(new Date(100));
     });
 
@@ -69,13 +71,15 @@ An implementation using Spring's `DataSourceUtils` is provided. A table prefix c
 3. A `TransactionSynchronizer` implementation also needs to be specified. It is responsible for checking
 if a transaction is active, and allows listeners to be notified when current transaction commits.
 Just as with the connection manager, an implementation using Spring's `TransactionSynchronizationManager` is provided.
-4. A `MessageQueue` is the object where messages are published. `MessageConsumer`s are registered at the time
+4. Registers a monitor that logs the message broker activities using SLF4j.
+5. Registers a monitor capturing metrics about the message broker, using Dropwizard's Metrics.
+6. A `MessageQueue` is the object where messages are published. `MessageConsumer`s are registered at the time
 the queue is built.
-5. A `MessageConsumer` specifies a `MessageHandler`, which will receive published messages. In addition to
+7. A `MessageConsumer` specifies a `MessageHandler`, which will receive published messages. In addition to
 `MessageHandler`s, there are `KeepAliveMessageHandler`s, which provides a way for the handler to
 notify the message broker it's still alive, and prevents it from timing out.
-6. Messages must be published within a transaction.
-7. Example of how messages are published. The message is written to the database in the same transaction
+8. Messages must be published within a transaction.
+9. Example of how messages are published. The message is written to the database in the same transaction
 as the transactional work is being done. Once the transaction commits, the message broker will query
 the database for messages to process, and forwards the message to the message handler.
 
@@ -140,11 +144,12 @@ Spring XML examples
         <constructor-arg value="#{database.dataSource}"/>
         <property name="tablePrefix" value="example_"/>
         <property name="messageSerializer">
-            <bean class="org.openforis.rmb.objectserialization.ObjectSerializationMessageSerializer"/>
+            <bean class="org.openforis.rmb.xstream.XStreamMessageSerializer"/>
         </property>
         <property name="monitors">
             <list>
-                <ref bean="eventCollectingMonitor"/>
+                <bean class="org.openforis.rmb.slf4j.Slf4jLoggingMonitor"/
+                <ref bean="myCustomMonitor"/>
             </list>
         </property>
         <property name="repositoryWatcherPollingPeriodSeconds" value="10"/>

@@ -32,7 +32,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * <pre>
  * {@code
 
-    RepositoryMessageBroker messageBroker = RepositoryMessageBroker.builder(
+    MessageBroker messageBroker = RepositoryMessageBroker.builder(
         new JdbcMessageRepository(connectionManager, "example_"),
         transactionSynchronizer)
         .build();

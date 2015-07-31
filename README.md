@@ -93,6 +93,7 @@ Just as with the connection manager, an implementation using Spring's `Transacti
 use this, or a similar logging monitor. If not, the library will not output any logging messages, not even
  for failures.
 7. Registers a monitor capturing metrics about the message broker, using Dropwizard's Metrics.
+ You probably would want to configure the `MetricRegistry` before passing it to the monitor though.
 8. `build()` must be called at the end, to create the actual message broker instance.
 9. A `MessageQueue` is the object where messages are published. `MessageConsumer`s are registered at the time
 the queue is built.

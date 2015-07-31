@@ -45,7 +45,7 @@ Spring's transaction manager, and provides helper classes to make it easy to con
 
 <h2>Programmatic Example</h2>
 <blockquote><pre><code>
-    RepositoryMessageBroker messageBroker = RepositoryMessageBroker.builder(                // (1)
+    MessageBroker messageBroker = RepositoryMessageBroker.builder(                // (1)
         new JdbcMessageRepository(connectionManager, "example_"),                           // (2)
         transactionSynchronizer)                                                            // (3)
         .build();

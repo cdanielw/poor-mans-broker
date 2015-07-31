@@ -51,7 +51,6 @@ Usage example
             .consumer(MessageConsumer.builder("A consumer",
                     (Date date) -> System.out.println("Got a date: " + date)))
             .build();
-    messageBroker.stop();
 ```
 
 *Fully configured:*
@@ -120,15 +119,21 @@ the queue is built.
 *Publishing messages:*
 ```java
 
-    withTransaction(() -> {                                                     // (1)
+    messageBroker.start();                                                      // (1)
+
+    withTransaction(() -> {                                                     // (2)
         doSomeTransactionalWork();
-        queue.publish(new Date(0));                                             // (2)
+        queue.publish(new Date(0));                                             // (3)
         queue.publish(new Date(100));
     });
 
+    messageBroker.stop();
+
 ```
-1. Messages must be published within a transaction.
-2. Example of how messages are published. The message is written to the database in the same transaction
+
+1. The message broker must be started before any messages are published.
+2. Messages must be published within a transaction.
+3. Example of how messages are published. The message is written to the database in the same transaction
 as the transactional work is being done. Once the transaction commits, the message broker will query
 the database for messages to process, and forwards the message to the message handler.
 

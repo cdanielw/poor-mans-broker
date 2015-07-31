@@ -39,50 +39,98 @@ Spring's transaction manager, and provides helper classes to make it easy to con
 
 Usage example
 -------------
+*Minimal:*
 ```java
-    MessageBroker messageBroker = RepositoryMessageBroker.builder(              // (1)
-            new JdbcMessageRepository(connectionManager, "example_"),           // (2)
-            transactionSynchronizer)                                            // (3)
-            .monitor(new Slf4jLoggingMonitor())                                 // (4)
-            .monitor(new MetricsMonitor(metricRegistry))                        // (5)
+
+    MessageBroker messageBroker = RepositoryMessageBroker.builder(
+            new JdbcMessageRepository(connectionManager, "example_"),
+            transactionSynchronizer)
             .build();
 
-    MessageQueue<Date> queue = messageBroker.<Date>queueBuilder("A test queue") // (6)
+    MessageQueue<Date> queue = messageBroker.queueBuilder("A test queue", Date.class)
             .consumer(MessageConsumer.builder("A consumer",
-                    (date) -> System.out.println("Got a date: " + date)))       // (7)
+                    (Date date) -> System.out.println("Got a date: " + date)))
             .build();
-
-    messageBroker.start();
-
-    withTransaction(() -> {                                                     // (8)
-        doSomeTransactionalWork();
-        queue.publish(new Date(0));                                             // (9)
-        queue.publish(new Date(100));
-    });
-
     messageBroker.stop();
 ```
 
+*Fully configured:*
+```java
+
+    MessageBroker messageBroker = RepositoryMessageBroker.builder(                      (1)
+            new JdbcMessageRepository(connectionManager, "example_"),                   (2)
+            transactionSynchronizer)                                                    (3)
+            .messageSerializer(new XStreamMessageSerializer())                          (4)
+            .repositoryWatcherPollingSchedule(30, SECONDS)                              (5)
+            .monitor(new Slf4jLoggingMonitor())                                         (6)
+            .monitor(new MetricsMonitor(new MetricRegistry()))                          (7)
+            .build();                                                                   (8)
+
+    MessageQueue<Date> queue = messageBroker.queueBuilder("A test queue", Date.class)   (9)
+            .consumer(MessageConsumer.builder("A consumer",                             (10)
+                    (Date date) -> System.out.println("Got a date: " + date))           (11)
+                    .retryUntilSuccess(ExponentialBackoff.upTo(1, MINUTES))             (12)
+                    .messagesHandledInParallel(1)                                       (13)
+                    .timeout(30, SECONDS))                                              (14)
+            .build();                                                                   (15)
+```
+
+
 1. The message broker is responsible for creating message queues, and keeps an eye on it's message queues,
-picking up abandoned messages, monitor queue sizes etc.
+ picking up abandoned messages, monitor queue sizes etc.
 2. The MessageRepository is working with the underlying repository.
-The `JdbcMessageRepository` need a `ConnectionManager` implementation, to get and resource JDBC connections.
+ The `JdbcMessageRepository` need a `ConnectionManager` implementation, to get and resource JDBC connections.
 An implementation using Spring's `DataSourceUtils` is provided. A table prefix can also be specified here.
 3. A `TransactionSynchronizer` implementation also needs to be specified. It is responsible for checking
-if a transaction is active, and allows listeners to be notified when current transaction commits.
+ if a transaction is active, and allows listeners to be notified when current transaction commits.
 Just as with the connection manager, an implementation using Spring's `TransactionSynchronizationManager` is provided.
-4. Registers a monitor that logs the message broker activities using SLF4j.
-5. Registers a monitor capturing metrics about the message broker, using Dropwizard's Metrics.
-6. A `MessageQueue` is the object where messages are published. `MessageConsumer`s are registered at the time
+4. The `MessageSerializer` is responsible for serializing/deserializing messages. `XStreamMessageSerializer` is
+ often a better option than the default configured `ObjectSerializationMessageSerializer`. It doesn't require the
+ message to implement Serializable, it's more lenient to changes in the class definition, and the
+ serialized form is outputs human-readable, which simplifies debugging.
+5. Specifies how often the repository should be polled. This is done to pick up abandoned messages, and to
+ report on message queue size. If not specified, it's configured to be polled every 30 seconds.
+6. Registers a monitor that logs the message broker activities using SLF4j. It is strongly suggested to
+use this, or a similar logging monitor. If not, the library will not output any logging messages, not even
+ for failures.
+7. Registers a monitor capturing metrics about the message broker, using Dropwizard's Metrics.
+8. `build()` must be called at the end, to create the actual message broker instance.
+9. A `MessageQueue` is the object where messages are published. `MessageConsumer`s are registered at the time
 the queue is built.
-7. A `MessageConsumer` specifies a `MessageHandler`, which will receive published messages. In addition to
-`MessageHandler`s, there are `KeepAliveMessageHandler`s, which provides a way for the handler to
-notify the message broker it's still alive, and prevents it from timing out.
-8. Messages must be published within a transaction.
-9. Example of how messages are published. The message is written to the database in the same transaction
+10. A message queue must have at least one `MessageConsumer`. The consumer must have a, within the message broker,
+ unique id.
+11. A consumer contains a `MessageHandler`, which will receive the messages published to the queue.
+ There are two variations of message handlers, a simple one, which is specified in this one, and
+ `KeepAliveMessageHandler`. The latter version provides a way for handlers that takes some time to complete,
+  to notify the message broker that progress on the message still is being made, and that its timeout
+   should be reset, to prevent it from being marked as abandoned.
+12. How to manage cases where a handler fails with a message can be configured. There are three main options:
+  * `retryUntilSuccess(throttlingStrategy)` - the message processing will be retried, with a delay calculated based on
+  the specified throttling strategy. This is the default behaviour. An exponential backoff will be applied up to a
+  minute.
+  * `retry(retries, throttlingStrategy)` - the message processing will be retried just like described above,
+  up to the specified number of retries. Then, the message processing is marked as failed.
+  * `neverRetry()` - the message processing is marked as failed, without any retries.
+13. Specifies the maximum number of messages the consumer is allowed to handle in parallel. Depending on
+ `MessageRepository`, this might even be enforced in a clustered environment.
+14. The amount of time the message handler get to complete it's processing, or call the keep-alive, before
+ the message is considered abandoned. The default timeout is 1 minute.
+15. Finally, `build()` must be called, to create the message queue instance.
+
+*Publishing messages:*
+```java
+
+    withTransaction(() -> {                                                     // (1)
+        doSomeTransactionalWork();
+        queue.publish(new Date(0));                                             // (2)
+        queue.publish(new Date(100));
+    });
+
+```
+1. Messages must be published within a transaction.
+2. Example of how messages are published. The message is written to the database in the same transaction
 as the transactional work is being done. Once the transaction commits, the message broker will query
 the database for messages to process, and forwards the message to the message handler.
-
 
 JDBC Schema
 -----------

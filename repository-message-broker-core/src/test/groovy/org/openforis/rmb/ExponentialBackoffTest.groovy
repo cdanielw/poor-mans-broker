@@ -11,7 +11,7 @@ class ExponentialBackoffTest extends Specification {
 
     def 'Test'() {
         when:
-            def delay = new ExponentialBackoff(1, TimeUnit.MINUTES).determineDelayMillis(retry)
+            def delay = ExponentialBackoff.upTo(1, TimeUnit.MINUTES).determineDelayMillis(retry)
 
         then:
             delay <= oneMinute

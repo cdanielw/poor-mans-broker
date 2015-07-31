@@ -47,7 +47,7 @@ public final class SpringMessageConsumer<M> implements InitializingBean {
         }
 
         if (throttlingStrategy == null && retries != null && retries > 0)
-            builder.retry(retries, new ThrottlingStrategy.ExponentialBackoff(1, TimeUnit.MINUTES));
+            builder.retry(retries, ThrottlingStrategy.ExponentialBackoff.upTo(1, TimeUnit.MINUTES));
         else if (throttlingStrategy != null && (retries == null || retries < 1))
             builder.retryUntilSuccess(throttlingStrategy);
         else if (throttlingStrategy != null && retries > 0)

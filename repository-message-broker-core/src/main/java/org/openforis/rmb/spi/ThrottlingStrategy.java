@@ -30,13 +30,7 @@ public interface ThrottlingStrategy {
         private static final int MAXIMUM_RETRY_BEFORE_OVERFLOWING = 24;
         private final int maxBackoffMillis;
 
-        /**
-         * Creates an exponential backoff strategy.
-         *
-         * @param maxBackoff the maximum delay
-         * @param timeUnit   the time unit of the maximum delay
-         */
-        public ExponentialBackoff(int maxBackoff, TimeUnit timeUnit) {
+        private ExponentialBackoff(int maxBackoff, TimeUnit timeUnit) {
             long max = timeUnit.toMillis(maxBackoff);
             if (max > Integer.MAX_VALUE)
                 throw new IllegalArgumentException("Backoff cannot be longer than ...");
@@ -47,6 +41,16 @@ public interface ThrottlingStrategy {
             if (retry > MAXIMUM_RETRY_BEFORE_OVERFLOWING) return maxBackoffMillis;
             long backoff = (long) Math.pow(2, retry) * 100;
             return backoff > maxBackoffMillis ? maxBackoffMillis : (int) backoff;
+        }
+
+        /**
+         * Creates an exponential backoff strategy, with the specified maximum backoff time.
+         *
+         * @param maxBackoff the maximum backoff time
+         * @param timeUnit   the time unit of the maximum backoff time
+         */
+        public static ThrottlingStrategy upTo(int maxBackoff, TimeUnit timeUnit) {
+            return new ExponentialBackoff(maxBackoff, timeUnit);
         }
     }
 }

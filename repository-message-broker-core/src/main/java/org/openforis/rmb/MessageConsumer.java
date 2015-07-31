@@ -4,6 +4,7 @@ import org.openforis.rmb.inmemory.InMemoryMessageRepository;
 import org.openforis.rmb.jdbc.JdbcMessageRepository;
 import org.openforis.rmb.spi.MessageRepository;
 import org.openforis.rmb.spi.ThrottlingStrategy;
+import org.openforis.rmb.spi.ThrottlingStrategy.ExponentialBackoff;
 import org.openforis.rmb.util.Is;
 
 import java.util.concurrent.TimeUnit;
@@ -180,15 +181,16 @@ public final class MessageConsumer<M> {
         private int time;
         private TimeUnit timeUnit;
         private ThrottlingStrategy throttlingStrategy;
-        private int messagesHandledInParallel = 1;
+        private int messagesHandledInParallel;
         private int maxRetries;
 
         private Builder(String consumerId, MessageHandler<M> handler, KeepAliveMessageHandler<M> keepAliveHandler) {
             this.consumerId = consumerId.trim();
             this.handler = handler;
             this.keepAliveHandler = keepAliveHandler;
+            this.messagesHandledInParallel = 1;
             timeout(1, MINUTES);
-            retryUntilSuccess(new ThrottlingStrategy.ExponentialBackoff(1, MINUTES));
+            retryUntilSuccess(ExponentialBackoff.upTo(1, MINUTES));
         }
 
         /**

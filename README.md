@@ -37,8 +37,8 @@ which is preferable to object serialization in many cases.
 To make it easy for Springframework users, `repository-message-broker-spring` provides integration with
 Spring's transaction manager, and provides helper classes to make it easy to configure queues using Spring.
 
-Examples
---------
+Usage example
+-------------
 ```java
     RepositoryMessageBroker messageBroker = RepositoryMessageBroker.builder(    // (1)
             new JdbcMessageRepository(connectionManager, "example_"),           // (2)
@@ -108,6 +108,69 @@ the database is PostgreSQL, and the tablePrefix is set to "example_"..
     PRIMARY KEY (message_id, consumer_id),
     FOREIGN KEY (message_id) REFERENCES example_message (id)
     );
+```
+
+Spring XML examples
+-------------------
+*Minimal:*
+
+```xml
+    <bean id="minimallyConfiguredMessageBroker" class="org.openforis.rmb.spring.SpringJdbcMessageBroker">
+        <constructor-arg value="#{database.dataSource}"/>
+        <property name="tablePrefix" value="example_"/>
+    </bean>
+
+    <bean id="minimallyConfiguredQueue" class="org.openforis.rmb.spring.SpringMessageQueue">
+        <constructor-arg ref="minimallyConfiguredMessageBroker"/>
+        <constructor-arg value="A queue"/>
+        <constructor-arg>
+            <list>
+                <bean class="org.openforis.rmb.spring.SpringMessageConsumer">
+                    <constructor-arg value="A minimally configured consumer"/>
+                    <constructor-arg ref="messageCollectingHandler"/>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+```
+
+*Fully configured:*
+```xml
+    <bean id="fullyConfiguredMessageBroker" class="org.openforis.rmb.spring.SpringJdbcMessageBroker">
+        <constructor-arg value="#{database.dataSource}"/>
+        <property name="tablePrefix" value="example_"/>
+        <property name="messageSerializer">
+            <bean class="org.openforis.rmb.objectserialization.ObjectSerializationMessageSerializer"/>
+        </property>
+        <property name="monitors">
+            <list>
+                <ref bean="eventCollectingMonitor"/>
+            </list>
+        </property>
+        <property name="repositoryWatcherPollingPeriodSeconds" value="10"/>
+    </bean>
+
+    <bean id="fullyConfiguredQueue" class="org.openforis.rmb.spring.SpringMessageQueue">
+        <constructor-arg ref="fullyConfiguredMessageBroker"/>
+        <constructor-arg value="A queue"/>
+        <constructor-arg>
+            <list>
+                <bean class="org.openforis.rmb.spring.SpringMessageConsumer">
+                    <constructor-arg value="A fully configured consumer"/>
+                    <constructor-arg ref="messageCollectingHandler"/>
+                    <property name="messagesHandledInParallel" value="1"/>
+                    <property name="retries" value="5"/>
+                    <property name="throttlingStrategy">
+                        <bean class="org.openforis.rmb.spi.ThrottlingStrategy$ExponentialBackoff">
+                            <constructor-arg value="1"/>
+                            <constructor-arg value="MINUTES"/>
+                        </bean>
+                    </property>
+                    <property name="timeoutSeconds" value="30"/>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
 ```
 
 Maven dependencies

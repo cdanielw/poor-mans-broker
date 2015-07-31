@@ -78,7 +78,7 @@ Usage example
 1. The message broker is responsible for creating message queues, and keeps an eye on it's message queues,
  picking up abandoned messages, monitor queue sizes etc.
 2. The MessageRepository is working with the underlying repository.
- The `JdbcMessageRepository` need a `ConnectionManager` implementation, to get and resource JDBC connections.
+ The `JdbcMessageRepository` need a `ConnectionManager` implementation to get and release JDBC connections.
 An implementation using Spring's `DataSourceUtils` is provided. A table prefix can also be specified here.
 3. A `TransactionSynchronizer` implementation also needs to be specified. It is responsible for checking
  if a transaction is active, and allows listeners to be notified when current transaction commits.

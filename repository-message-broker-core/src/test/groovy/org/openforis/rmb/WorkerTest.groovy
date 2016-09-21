@@ -59,7 +59,7 @@ class WorkerTest extends Specification {
         def handler = createFailingHandler(1)
 
         when:
-            consume(consumer(handler))
+            consume(nonRetryingConsumer(handler))
 
         then:
             repo.updates.size() == 1
@@ -162,9 +162,21 @@ class WorkerTest extends Specification {
         MessageConsumer.builder('consumer', handler).build()
     }
 
+    MessageConsumer nonRetryingConsumer(TestHandler handler) {
+        MessageConsumer.builder('consumer', handler)
+                .neverRetry()
+                .build()
+    }
+
     MessageConsumer retryingConsumer(int maxRetries, TestHandler handler) {
         MessageConsumer.builder('consumer', handler)
                 .retry(maxRetries, ThrottlingStrategy.NO_THROTTLING)
+                .build()
+    }
+
+    MessageConsumer retryingConsumer(TestHandler handler) {
+        MessageConsumer.builder('consumer', handler)
+                .retryUntilSuccess(ThrottlingStrategy.NO_THROTTLING)
                 .build()
     }
 

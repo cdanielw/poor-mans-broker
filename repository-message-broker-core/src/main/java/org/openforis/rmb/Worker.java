@@ -85,8 +85,16 @@ final class Worker<M> {
     }
 
     private synchronized void failed(Exception e) {
-        updateRepo(update.failed(clock, e.getMessage()));
+        updateRepo(update.failed(clock, exceptionMessage(e)));
         monitors.onEvent(new MessageConsumptionFailedEvent(update, message, e));
+    }
+
+    private String exceptionMessage(Throwable e) {
+        if (e == null)
+            return null;
+        if (e.getMessage() != null)
+            return e.getMessage();
+        return exceptionMessage(e.getCause());
     }
 
     private synchronized void completed() {
